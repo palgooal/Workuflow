@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Models;
+
+use App\Support\Enums\ProjectType;
+use App\Support\Enums\TransactionType;
+use App\Support\Traits\BelongsToUser;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Project extends Model
+{
+    use HasFactory, HasUlids, SoftDeletes, BelongsToUser;
+
+    protected $fillable = [
+        'user_id',
+        'name',
+        'description',
+        'color',
+        'currency',
+        'type',
+        'is_active',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'type'      => ProjectType::class,
+            'is_active' => 'boolean',
+        ];
+    }
+
+    // ==================== Relations ====================
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function debts(): HasMany
+    {
+        return $this->hasMany(Debt::class);
+    }
+
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    public function recurringTransactions(): HasMany
+    {
+        return $this->hasMany(RecurringTransaction::class);
+    }
+
+    // ==================== Scopes ====================
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeBusiness($query)
+    {
+        return $query->where('type', ProjectType::Business);
+    }
+
+    public function scopePersonal($query)
+    {
+        return $query->where('type', ProjectType::Personal);
+    }
+
+    // ==================== Helpers ====================
+
+    public function totalIncome(): float
+    {
+        return $this->transactions()
+            ->where('type', TransactionType::Income)
+            ->sum('amount');
+    }
+
+    public function totalExpenses(): float
+    {
+        return $this->transactions()
+            ->where('type', TransactionType::Expense)
+            ->sum('amount');
+    }
+
+    public function netProfit(): float
+    {
+        return $this->totalIncome() - $this->totalExpenses();
+    }
+}
