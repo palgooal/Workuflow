@@ -1,17 +1,19 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard') }}
-        </h2>
-    </x-slot>
+    <x-slot name="pageTitle">لوحة التحكم</x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    {{ __("You're logged in!") }}
-                </div>
-            </div>
-        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <x-stats-card title="إجمالي الدخل" value="0.00" suffix=" ر.س" color="green" :change="0" />
+        <x-stats-card title="إجمالي المصاريف" value="0.00" suffix=" ر.س" color="red" :change="0" />
+        <x-stats-card title="صافي الربح" value="0.00" suffix=" ر.س" color="indigo" :change="0" />
+        <x-stats-card title="المشاريع النشطة" value="0" color="yellow" />
+    </div>
+
+    <div class="mt-6">
+        <x-empty-state
+            title="لا توجد معاملات بعد"
+            description="ابدأ بإضافة مشروع ثم سجّل أول معاملة مالية لك"
+            action="{{ route('projects.index') }}"
+            actionLabel="إنشاء مشروع"
+        />
     </div>
 </x-app-layout>
