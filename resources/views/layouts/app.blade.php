@@ -318,5 +318,8 @@
     </div>
 </div>
 
+{{-- Scripts Stack — للـ Charts وغيرها --}}
+@stack('scripts')
+
 </body>
 </html>

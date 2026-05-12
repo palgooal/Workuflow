@@ -1,7 +1,14 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DebtController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -10,22 +17,48 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Projects — Phase 4
-    Route::resource('projects', ProjectController::class);
+    Route::resource('projects', ProjectController::class)->except(['store'])->names('projects');
+    Route::post('projects', [ProjectController::class, 'store'])
+        ->middleware('subscription:projects')
+        ->name('projects.store');
+
+    // Categories — Phase 5
+    Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // Transactions — Phase 6
+    Route::resource('transactions', TransactionController::class)->except(['store'])->names('transactions');
+    Route::post('transactions', [TransactionController::class, 'store'])
+        ->middleware('subscription:transactions')
+        ->name('transactions.store');
+
+    // Debts — Phase 8
+    Route::resource('debts', DebtController::class)->only(['index', 'create', 'store', 'destroy']);
+    Route::post('/debts/{debt}/record-payment', [DebtController::class, 'recordPayment'])->name('debts.record-payment');
+    Route::post('/debts/{debt}/mark-paid',      [DebtController::class, 'markAsPaid'])->name('debts.mark-paid');
+
+    // Reports — Phase 9
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    // Notifications — Phase 10
+    Route::get('/notifications',                          [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read',               [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all',                [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::delete('/notifications/{id}',                  [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('/api/notifications/unread-count',         [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+
+    // Settings — Phase 12
+    Route::get('/settings',                    [SettingsController::class, 'index'])->name('settings.index');
+    Route::patch('/settings/profile',          [SettingsController::class, 'updateProfile'])->name('settings.profile');
+    Route::patch('/settings/password',         [SettingsController::class, 'updatePassword'])->name('settings.password');
+    Route::patch('/settings/preferences',      [SettingsController::class, 'updatePreferences'])->name('settings.preferences');
+    Route::delete('/settings/account',         [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
 
     // Placeholder routes — ستُستبدل بـ Controllers حقيقية مع كل Phase
-    Route::get('/transactions', fn() => 'transactions')->name('transactions.index');
-    Route::get('/debts',        fn() => 'debts')->name('debts.index');
     Route::get('/budget',       fn() => 'budget')->name('budget.index');
     Route::get('/recurring',    fn() => 'recurring')->name('recurring.index');
-    Route::get('/reports',      fn() => 'reports')->name('reports.index');
-    Route::get('/categories',   fn() => 'categories')->name('categories.index');
-    Route::get('/notifications',fn() => 'notifications')->name('notifications.index');
-    Route::get('/settings',     fn() => 'settings')->name('settings.index');
 
     // Profile (Breeze)
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
