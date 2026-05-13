@@ -11,8 +11,8 @@
 |--------|--------|
 | إجمالي المراحل | 15 مرحلة + Marketing |
 | إجمالي المهام | 56 مهمة |
-| الحالة الحالية | ✅ Phases 1–15 + Landing Page مكتملة |
-| اختبارات Pest | 53/53 ✅ |
+| الحالة الحالية | ✅ Phases 1–15 + Landing Page + SubscriptionResource مكتملة |
+| اختبارات Pest | 54/54 ✅ |
 
 ---
 
@@ -549,8 +549,10 @@ Admin+   → تطوير Admin المتقدم (مقترح)                 ⬜ م
 **الحالة:** `completed`
 
 **المنجز:**
-- [x] 53 اختبار Pest — جميعها ✅ (53/53)
+- [x] 54 اختبار Pest — جميعها ✅ (54/54)
 - [x] تغطية: Auth, Projects, Categories, Transactions, Debts, Budget, Recurring, Billing
+- [x] `ExampleTest` مُحدَّث: يتحقق من Landing Page (status 200 + assertViewIs welcome)
+- [x] اختبار جديد: المستخدم المسجّل يرى "لوحة التحكم" في الـ navbar
 
 ---
 
