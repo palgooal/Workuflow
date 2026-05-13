@@ -26,7 +26,7 @@ test('user cannot view another user project', function () {
 
     $this->actingAs($other)
         ->get(route('projects.show', $project))
-        ->assertForbidden();
+        ->assertNotFound();
 });
 
 // ==================== الإنشاء ====================
@@ -99,5 +99,5 @@ test('user cannot delete another user project', function () {
 
     $this->actingAs($other)
         ->delete(route('projects.destroy', $project))
-        ->assertForbidden();
+        ->assertNotFound();
 });

@@ -14,6 +14,7 @@ class DebtData
         public readonly string      $currency,
         public readonly ?Carbon     $due_date    = null,
         public readonly ?string     $notes       = null,
+        public readonly ?string     $project_id  = null,
     ) {}
 
     public static function fromRequest(array $data): self
@@ -24,7 +25,8 @@ class DebtData
             amount:     (float) $data['amount'],
             currency:   $data['currency'],
             due_date:   isset($data['due_date']) ? Carbon::parse($data['due_date']) : null,
-            notes:      $data['notes'] ?? null,
+            notes:      $data['notes']       ?? null,
+            project_id: $data['project_id']  ?? null,
         );
     }
 }

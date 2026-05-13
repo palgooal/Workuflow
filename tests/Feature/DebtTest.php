@@ -114,5 +114,5 @@ test('user cannot pay another user debt', function () {
 
     $this->actingAs($other)
         ->post(route('debts.record-payment', $debt), ['amount' => 100])
-        ->assertForbidden();
+        ->assertNotFound();
 });

@@ -17,6 +17,7 @@ class CreateDebtAction
             'currency'         => $data->currency,
             'due_date'         => $data->due_date,
             'notes'            => $data->notes,
+            'project_id'       => $data->project_id,
             'status'           => \App\Support\Enums\DebtStatus::Active,
         ]);
     }

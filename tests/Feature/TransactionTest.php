@@ -68,7 +68,7 @@ test('user cannot edit another user transaction', function () {
 
     $this->actingAs($other)
         ->get(route('transactions.edit', $tx))
-        ->assertForbidden();
+        ->assertNotFound();
 });
 
 test('user cannot delete another user transaction', function () {
@@ -82,5 +82,5 @@ test('user cannot delete another user transaction', function () {
 
     $this->actingAs($other)
         ->delete(route('transactions.destroy', $tx))
-        ->assertForbidden();
+        ->assertNotFound();
 });

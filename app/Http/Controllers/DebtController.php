@@ -29,15 +29,17 @@ class DebtController extends Controller
     {
         $tab = $request->query('tab', 'borrowed');
 
+        $statusOrder = "CASE status WHEN 'active' THEN 1 WHEN 'partially_paid' THEN 2 WHEN 'paid' THEN 3 ELSE 4 END";
+
         $borrowed = Debt::borrowed()
             ->with('project')
-            ->orderByRaw("FIELD(status, 'active', 'partially_paid', 'paid')")
+            ->orderByRaw($statusOrder)
             ->orderBy('due_date')
             ->get();
 
         $lent = Debt::lent()
             ->with('project')
-            ->orderByRaw("FIELD(status, 'active', 'partially_paid', 'paid')")
+            ->orderByRaw($statusOrder)
             ->orderBy('due_date')
             ->get();
 
