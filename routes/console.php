@@ -27,6 +27,13 @@ Schedule::call(function () {
     });
 })->weekly()->sundays()->at('00:00')->name('clean-old-notifications')->withoutOverlapping();
 
+// معالجة الالتزامات المتكررة المستحقة يومياً الساعة 1 صباحاً
+Schedule::command('recurring:process')
+    ->dailyAt('01:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/recurring.log'));
+
 // تنظيف الجلسات المنتهية الصلاحية يومياً
 Schedule::command('session:gc')->daily()->runInBackground();
 

@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecurringController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
@@ -56,9 +58,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/settings/preferences',      [SettingsController::class, 'updatePreferences'])->name('settings.preferences');
     Route::delete('/settings/account',         [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
 
-    // Placeholder routes — ستُستبدل بـ Controllers حقيقية مع كل Phase
-    Route::get('/budget',       fn() => 'budget')->name('budget.index');
-    Route::get('/recurring',    fn() => 'recurring')->name('recurring.index');
+    // Budget — Phase 4.5
+    Route::resource('budget', BudgetController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('budget');
+
+    // Recurring Transactions — Phase 5.5
+    Route::resource('recurring', RecurringController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+    Route::post('/recurring/{recurring}/toggle',      [RecurringController::class, 'toggle'])->name('recurring.toggle');
+    Route::post('/recurring/{recurring}/process-now', [RecurringController::class, 'processNow'])->name('recurring.process-now');
 
     // Profile (Breeze)
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
