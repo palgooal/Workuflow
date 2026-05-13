@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
@@ -14,8 +15,8 @@ use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
-});
+    return view('welcome');
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -69,10 +70,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/recurring/{recurring}/toggle',      [RecurringController::class, 'toggle'])->name('recurring.toggle');
     Route::post('/recurring/{recurring}/process-now', [RecurringController::class, 'processNow'])->name('recurring.process-now');
 
+    // Billing — Phase 11
+    Route::prefix('billing')->name('billing.')->group(function () {
+        Route::get('/',          [BillingController::class, 'index'])->name('index');
+        Route::post('/checkout', [BillingController::class, 'checkout'])->name('checkout');
+        Route::get('/success',   [BillingController::class, 'success'])->name('success');
+        Route::post('/portal',   [BillingController::class, 'portal'])->name('portal');
+    });
+
     // Profile (Breeze)
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Stripe Webhook — بدون Auth (Stripe يتحقق بـ signature)
+Route::post('/stripe/webhook', [BillingController::class, 'webhook'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('stripe.webhook');
 
 require __DIR__.'/auth.php';

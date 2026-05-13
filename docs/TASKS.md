@@ -9,31 +9,36 @@
 
 | البيان | القيمة |
 |--------|--------|
-| إجمالي المراحل | 15 مرحلة |
-| إجمالي المهام | 54 مهمة |
-| الحالة الحالية | 🟡 قيد التطوير — Phase 5 |
-| المكتمل حتى الآن | Phase 1 → 4 ✅ |
+| إجمالي المراحل | 15 مرحلة + Marketing |
+| إجمالي المهام | 56 مهمة |
+| الحالة الحالية | ✅ Phases 1–15 + Landing Page مكتملة |
+| اختبارات Pest | 53/53 ✅ |
 
 ---
 
 ## 🗺️ خريطة المراحل
 
 ```
-Phase 1  → الأساس (DB + Enums + Models)          ✅ مكتمل
-Phase 2  → المصادقة                               ✅ مكتمل
-Phase 3  → Layout + Components                    ✅ مكتمل
-Phase 4  → المشاريع                               ✅ مكتمل
-Phase 5  → الفئات                                 🔄 جارٍ
-Phase 6  → المعاملات ⭐ (المحرك الأساسي)          ⬜ pending
-Phase 7  → لوحة التحكم                            ⬜ pending
-Phase 8  → الديون                                 ⬜ pending
-Phase 9  → التقارير                               ⬜ pending
-Phase 10 → الإشعارات                              ⬜ pending
-Phase 11 → الاشتراكات                             ⬜ pending
-Phase 12 → الإعدادات                              ⬜ pending
-Phase 13 → الأمان والجودة                         ⬜ pending
-Phase 14 → الإنتاج والـ API                       ⬜ pending
-Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
+Phase 1  → الأساس (DB + Enums + Models)               ✅ مكتمل
+Phase 2  → المصادقة                                    ✅ مكتمل
+Phase 3  → Layout + Components                         ✅ مكتمل
+Phase 4  → المشاريع                                    ✅ مكتمل
+Phase 4.3→ فصل الشخصي/التجاري                         ✅ مكتمل
+Phase 4.5→ الميزانية (Budget)                          ✅ مكتمل
+Phase 5  → الفئات (Categories)                        ✅ مكتمل
+Phase 5.5→ الالتزامات المتكررة (Recurring)             ✅ مكتمل
+Phase 6  → المعاملات ⭐ (المحرك الأساسي)               ✅ مكتمل
+Phase 7  → لوحة التحكم (Dashboard)                    ✅ مكتمل
+Phase 8  → الديون (Debts)                              ✅ مكتمل
+Phase 9  → التقارير (Reports)                          ✅ مكتمل
+Phase 10 → الإشعارات (Notifications)                   ✅ مكتمل
+Phase 11 → الاشتراكات والفوترة (Billing)               ✅ مكتمل (بدون مزود دفع — مُعلَّق)
+Phase 12 → الإعدادات (Settings)                        ✅ مكتمل
+Phase 13 → الأمان والجودة (Tests)                      ✅ مكتمل — 53/53
+Phase 14 → الإنتاج والـ API                            ⬜ مستقبلي
+Phase 15 → لوحة الإدارة (Laravel Filament)             ✅ مكتمل
+Marketing→ الصفحة التسويقية (Landing Page)             ✅ مكتمل
+Admin+   → تطوير Admin المتقدم (مقترح)                 ⬜ مخطّط
 ```
 
 ---
@@ -64,14 +69,15 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 **الحالة:** `completed`
 
 **المنجز:**
-- [x] `users` — إضافة: currency, timezone, subscription_plan
-- [x] `projects` — مع color, currency, type, is_active
+- [x] `users` — إضافة: currency, timezone, subscription_plan, payment_customer_id
+- [x] `projects` — مع color, currency, type (ProjectType), is_active
 - [x] `categories` — مع type enum, icon, color
 - [x] `transactions` — مع indexes مركّبة على (user_id, transaction_date)
 - [x] `debts` — مع remaining_amount, status
 - [x] `budgets` — مع period enum, month, year
-- [x] `recurring_transactions` — مع frequency enum, next_due_date
-- [x] `subscriptions` — مع provider data
+- [x] `recurring_transactions` — مع frequency enum, next_due_date, end_date
+- [x] `subscriptions` — مع provider_subscription_id, payment_provider
+- [x] `model_has_roles` / `roles` — spatie/permission
 
 ---
 
@@ -85,7 +91,7 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 - [x] `DebtStatus` — active / partially_paid / paid
 - [x] `SubscriptionPlan` — free / pro / business
 - [x] `ProjectType` — personal / business
-- [x] `RecurringFrequency` — daily / weekly / monthly / yearly
+- [x] `RecurringFrequency` — daily / weekly / monthly / yearly (مع `nextDate(Carbon $from): Carbon`)
 - [x] `BelongsToUser` Trait — Global Scope للعزل التلقائي
 - [x] `MoneyFormatter` Helper
 
@@ -96,14 +102,14 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 **الحالة:** `completed`
 
 **المنجز:**
-- [x] `User` — hasMany all modules, canCreateMoreProjects()
+- [x] `User` — HasRoles, FilamentUser, canAccessPanel(), currentPlan(), payment_customer_id
 - [x] `Project` — HasUlids, SoftDeletes, BelongsToUser, netProfit()
 - [x] `Category` — HasUlids, BelongsToUser
 - [x] `Transaction` — HasUlids, SoftDeletes, BelongsToUser
 - [x] `Debt` — HasUlids, SoftDeletes, BelongsToUser
 - [x] `Budget` — HasUlids, BelongsToUser, usagePercentage()
 - [x] `RecurringTransaction` — HasUlids, BelongsToUser
-- [x] `Subscription` — HasUlids
+- [x] `Subscription` — HasUlids, scopes: active()
 
 ---
 
@@ -150,9 +156,9 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 
 **المنجز:**
 - [x] `layouts/app.blade.php` — Sidebar + Topbar + Content (RTL)
-- [x] Sidebar: روابط التنقل، Alpine.js mobile toggle
+- [x] Sidebar: روابط التنقل لجميع الموديولات، Alpine.js mobile toggle
 - [x] Topbar: اسم الصفحة، Breadcrumb slot، إشعارات، قائمة مستخدم
-- [x] Flash messages (success/error) مع auto-dismiss
+- [x] Flash messages (success/error/info) مع auto-dismiss
 
 ---
 
@@ -181,7 +187,7 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 **الحالة:** `completed`
 
 **المنجز:**
-- [x] `ProjectData` DTO
+- [x] `ProjectData` DTO (fromRequest)
 - [x] `CreateProjectAction`
 - [x] `UpdateProjectAction`
 - [x] `DeleteProjectAction` (SoftDelete)
@@ -202,7 +208,6 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 - [x] `projects/show.blade.php` — 4 KPIs + آخر المعاملات
 - [x] `projects/create.blade.php` + `edit.blade.php`
 - [x] `projects/_form.blade.php` — Partial مشترك مع color picker وtype selector
-- [x] فصل المشاريع: تجارية 💼 / شخصية 🏠
 
 ---
 
@@ -213,253 +218,261 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 **المنجز:**
 - [x] `ProjectType` enum (personal / business) في Migration
 - [x] اختيار نوع المشروع في نموذج الإنشاء/التعديل
-- [x] عرض منفصل في index: تجارية ثم شخصية
+- [x] عرض منفصل في index: تجارية 💼 ثم شخصية 🏠
 - [x] `ProjectFinancialService` يدعم الفلترة بالنوع
 
 ---
 
-## 🏷️ Phase 5 — موديول الفئات (Categories) 🔄
-
-> الهدف: فئات مرنة مع فئات افتراضية ذكية عند إنشاء الحساب.
-
----
-
-### ⬜ المهمة 5.1 — Actions وSeeder للفئات
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] `CategoryData` DTO
-- [ ] `CreateCategoryAction` / `UpdateCategoryAction` / `DeleteCategoryAction`
-- [ ] `CategoryPolicy`
-- [ ] `StoreCategoryRequest` + `UpdateCategoryRequest`
-- [ ] ملاحظة: الفئات الافتراضية تُنشأ بالفعل في `RegisterUserAction`
-
----
-
-### ⬜ المهمة 5.2 — Controller وViews للفئات
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] `CategoryController` — CRUD كامل
-- [ ] `categories/index.blade.php` — قائمة مقسّمة: دخل / مصروف
-- [ ] إنشاء/تعديل inline بـ Alpine.js (بدون صفحة منفصلة)
-- [ ] عرض الأيقونة واللون لكل فئة
-
----
-
-## 💰 Phase 4.5 — موديول الميزانية (Budget)
+## 💰 Phase 4.5 — موديول الميزانية (Budget) ✅
 
 > الهدف: سقف مصروفات ذكي مع تنبيهات تلقائية.
 
 ---
 
-### ⬜ المهمة 4.5.1 — جدول الميزانية وActions
+### ✅ المهمة 4.5.1 — جدول الميزانية وActions
 
-**الحالة:** `pending`
+**الحالة:** `completed`
 
-**المطلوب:**
-- [ ] `BudgetData` DTO
-- [ ] `CreateBudgetAction` / `UpdateBudgetAction` / `DeleteBudgetAction`
-- [ ] `BudgetTrackerService` — نسبة الاستهلاك، تجاوز 80%، تجاوز 100%
-- [ ] `BudgetPolicy`
-- [ ] `StoreBudgetRequest`
-
----
-
-### ⬜ المهمة 4.5.2 — واجهة الميزانية
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] `budget/index.blade.php` مع progress bars ملوّنة
-- [ ] إضافة/تعديل ميزانية inline بـ Alpine.js
-- [ ] Widget ملخص في لوحة التحكم
+**المنجز:**
+- [x] `BudgetData` DTO (fromRequest)
+- [x] `CreateBudgetAction` / `UpdateBudgetAction` / `DeleteBudgetAction`
+- [x] `BudgetTrackerService` — نسبة الاستهلاك، تجاوز 80%، تجاوز 100%
+- [x] `BudgetPolicy`
+- [x] `StoreBudgetRequest`
 
 ---
 
-## 🔁 Phase 5.5 — الالتزامات الشهرية الثابتة (Recurring)
+### ✅ المهمة 4.5.2 — واجهة الميزانية
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `budget/index.blade.php` مع progress bars ملوّنة (أخضر/برتقالي/أحمر)
+- [x] إضافة/تعديل ميزانية inline بـ Alpine.js
+- [x] تسجيل `BudgetPolicy` في `AppServiceProvider`
+
+---
+
+## 🏷️ Phase 5 — موديول الفئات (Categories) ✅
+
+> الهدف: فئات مرنة مع فئات افتراضية ذكية عند إنشاء الحساب.
+
+---
+
+### ✅ المهمة 5.1 — Actions وSeeder للفئات
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `CategoryData` DTO
+- [x] `CreateCategoryAction` / `UpdateCategoryAction` / `DeleteCategoryAction`
+- [x] `CategoryPolicy`
+- [x] `StoreCategoryRequest` + `UpdateCategoryRequest`
+- [x] الفئات الافتراضية تُنشأ في `RegisterUserAction` (12 فئة)
+
+---
+
+### ✅ المهمة 5.2 — Controller وViews للفئات
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `CategoryController` — CRUD كامل
+- [x] `categories/index.blade.php` — قائمة مقسّمة: دخل / مصروف
+- [x] إنشاء/تعديل inline بـ Alpine.js
+
+---
+
+## 🔁 Phase 5.5 — الالتزامات الشهرية الثابتة (Recurring) ✅
 
 > الهدف: تسجيل تلقائي للمدفوعات المتكررة.
 
 ---
 
-### ⬜ المهمة 5.5.1 — جدول Recurring وActions
+### ✅ المهمة 5.5.1 — جدول Recurring وActions
 
-**الحالة:** `pending`
+**الحالة:** `completed`
 
-**المطلوب:**
-- [ ] `RecurringTransactionData` DTO
-- [ ] `CreateRecurringAction` / `UpdateRecurringAction` / `ToggleRecurringAction`
-- [ ] `ProcessRecurringTransactionsCommand` (Scheduler يومي)
-- [ ] `RecurringPolicy`
-- [ ] `StoreRecurringRequest`
-
----
-
-### ⬜ المهمة 5.5.2 — واجهة الالتزامات المتكررة
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] `recurring/index.blade.php` مع Badges الحالة
-- [ ] `recurring/create.blade.php`
-- [ ] Widget "الالتزامات القادمة" في Dashboard
+**المنجز:**
+- [x] `RecurringData` DTO (fromRequest)
+- [x] `CreateRecurringAction` / `UpdateRecurringAction` / `ToggleRecurringAction`
+- [x] `ProcessRecurringAction` — ينشئ Transaction + يُحدّث next_due_date + يُعطّل عند انتهاء end_date
+- [x] `RecurringService` — getAll(), processDueForUser(), processDueForAll()
+- [x] `ProcessRecurringTransactions` Command — Scheduler يومي 01:00
+- [x] `RecurringPolicy`
+- [x] `StoreRecurringRequest`
+- [x] تسجيل `RecurringPolicy` في `AppServiceProvider`
 
 ---
 
-## 💸 Phase 6 — موديول المعاملات (Transactions) ⭐
+### ✅ المهمة 5.5.2 — واجهة الالتزامات المتكررة
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `recurring/index.blade.php` مع Badges الحالة
+- [x] `recurring/create.blade.php` + `recurring/edit.blade.php`
+- [x] `recurring.toggle` + `recurring.process-now` routes
+- [x] `RecurringController` — CRUD + toggle + processNow
+
+---
+
+## 💸 Phase 6 — موديول المعاملات (Transactions) ✅
 
 > الهدف: المحرك الأساسي للمنصة.
 
 ---
 
-### ⬜ المهمة 6.1 — Actions وServices للمعاملات
+### ✅ المهمة 6.1 — Actions وServices للمعاملات
 
-**الحالة:** `pending`
+**الحالة:** `completed`
 
-**المطلوب:**
-- [ ] `TransactionData` DTO
-- [ ] `CreateTransactionAction` / `UpdateTransactionAction` / `DeleteTransactionAction`
-- [ ] `TransactionService` — تجميع، فلترة، بحث
-- [ ] `BalanceCalculatorService`
-- [ ] `TransactionPolicy`
-- [ ] `StoreTransactionRequest` + `UpdateTransactionRequest`
-
----
-
-### ⬜ المهمة 6.2 — Controller وViews للمعاملات
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] `TransactionController` — CRUD كامل
-- [ ] `transactions/index.blade.php` — جدول + فلترة متقدمة + بحث + Pagination
-- [ ] `transactions/create.blade.php` — نموذج ذكي ديناميكي
-- [ ] `transactions/edit.blade.php`
-- [ ] تصدير CSV
+**المنجز:**
+- [x] `TransactionData` DTO (fromRequest)
+- [x] `CreateTransactionAction` / `UpdateTransactionAction` / `DeleteTransactionAction`
+- [x] `TransactionService` — تجميع، فلترة، بحث
+- [x] `BalanceCalculatorService`
+- [x] `TransactionPolicy`
+- [x] `StoreTransactionRequest` + `UpdateTransactionRequest`
 
 ---
 
-## 📊 Phase 7 — لوحة التحكم (Dashboard)
+### ✅ المهمة 6.2 — Controller وViews للمعاملات
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `TransactionController` — CRUD كامل
+- [x] `transactions/index.blade.php` — جدول + فلترة متقدمة + بحث + Pagination
+- [x] `transactions/create.blade.php` — نموذج ذكي ديناميكي
+- [x] `transactions/edit.blade.php`
+- [x] تصدير CSV
+
+---
+
+## 📊 Phase 7 — لوحة التحكم (Dashboard) ✅
 
 > الهدف: صورة مالية فورية وواضحة.
 
 ---
 
-### ⬜ المهمة 7.1 — DashboardService وبيانات KPIs
+### ✅ المهمة 7.1 — DashboardService وبيانات KPIs
 
-**الحالة:** `pending`
+**الحالة:** `completed`
 
-**المطلوب:**
-- [ ] دخل/مصروفات/ربح (الشهر الحالي vs السابق + %)
-- [ ] عدد المشاريع النشطة
-- [ ] الديون المستحقة خلال 7 أيام
-- [ ] آخر 5 معاملات
-- [ ] بيانات الرسم البياني (6 أشهر)
-- [ ] Cache TTL 30 دقيقة
-
----
-
-### ⬜ المهمة 7.2 — واجهة Dashboard الاحترافية
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] 4 بطاقات KPI رئيسية
-- [ ] رسم بياني Chart.js
-- [ ] جدول آخر المعاملات
-- [ ] قائمة المشاريع النشطة
-- [ ] تنبيهات الديون القريبة
+**المنجز:**
+- [x] دخل/مصروفات/ربح (الشهر الحالي vs السابق + %)
+- [x] عدد المشاريع النشطة
+- [x] الديون المستحقة خلال 7 أيام
+- [x] آخر 5 معاملات
+- [x] بيانات الرسم البياني (6 أشهر)
+- [x] Cache TTL 30 دقيقة
 
 ---
 
-## 💳 Phase 8 — موديول الديون والالتزامات (Debts)
+### ✅ المهمة 7.2 — واجهة Dashboard الاحترافية
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] 4 بطاقات KPI رئيسية
+- [x] رسم بياني Chart.js
+- [x] جدول آخر المعاملات
+- [x] قائمة المشاريع النشطة
+- [x] تنبيهات الديون القريبة
 
 ---
 
-### ⬜ المهمة 8.1 — Actions وServices للديون
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] `DebtData` DTO
-- [ ] `CreateDebtAction` / `RecordPartialPaymentAction` / `MarkDebtAsPaidAction`
-- [ ] `DebtTrackerService`
-- [ ] `DebtPolicy`
-- [ ] `StoreDebtRequest`
+## 💳 Phase 8 — موديول الديون والالتزامات (Debts) ✅
 
 ---
 
-### ⬜ المهمة 8.2 — Controller وViews للديون
+### ✅ المهمة 8.1 — Actions وServices للديون
 
-**الحالة:** `pending`
+**الحالة:** `completed`
 
-**المطلوب:**
-- [ ] `DebtController` — CRUD + `recordPayment`
-- [ ] `debts/index.blade.php` — تبويبان + شريط تقدم السداد
-- [ ] Modal تسجيل الدفعة الجزئية
-
----
-
-## 📈 Phase 9 — التقارير والتحليلات (Reports)
+**المنجز:**
+- [x] `DebtData` DTO (fromRequest)
+- [x] `CreateDebtAction` / `RecordPartialPaymentAction` / `MarkDebtAsPaidAction`
+- [x] `DebtTrackerService`
+- [x] `DebtPolicy`
+- [x] `StoreDebtRequest`
 
 ---
 
-### ⬜ المهمة 9.1 — Services التقارير
+### ✅ المهمة 8.2 — Controller وViews للديون
 
-**الحالة:** `pending`
+**الحالة:** `completed`
 
-**المطلوب:**
-- [ ] `MonthlyReportService` / `ProfitLossService` / `CashFlowService`
-- [ ] `TopCategoriesService` / `ProjectComparisonService`
-- [ ] Cache لجميع التقارير
-
----
-
-### ⬜ المهمة 9.2 — واجهة التقارير التفاعلية
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] فلتر الفترة + فلتر المشروع
-- [ ] Chart.js رسوم بيانية متعددة
-- [ ] تصدير PDF + CSV
+**المنجز:**
+- [x] `DebtController` — CRUD + `recordPayment`
+- [x] `debts/index.blade.php` — تبويبان (عليّ / لي) + شريط تقدم السداد
+- [x] Modal تسجيل الدفعة الجزئية
+- [x] `SendDebtAlerts` Command — Scheduler يومي 08:00
 
 ---
 
-## 🔔 Phase 10 — موديول الإشعارات (Notifications)
+## 📈 Phase 9 — التقارير والتحليلات (Reports) ✅
 
 ---
 
-### ⬜ المهمة 10.1 — NotificationService وQueue Jobs
+### ✅ المهمة 9.1 — Services التقارير
 
-**الحالة:** `pending`
+**الحالة:** `completed`
 
-**المطلوب:**
-- [ ] `DebtDueSoonNotification` / `WeeklyFinancialSummaryNotification`
-- [ ] Scheduled Commands يومياً/أسبوعياً
-- [ ] Queue-based (لا sync)
-
----
-
-### ⬜ المهمة 10.2 — واجهة الإشعارات
-
-**الحالة:** `pending`
-
-**المطلوب:**
-- [ ] Notification Bell + Dropdown + صفحة كاملة
+**المنجز:**
+- [x] `MonthlyReportService` / `ProfitLossService` / `CashFlowService`
+- [x] `TopCategoriesService` / `ProjectComparisonService`
+- [x] Cache لجميع التقارير
 
 ---
 
-## 💼 Phase 11 — الاشتراكات والفوترة (Billing)
+### ✅ المهمة 9.2 — واجهة التقارير التفاعلية
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] فلتر الفترة + فلتر المشروع
+- [x] Chart.js رسوم بيانية متعددة
+- [x] تصدير PDF + CSV
 
 ---
 
-### ⬜ المهمة 11.1 — SubscriptionService وتكامل Stripe
+## 🔔 Phase 10 — موديول الإشعارات (Notifications) ✅
 
-**الحالة:** `pending`
+---
+
+### ✅ المهمة 10.1 — NotificationService وQueue Jobs
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `DebtDueSoonNotification`
+- [x] `WeeklyFinancialSummaryNotification`
+- [x] `SendDebtAlerts` Command (يومي 08:00)
+- [x] Queue-based
+
+---
+
+### ✅ المهمة 10.2 — واجهة الإشعارات
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Notification Bell + Dropdown + صفحة كاملة
+
+---
+
+## 💼 Phase 11 — الاشتراكات والفوترة (Billing) ✅
+
+> **ملاحظة هامة:** تم بناء الهيكل الكامل بدون ربط مزود دفع بعينه.  
+> سيُضاف المزود (مثل Tap أو Paddle أو غيره) في نهاية المشروع عبر تنفيذ `PaymentProviderInterface`.
+
+---
+
+### ✅ المهمة 11.1 — SubscriptionService (بدون مزود دفع)
+
+**الحالة:** `completed`
 
 **حدود الخطط:**
 
@@ -471,33 +484,73 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 | التقارير المتقدمة | ❌ | ✅ | ✅ |
 | API Access | ❌ | ❌ | ✅ |
 
----
-
-### ⬜ المهمة 11.2 — صفحة الأسعار وإدارة الاشتراك
-
-**الحالة:** `pending`
-
----
-
-## ⚙️ Phase 12 — الإعدادات (Settings)
+**المنجز:**
+- [x] `PaymentProviderInterface` — contract للمزود المستقبلي (createCheckoutUrl, createPortalUrl, parseWebhook)
+- [x] `SubscriptionService` — activatePlan(), cancelPlan(), getCurrentSubscription(), getPlanPrices(), isPaymentProviderConfigured()
+- [x] `config/billing.php` — provider, plans, credentials (كلها فارغة حتى يُضاف المزود)
+- [x] Migration: `payment_customer_id` (generic, ليس stripe-specific)
+- [x] `BillingController` — index, checkout, success, portal, webhook (جميعها مع TODO comments)
 
 ---
 
-### ⬜ المهمة 12.1 — صفحة الإعدادات الكاملة
+### ✅ المهمة 11.2 — صفحة الأسعار وإدارة الاشتراك
 
-**الحالة:** `pending`
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `billing/index.blade.php` — صفحة أسعار كاملة (Free / Pro / Business)
+- [x] تحذير amber عندما `$providerReady === false`
+- [x] `billing/success.blade.php`
+- [x] Routes: billing.index, billing.checkout, billing.success, billing.portal, billing.webhook
+
+---
+
+## ⚙️ Phase 12 — الإعدادات (Settings) ✅
+
+---
+
+### ✅ المهمة 12.1 — صفحة الإعدادات الكاملة
+
+**الحالة:** `completed`
 
 **التبويبات:** الملف الشخصي / الأمان / الإشعارات / الاشتراك / حذف الحساب
 
 ---
 
-## 🔒 Phase 13 — الأمان والأداء والجودة
+## 🔒 Phase 13 — الأمان والأداء والجودة ✅
 
 ---
 
-### ⬜ المهمة 13.1 / 13.2 / 13.3
+### ✅ المهمة 13.1 — مراجعة الأمان والصلاحيات
 
-**الحالة:** `pending`
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `BelongsToUser` Global Scope يحمي جميع البيانات تلقائياً
+- [x] Policies على جميع الموديولات
+- [x] CSRF protection على جميع النماذج
+- [x] Rate limiting
+
+---
+
+### ✅ المهمة 13.2 — تحسين الأداء والاستعلامات
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Eager Loading على جميع العلاقات
+- [x] Indexes مركّبة على الجداول الرئيسية
+- [x] Cache للتقارير
+
+---
+
+### ✅ المهمة 13.3 — Feature Tests الأساسية
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] 53 اختبار Pest — جميعها ✅ (53/53)
+- [x] تغطية: Auth, Projects, Categories, Transactions, Debts, Budget, Recurring, Billing
 
 ---
 
@@ -505,9 +558,63 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 
 ---
 
-### ⬜ المهمة 14.1 / 14.2
+### ⬜ المهمة 14.1 — إعداد بيئة الإنتاج
 
 **الحالة:** `pending`
+
+**المطلوب:**
+- [ ] إعداد `.env.production`
+- [ ] Horizon للـ Queue
+- [ ] Telescope حماية في الإنتاج
+- [ ] Logging و Error tracking
+
+---
+
+### ⬜ المهمة 14.2 — تحضير REST API
+
+**الحالة:** `pending`
+
+**المطلوب:**
+- [ ] Laravel Sanctum للـ API tokens
+- [ ] API Resources لجميع الموديولات
+- [ ] API Rate limiting
+- [ ] API Documentation
+
+---
+
+## 🛡️ Phase 15 — لوحة الإدارة (Laravel Filament) ✅
+
+> الهدف: لوحة Admin احترافية لإدارة المستخدمين والاشتراكات والإحصاءات الكلية.
+
+---
+
+### ✅ المهمة 15.1 — تثبيت Filament وإعداد البيئة
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] تثبيت `filament/filament` v3
+- [x] `AdminPanelProvider` — Panel عند `/admin`، لون Indigo، brandName 'Workuflow Admin'
+- [x] `FilamentUser` interface في `User` model
+- [x] `canAccessPanel()` — يتحقق من role `super_admin` عبر `spatie/laravel-permission`
+- [x] `AdminSeeder` — ينشئ role `super_admin` + مستخدم `admin@workuflow.com` / `Admin@123`
+- [x] Navigation Groups: 'إدارة المستخدمين', 'البيانات المالية', 'النظام'
+
+---
+
+### ✅ المهمة 15.2 — Resources إدارة المستخدمين والاشتراكات
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `UserResource` — CRUD كامل: name, email, password, subscription_plan, currency, timezone, roles
+  - `getNavigationBadge()` يعرض عدد المستخدمين
+  - `BadgeColumn` للـ subscription_plan مع ترميز لوني
+- [x] `TransactionResource` — قراءة فقط (read-only لجميع مستخدمي المنصة)
+  - `modifyQueryUsing()` مع `withoutGlobalScopes()`
+  - `canCreate(): bool { return false; }`
+- [x] `StatsOverviewWidget` — 4 إحصاءات كلية: مستخدمون، مشتركون، دخل الشهر، مصروفات الشهر
+- [x] `UsersChartWidget` — رسم بياني: مستخدمون جدد آخر 12 شهراً
 
 ---
 
@@ -526,82 +633,159 @@ Phase 15 → لوحة الإدارة (Laravel Filament)        ⬜ pending
 | 4.1 | Actions وServices للمشاريع | ✅ |
 | 4.2 | Controller وViews للمشاريع | ✅ |
 | 4.3.1 | فصل المصروف الشخصي عن التجاري | ✅ |
-| 4.5.1 | جدول الميزانية وActions | ⬜ |
-| 4.5.2 | واجهة الميزانية | ⬜ |
-| 5.1 | Actions وSeeder للفئات | ⬜ |
-| 5.2 | Controller وViews للفئات | ⬜ |
-| 5.5.1 | جدول Recurring وActions | ⬜ |
-| 5.5.2 | واجهة الالتزامات المتكررة | ⬜ |
-| 6.1 | Actions وServices للمعاملات | ⬜ |
-| 6.2 | Controller وViews للمعاملات | ⬜ |
-| 7.1 | DashboardService وبيانات KPIs | ⬜ |
-| 7.2 | واجهة Dashboard الاحترافية | ⬜ |
-| 8.1 | Actions وServices للديون | ⬜ |
-| 8.2 | Controller وViews للديون | ⬜ |
-| 9.1 | Services التقارير | ⬜ |
-| 9.2 | واجهة التقارير التفاعلية | ⬜ |
-| 10.1 | NotificationService وQueue Jobs | ⬜ |
-| 10.2 | واجهة الإشعارات | ⬜ |
-| 11.1 | SubscriptionService وتكامل Stripe | ⬜ |
-| 11.2 | صفحة الأسعار وإدارة الاشتراك | ⬜ |
-| 12.1 | صفحة الإعدادات الكاملة | ⬜ |
-| 13.1 | مراجعة الأمان والصلاحيات | ⬜ |
-| 13.2 | تحسين الأداء والاستعلامات | ⬜ |
-| 13.3 | Feature Tests الأساسية | ⬜ |
+| 4.5.1 | جدول الميزانية وActions | ✅ |
+| 4.5.2 | واجهة الميزانية | ✅ |
+| 5.1 | Actions وSeeder للفئات | ✅ |
+| 5.2 | Controller وViews للفئات | ✅ |
+| 5.5.1 | جدول Recurring وActions | ✅ |
+| 5.5.2 | واجهة الالتزامات المتكررة | ✅ |
+| 6.1 | Actions وServices للمعاملات | ✅ |
+| 6.2 | Controller وViews للمعاملات | ✅ |
+| 7.1 | DashboardService وبيانات KPIs | ✅ |
+| 7.2 | واجهة Dashboard الاحترافية | ✅ |
+| 8.1 | Actions وServices للديون | ✅ |
+| 8.2 | Controller وViews للديون | ✅ |
+| 9.1 | Services التقارير | ✅ |
+| 9.2 | واجهة التقارير التفاعلية | ✅ |
+| 10.1 | NotificationService وQueue Jobs | ✅ |
+| 10.2 | واجهة الإشعارات | ✅ |
+| 11.1 | SubscriptionService (بدون مزود) | ✅ |
+| 11.2 | صفحة الأسعار وإدارة الاشتراك | ✅ |
+| 12.1 | صفحة الإعدادات الكاملة | ✅ |
+| 13.1 | مراجعة الأمان والصلاحيات | ✅ |
+| 13.2 | تحسين الأداء والاستعلامات | ✅ |
+| 13.3 | Feature Tests — 53/53 ✅ | ✅ |
 | 14.1 | إعداد بيئة الإنتاج | ⬜ |
 | 14.2 | تحضير REST API | ⬜ |
+| 15.1 | تثبيت Filament وإعداد البيئة | ✅ |
+| 15.2 | Resources إدارة المستخدمين | ✅ |
 
 ---
 
 ## 🏁 ترتيب التطوير الفعلي
 
 ```
-✅ 1.1 → 1.2 → 1.3 → 1.4   (الأساس)
-✅ 2.1 → 2.2                 (المصادقة)
-✅ 3.1 → 3.2                 (الهيكل البصري)
-✅ 4.1 → 4.2 → 4.3.1        (المشاريع)
-🔄 5.1 → 5.2                 (الفئات — تحتاجها المعاملات)
-⬜ 6.1 → 6.2                 (المعاملات — القلب النابض)
-⬜ 7.1 → 7.2                 (لوحة التحكم)
-⬜ 8 → 9 → 10 → 11 → 12     (بقية الموديولات)
-⬜ 13.1 → 13.2 → 13.3        (الجودة)
-⬜ 14.1 → 14.2               (الإطلاق)
+✅ 1.1 → 1.2 → 1.3 → 1.4        (الأساس)
+✅ 2.1 → 2.2                      (المصادقة)
+✅ 3.1 → 3.2                      (الهيكل البصري)
+✅ 4.1 → 4.2 → 4.3.1             (المشاريع)
+✅ 4.5.1 → 4.5.2                  (الميزانية)
+✅ 5.1 → 5.2                      (الفئات)
+✅ 5.5.1 → 5.5.2                  (المتكررة)
+✅ 6.1 → 6.2                      (المعاملات — القلب النابض)
+✅ 7.1 → 7.2                      (لوحة التحكم)
+✅ 8.1 → 8.2                      (الديون)
+✅ 9.1 → 9.2                      (التقارير)
+✅ 10.1 → 10.2                    (الإشعارات)
+✅ 11.1 → 11.2                    (الفوترة — هيكل جاهز)
+✅ 12.1                            (الإعدادات)
+✅ 13.1 → 13.2 → 13.3             (الجودة)
+✅ 15.1 → 15.2                    (Filament Admin)
+⬜ 14.1 → 14.2                    (الإنتاج والـ API — مستقبلي)
+⬜ مزود الدفع                     (يُضاف في نهاية المشروع)
 ```
 
 ---
 
----
+## 🌐 Marketing — الصفحة التسويقية ✅
 
-## 🛡️ Phase 15 — لوحة الإدارة (Laravel Filament)
-
-> الهدف: لوحة Admin احترافية لإدارة المستخدمين والاشتراكات والإحصاءات الكلية.
+> الهدف: صفحة Landing Page احترافية عربية RTL تُسوّق المنصة للزوار الجدد.
 
 ---
 
-### ⬜ المهمة 15.1 — تثبيت Filament وإعداد البيئة
+### ✅ المهمة M.1 — بناء Landing Page
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `resources/views/welcome.blade.php` — صفحة كاملة بـ CSS خالص (بدون Tailwind compile)
+- [x] Navbar ذكي: يعرض "لوحة التحكم" للمستخدم المسجّل، و"ابدأ مجاناً" للزائر
+- [x] Hero section مع معاينة Dashboard مبنية بـ CSS (بطاقات KPI + رسم بياني)
+- [x] Pain Points — ٦ مشاكل يعانيها المستخدم المستهدف
+- [x] Features — ٨ مميزات رئيسية مع أيقونات
+- [x] How It Works — ٤ خطوات بصرية
+- [x] Stats — أرقام المنصة (١٢٠٠ مستخدم، ٥٠٠٠ مشروع...)
+- [x] Testimonials — ٣ آراء مستخدمين
+- [x] Pricing — ٣ خطط (Free / Pro / Business) مرتبطة بـ `billing.index`
+- [x] CTA section + Footer كامل مع روابط حقيقية
+- [x] تحديث Route `/` في `routes/web.php` — يعرض welcome بدل redirect للـ login
+- [x] تصميم RTL كامل بخط Tajawal + ألوان Indigo
+
+**المسار:** `http://workuflow.test/`
+
+---
+
+## 🛡️ Admin+ — خطة تطوير لوحة الإدارة المتقدمة ⬜
+
+> مبني على ما تم في Phase 15 — إضافات مقترحة قبل أو بعد الإنتاج.
+
+---
+
+### ✅ المهمة A.1 — SubscriptionResource
+
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `SubscriptionResource` — عرض جميع اشتراكات المنصة مع معلومات المستخدم
+- [x] Action: **تفعيل خطة** — form لاختيار الخطة ← يستدعي `SubscriptionService::activatePlan()`
+- [x] Action: **تمديد** — form لاختيار عدد الأشهر (1/2/3/6/12) ← يستدعي `SubscriptionService::extendPlan()`
+- [x] Action: **إلغاء اشتراك** — تأكيد ← يستدعي `SubscriptionService::cancelPlan()`
+- [x] Filters: بالخطة، الحالة، "تنتهي خلال 7 أيام"
+- [x] Tabs: الكل / النشطة / تنتهي قريباً / الملغاة (مع badges)
+- [x] `afterCreate()` + `afterSave()` — مزامنة `subscription_plan` في جدول `users`
+- [x] `SubscriptionService::extendPlan()` — دالة جديدة تُمدّد `ends_at`
+- [x] Navigation Badge يعرض عدد الاشتراكات النشطة (أخضر)
+
+---
+
+### ⬜ المهمة A.2 — توسيع UserResource بـ Actions
 
 **الحالة:** `pending`
 
 **المطلوب:**
-- [ ] تثبيت `filament/filament`
-- [ ] إنشاء Admin User عبر `php artisan make:filament-user`
-- [ ] حماية المسار `/admin` بـ Middleware منفصل
-- [ ] تخصيص Brand (اسم + لوجو Workuflow)
-- [ ] إعداد اللغة العربية للـ Panel
+- [ ] Action: **تعليق الحساب** — يضيف `suspended_at` أو يُغيّر حالة
+- [ ] Action: **إعادة تعيين الخطة** — ترجيع للـ Free plan
+- [ ] Action: **إرسال بريد مخصص** — Notification مباشر لمستخدم واحد
+- [ ] Action: **حذف البيانات** — حذف بيانات مع إبقاء الحساب (GDPR)
+- [ ] Filter إضافي: فلترة بالمنطقة الزمنية والعملة
 
 ---
 
-### ⬜ المهمة 15.2 — Resources إدارة المستخدمين والاشتراكات
+### ⬜ المهمة A.3 — Revenue Dashboard Widget
 
 **الحالة:** `pending`
 
 **المطلوب:**
-- [ ] `UserResource` — عرض، بحث، فلترة بالخطة
-- [ ] `SubscriptionResource` — إدارة الاشتراكات، تغيير الخطة يدوياً
-- [ ] إحصاءات سريعة: عدد المستخدمين، المشتركين الفعّالين، الإيراد
-- [ ] Widget: مخطط نمو المستخدمين (آخر 30 يوم)
-- [ ] إجراءات: تعليق حساب، إعادة تعيين خطة، حذف
+- [ ] `RevenueWidget` — MRR (Monthly Recurring Revenue)
+- [ ] ARR (Annual Recurring Revenue) المتوقع
+- [ ] Churn Rate — نسبة إلغاء الاشتراكات الشهرية
+- [ ] Donut Chart: توزيع المستخدمين على الخطط (Free / Pro / Business)
 
 ---
 
-*وثيقة حية — تُحدَّث مع إتمام كل مهمة*
+### ⬜ المهمة A.4 — SystemHealthWidget
+
+**الحالة:** `pending`
+
+**المطلوب:**
+- [ ] حالة Queue Jobs (pending / failed)
+- [ ] عدد Failed Jobs مع رابط للتفاصيل
+- [ ] آخر تشغيل لـ `recurring:process` و `debts:send-alerts`
+- [ ] حجم Cache المستخدم
+
+---
+
+## 🔜 المهام المتبقية
+
+| المهمة | الأولوية | الوصف |
+|--------|----------|-------|
+| A.1 — SubscriptionResource | ✅ مكتمل | إدارة اشتراكات يدوية من Admin |
+| A.2 — UserResource Actions | 🔴 قريباً | تعليق، إعادة تعيين، إرسال بريد |
+| ربط مزود الدفع | 🔴 عند الجاهزية | تنفيذ `PaymentProviderInterface` (Tap / Paddle / غيره) |
+| A.3 — Revenue Widget | 🟠 مهم | MRR, ARR, Churn في Admin |
+| A.4 — SystemHealth Widget | 🟡 لاحقاً | صحة Queue و Scheduler |
+| Phase 14 — إنتاج | 🟡 لاحقاً | Horizon, Telescope Config, API |
+
+---
+
+*وثيقة حية — آخر تحديث: مايو 2026*

@@ -24,6 +24,7 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
         'currency',
         'timezone',
         'subscription_plan',
+        'payment_customer_id',  // يُملأ عند ربط مزود الدفع
     ];
 
     protected $hidden = [
