@@ -4,15 +4,18 @@ namespace App\Models;
 
 use App\Support\Enums\SubscriptionPlan;
 // use Illuminate\Contracts\Auth\MustVerifyEmail; // TODO: إعادة تفعيله قبل الإطلاق (Phase 13)
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable // implements MustVerifyEmail
+class User extends Authenticatable implements FilamentUser // implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
     protected $fillable = [
         'name',
@@ -90,5 +93,12 @@ class User extends Authenticatable // implements MustVerifyEmail
     {
         $max = $this->currentPlan()->maxProjects();
         return $this->projects()->count() < $max;
+    }
+
+    // ==================== Filament Admin ====================
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->hasRole('super_admin');
     }
 }
