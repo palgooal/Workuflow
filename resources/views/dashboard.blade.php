@@ -5,6 +5,16 @@
 @section('content')
 <div class="space-y-6">
 
+    {{-- Onboarding Widget — يظهر فقط للمستخدمين الجدد --}}
+    @if($showOnboarding)
+        <x-onboarding-widget
+            :steps="$onboardingSteps"
+            :progress="$onboardingProgress"
+            :completed="$onboardingCompleted"
+            :total="$onboardingTotal"
+        />
+    @endif
+
     {{-- Welcome + Date --}}
     <div class="flex items-center justify-between">
         <div>

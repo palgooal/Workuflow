@@ -10,6 +10,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecurringController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\TransactionController;
@@ -45,6 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Reports — Phase 9
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    // Onboarding — U.3
+    Route::post('/onboarding/dismiss', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
 
     // Reports Export — U.2
     Route::get('/reports/export/pdf',   [ReportExportController::class, 'pdf'])->name('reports.export.pdf');

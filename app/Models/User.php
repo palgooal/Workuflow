@@ -26,6 +26,7 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
         'timezone',
         'subscription_plan',
         'status',
+        'onboarding_dismissed_at',
         'payment_customer_id',  // يُملأ عند ربط مزود الدفع
     ];
 
@@ -37,10 +38,11 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'subscription_plan' => SubscriptionPlan::class,
-            'status'            => UserStatus::class,
+            'email_verified_at'          => 'datetime',
+            'password'                   => 'hashed',
+            'subscription_plan'          => SubscriptionPlan::class,
+            'status'                     => UserStatus::class,
+            'onboarding_dismissed_at'    => 'datetime',
         ];
     }
 
