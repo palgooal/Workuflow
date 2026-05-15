@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Exports\TransactionsExport;
 use App\Models\Transaction;
 use App\Modules\Reports\Services\ReportService;
-use App\Support\Enums\SubscriptionPlan;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ReportExportController extends Controller
@@ -32,18 +33,50 @@ class ReportExportController extends Controller
 
         $summary = $this->service->getSummary($from, $to);
 
-        $pdf = Pdf::loadView('reports.exports.pdf', compact(
+        // ─── إعداد mPDF مع دعم العربية ────────────────
+        $defaultConfig   = (new ConfigVariables())->getDefaults();
+        $fontDirectories = $defaultConfig['fontDir'];
+
+        $defaultFontConfig = (new FontVariables())->getDefaults();
+        $fontData          = $defaultFontConfig['fontdata'];
+
+        $mpdf = new Mpdf([
+            'mode'              => 'utf-8',
+            'format'            => 'A4',
+            'orientation'       => 'P',
+            'margin_top'        => 10,
+            'margin_bottom'     => 10,
+            'margin_left'       => 10,
+            'margin_right'      => 10,
+            'fontDir'           => array_merge($fontDirectories, [
+                base_path('resources/fonts'),
+            ]),
+            'fontdata'          => $fontData,
+            'default_font'      => 'dejavusans',
+            'autoScriptToLang'  => true,
+            'autoLangToFont'    => true,
+            'direction'         => 'rtl',
+            'allow_charset_conversion' => true,
+        ]);
+
+        $mpdf->SetDirectionality('rtl');
+
+        $html = view('reports.exports.pdf', compact(
             'transactions', 'summary', 'from', 'to'
-        ))
-        ->setPaper('a4', 'portrait')
-        ->setOption('defaultFont', 'DejaVu Sans')
-        ->setOption('isHtml5ParserEnabled', true)
-        ->setOption('isRemoteEnabled', false)
-        ->setOption('chroot', public_path());
+        ))->render();
+
+        $mpdf->WriteHTML($html);
 
         $filename = 'workuflow-report-' . $from . '-to-' . $to . '.pdf';
 
-        return $pdf->download($filename);
+        return response(
+            $mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN),
+            200,
+            [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]
+        );
     }
 
     // ─── Excel ────────────────────────────────────────────────
@@ -65,9 +98,7 @@ class ReportExportController extends Controller
 
     private function checkExportAccess(): void
     {
-        $user = auth()->user();
-
-        if (! $user->currentPlan()->canExport()) {
+        if (! auth()->user()->currentPlan()->canExport()) {
             abort(403, 'تصدير التقارير متاح لمشتركي Pro وBusiness فقط. يرجى ترقية خطتك.');
         }
     }
@@ -77,7 +108,6 @@ class ReportExportController extends Controller
         $from = $request->input('from', now()->startOfYear()->toDateString());
         $to   = $request->input('to',   now()->endOfMonth()->toDateString());
 
-        // تأكد من أن from <= to
         if ($from > $to) {
             [$from, $to] = [$to, $from];
         }

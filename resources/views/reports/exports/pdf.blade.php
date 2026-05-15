@@ -2,167 +2,154 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تقرير المعاملات — {{ $from }} إلى {{ $to }}</title>
+    <title>تقرير المعاملات</title>
     <style>
-        @font-face {
-            font-family: 'Arial';
-            src: local('Arial');
-        }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 11px;
+            font-family: 'dejavusans', sans-serif;
+            font-size: 11pt;
             color: #1e293b;
             direction: rtl;
             text-align: right;
-            background: #ffffff;
         }
 
-        /* ─── Header ────────────────────────── */
+        /* ─── Header ───────────────────────── */
         .header {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-            padding: 20px 24px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            background-color: #4f46e5;
+            color: #ffffff;
+            padding: 18px 20px;
+            margin-bottom: 16px;
         }
 
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
+        .header-inner {
+            width: 100%;
         }
 
         .brand {
-            font-size: 20px;
+            font-size: 20pt;
             font-weight: bold;
-            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .brand-sub {
+            font-size: 9pt;
+            color: #c7d2fe;
+            margin-top: 2px;
         }
 
         .report-meta {
-            text-align: left;
-            font-size: 10px;
-            opacity: 0.85;
+            font-size: 9pt;
+            color: #e0e7ff;
+            margin-top: 10px;
         }
 
         .report-title {
-            font-size: 16px;
+            font-size: 14pt;
             font-weight: bold;
-            margin-bottom: 4px;
+            color: #ffffff;
+            margin-top: 10px;
         }
 
         .report-period {
-            font-size: 11px;
-            opacity: 0.9;
+            font-size: 10pt;
+            color: #c7d2fe;
+            margin-top: 4px;
         }
 
-        /* ─── Summary Cards ─────────────────── */
-        .summary {
-            display: table;
+        /* ─── Summary Table ─────────────────── */
+        .summary-table {
             width: 100%;
-            margin-bottom: 20px;
-            border-spacing: 8px;
+            border-collapse: separate;
+            border-spacing: 6px;
+            margin-bottom: 16px;
         }
 
-        .summary-row {
-            display: table-row;
-        }
-
-        .summary-card {
-            display: table-cell;
-            width: 25%;
-            background: #f8fafc;
+        .summary-cell {
+            background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px 16px;
+            padding: 10px 12px;
             text-align: center;
+            width: 25%;
         }
 
         .summary-label {
-            font-size: 10px;
+            font-size: 9pt;
             color: #64748b;
+            display: block;
             margin-bottom: 4px;
         }
 
         .summary-value {
-            font-size: 14px;
+            font-size: 13pt;
             font-weight: bold;
         }
 
-        .text-green { color: #059669; }
-        .text-red   { color: #dc2626; }
-        .text-blue  { color: #2563eb; }
-        .text-gray  { color: #475569; }
+        .green  { color: #059669; }
+        .red    { color: #dc2626; }
+        .blue   { color: #2563eb; }
 
-        /* ─── Table ─────────────────────────── */
+        /* ─── Section Title ─────────────────── */
         .section-title {
-            font-size: 13px;
+            font-size: 12pt;
             font-weight: bold;
             color: #1e293b;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
             border-bottom: 2px solid #4f46e5;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
         }
 
-        table {
+        /* ─── Transactions Table ────────────── */
+        .tx-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        thead th {
-            background: #4f46e5;
-            color: white;
-            padding: 8px 10px;
-            font-size: 10px;
-            font-weight: bold;
-            text-align: right;
-        }
-
-        tbody tr:nth-child(even) {
-            background: #f8fafc;
-        }
-
-        tbody td {
+        .tx-table thead th {
+            background-color: #4f46e5;
+            color: #ffffff;
             padding: 7px 10px;
-            font-size: 10px;
+            font-size: 10pt;
+            text-align: right;
+            border: 1px solid #4338ca;
+        }
+
+        .tx-table tbody td {
+            padding: 6px 10px;
+            font-size: 9.5pt;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
         }
 
+        .tx-table tbody tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
         .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 9px;
+            padding: 2px 7px;
+            font-size: 8.5pt;
             font-weight: bold;
         }
 
-        .badge-income  { background: #d1fae5; color: #065f46; }
-        .badge-expense { background: #fee2e2; color: #991b1b; }
+        .badge-income  { color: #065f46; background-color: #d1fae5; }
+        .badge-expense { color: #991b1b; background-color: #fee2e2; }
+
+        .total-row td {
+            background-color: #eef2ff !important;
+            font-weight: bold;
+            font-size: 11pt;
+            border-top: 2px solid #4f46e5;
+        }
 
         /* ─── Footer ────────────────────────── */
         .footer {
-            margin-top: 16px;
-            padding-top: 12px;
+            margin-top: 14px;
+            padding-top: 10px;
             border-top: 1px solid #e2e8f0;
             text-align: center;
-            font-size: 9px;
+            font-size: 8.5pt;
             color: #94a3b8;
-        }
-
-        .page-break { page-break-after: always; }
-
-        /* ─── Total Row ─────────────────────── */
-        .total-row td {
-            background: #eef2ff !important;
-            font-weight: bold;
-            font-size: 11px;
-            color: #1e293b;
-            border-top: 2px solid #4f46e5;
         }
     </style>
 </head>
@@ -170,52 +157,43 @@
 
     {{-- Header --}}
     <div class="header">
-        <div class="header-top">
-            <div>
-                <div class="brand">Workuflow</div>
-                <div style="font-size:10px; opacity:0.8;">منصة إدارة الأعمال والمالية</div>
-            </div>
-            <div class="report-meta">
-                <div>تاريخ الإنشاء: {{ now()->format('Y-m-d H:i') }}</div>
-                <div>{{ auth()->user()->name }}</div>
-            </div>
+        <div class="brand">Workuflow</div>
+        <div class="brand-sub">منصة إدارة الأعمال والمالية</div>
+        <div class="report-meta">
+            تاريخ الإنشاء: {{ now()->format('Y-m-d H:i') }} &nbsp;|&nbsp; {{ auth()->user()->name }}
         </div>
         <div class="report-title">تقرير المعاملات المالية</div>
         <div class="report-period">الفترة: {{ $from }} — {{ $to }}</div>
     </div>
 
     {{-- Summary --}}
-    <div class="summary">
-        <div class="summary-row">
-            <div class="summary-card">
-                <div class="summary-label">إجمالي الدخل</div>
-                <div class="summary-value text-green">
-                    {{ number_format($summary['income'], 2) }}
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">إجمالي المصروفات</div>
-                <div class="summary-value text-red">
-                    {{ number_format($summary['expenses'], 2) }}
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">صافي الربح</div>
-                <div class="summary-value {{ $summary['net'] >= 0 ? 'text-green' : 'text-red' }}">
+    <table class="summary-table">
+        <tr>
+            <td class="summary-cell">
+                <span class="summary-label">إجمالي الدخل</span>
+                <span class="summary-value green">{{ number_format($summary['income'], 2) }}</span>
+            </td>
+            <td class="summary-cell">
+                <span class="summary-label">إجمالي المصروفات</span>
+                <span class="summary-value red">{{ number_format($summary['expenses'], 2) }}</span>
+            </td>
+            <td class="summary-cell">
+                <span class="summary-label">صافي الربح</span>
+                <span class="summary-value {{ $summary['net'] >= 0 ? 'green' : 'red' }}">
                     {{ number_format($summary['net'], 2) }}
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">عدد المعاملات</div>
-                <div class="summary-value text-blue">{{ $summary['count'] }}</div>
-            </div>
-        </div>
-    </div>
+                </span>
+            </td>
+            <td class="summary-cell">
+                <span class="summary-label">عدد المعاملات</span>
+                <span class="summary-value blue">{{ $summary['count'] }}</span>
+            </td>
+        </tr>
+    </table>
 
     {{-- Transactions Table --}}
     <div class="section-title">تفاصيل المعاملات</div>
 
-    <table>
+    <table class="tx-table">
         <thead>
             <tr>
                 <th>التاريخ</th>
@@ -244,21 +222,20 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">
+                    <td colspan="6" style="text-align:center; color:#94a3b8; padding:18px;">
                         لا توجد معاملات في هذه الفترة
                     </td>
                 </tr>
             @endforelse
 
-            {{-- Total --}}
             @if($transactions->count() > 0)
-            <tr class="total-row">
-                <td colspan="4"></td>
-                <td>الإجمالي الصافي</td>
-                <td style="{{ $summary['net'] >= 0 ? 'color:#059669' : 'color:#dc2626' }}">
-                    {{ number_format($summary['net'], 2) }}
-                </td>
-            </tr>
+                <tr class="total-row">
+                    <td colspan="4"></td>
+                    <td>الإجمالي الصافي</td>
+                    <td style="{{ $summary['net'] >= 0 ? 'color:#059669' : 'color:#dc2626' }}">
+                        {{ number_format($summary['net'], 2) }}
+                    </td>
+                </tr>
             @endif
         </tbody>
     </table>
