@@ -19,6 +19,7 @@ class CreateTransactionAction
             'category_id'      => $data->category_id,
             'notes'            => $data->notes,
             'reference'        => $data->reference,
+            'payee'            => $data->payee,
         ]);
     }
 }

@@ -18,6 +18,7 @@ class MoneyFormatter
             'GBP' => '£ ' . $formatted,
             'AED' => $formatted . ' د.إ',
             'KWD' => $formatted . ' د.ك',
+            'ILS' => '₪ ' . $formatted,
             default => $formatted . ' ' . $currency,
         };
     }

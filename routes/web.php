@@ -3,6 +3,8 @@
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtController;
 use App\Http\Controllers\NotificationController;
@@ -29,6 +31,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('projects', [ProjectController::class, 'store'])
         ->middleware('subscription:projects')
         ->name('projects.store');
+
+    // Clients
+    Route::resource('clients', ClientController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('clients');
+
+    // Services (catalog)
+    Route::resource('services', ServiceController::class)
+        ->only(['index', 'store', 'destroy'])
+        ->names('services');
 
     // Categories — Phase 5
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);

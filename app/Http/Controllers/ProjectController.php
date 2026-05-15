@@ -10,6 +10,8 @@ use App\Modules\Projects\Actions\DeleteProjectAction;
 use App\Modules\Projects\Actions\UpdateProjectAction;
 use App\Modules\Projects\DTOs\ProjectData;
 use App\Modules\Projects\Services\ProjectFinancialService;
+use App\Models\Client;
+use App\Models\Service;
 use App\Support\Enums\ProjectType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -40,19 +42,41 @@ class ProjectController extends Controller
     {
         $this->authorize('create', Project::class);
 
-        $currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $currencies = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
         $colors     = $this->defaultColors();
+        $clients    = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
+        $services   = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
 
-        return view('projects.create', compact('currencies', 'colors'));
+        return view('projects.create', compact('currencies', 'colors', 'clients', 'services'));
     }
 
     public function store(StoreProjectRequest $request): RedirectResponse
     {
         $this->authorize('create', Project::class);
 
+        $validated = $request->validated();
+
         $project = $this->createAction->execute(
-            ProjectData::fromRequest($request->validated())
+            ProjectData::fromRequest($validated)
         );
+
+        // حفظ العميل
+        if (! empty($validated['client_id'])) {
+            $project->update(['client_id' => $validated['client_id']]);
+        }
+
+        // حفظ الخدمات
+        if (! empty($validated['services'])) {
+            $syncData = [];
+            foreach ($validated['services'] as $svc) {
+                $syncData[$svc['service_id']] = [
+                    'amount' => $svc['amount'],
+                    'type'   => $svc['type'],
+                    'notes'  => $svc['notes'] ?? null,
+                ];
+            }
+            $project->services()->sync($syncData);
+        }
 
         return redirect()
             ->route('projects.show', $project)
@@ -63,6 +87,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
+        $project->load(['client', 'services']);
         $project->loadCount('transactions');
         $summary = $this->financialService->getSummary($project);
 
@@ -79,20 +104,43 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
-        $currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $project->load(['client', 'services']);
+        $currencies = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
         $colors     = $this->defaultColors();
+        $clients    = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
+        $services   = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
 
-        return view('projects.edit', compact('project', 'currencies', 'colors'));
+        return view('projects.edit', compact('project', 'currencies', 'colors', 'clients', 'services'));
     }
 
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
         $this->authorize('update', $project);
 
+        $validated = $request->validated();
+
         $this->updateAction->execute(
             $project,
-            ProjectData::fromRequest($request->validated())
+            ProjectData::fromRequest($validated)
         );
+
+        // تحديث العميل
+        $project->update(['client_id' => $validated['client_id'] ?? null]);
+
+        // تحديث الخدمات
+        if (isset($validated['services'])) {
+            $syncData = [];
+            foreach ($validated['services'] as $svc) {
+                $syncData[$svc['service_id']] = [
+                    'amount' => $svc['amount'],
+                    'type'   => $svc['type'],
+                    'notes'  => $svc['notes'] ?? null,
+                ];
+            }
+            $project->services()->sync($syncData);
+        } else {
+            $project->services()->detach();
+        }
 
         return redirect()
             ->route('projects.show', $project)

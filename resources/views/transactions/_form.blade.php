@@ -92,6 +92,29 @@
             @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
 
+        {{-- Payee — يظهر فقط عند المصروف --}}
+        <div x-show="selectedType === 'expense'" x-transition>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                جهة الدفع
+                <span class="text-gray-400 font-normal">(المورد / الجهة المستفيدة)</span>
+            </label>
+            <div class="relative">
+                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 5h1"/>
+                    </svg>
+                </div>
+                <input type="text" name="payee"
+                       value="{{ old('payee', $transaction->payee ?? '') }}"
+                       placeholder="مثال: مطبعة النور، Adobe، مصور فريلانس..."
+                       class="w-full pr-9 pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm
+                              focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent
+                              @error('payee') border-red-300 bg-red-50 @enderror">
+            </div>
+            @error('payee') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+        </div>
+
         {{-- Date + Project --}}
         <div class="grid grid-cols-2 gap-4">
             <div>

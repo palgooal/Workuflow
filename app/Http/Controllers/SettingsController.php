@@ -25,6 +25,7 @@ class SettingsController extends Controller
             'BHD' => 'دينار بحريني',
             'OMR' => 'ريال عُماني',
             'JOD' => 'دينار أردني',
+            'ILS' => 'شيكل إسرائيلي ₪',
             'EGP' => 'جنيه مصري',
             'MAD' => 'درهم مغربي',
             'TND' => 'دينار تونسي',

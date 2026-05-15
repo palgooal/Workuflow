@@ -16,6 +16,7 @@ class UpdateProjectAction
             'color'       => $data->color,
             'description' => $data->description,
             'is_active'   => $data->is_active,
+            'client_id'   => $data->client_id,
         ]);
 
         return $project->fresh();

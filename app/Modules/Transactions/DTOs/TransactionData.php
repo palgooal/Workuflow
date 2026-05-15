@@ -17,6 +17,7 @@ class TransactionData
         public readonly ?string         $category_id  = null,
         public readonly ?string         $notes        = null,
         public readonly ?string         $reference    = null,
+        public readonly ?string         $payee        = null,
     ) {}
 
     public static function fromRequest(array $data): self
@@ -31,6 +32,7 @@ class TransactionData
             category_id:      $data['category_id'] ?? null,
             notes:            $data['notes']        ?? null,
             reference:        $data['reference']    ?? null,
+            payee:            $data['payee']        ?? null,
         );
     }
 }

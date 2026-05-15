@@ -13,6 +13,7 @@ class ProjectData
         public readonly string      $color,
         public readonly ?string     $description = null,
         public readonly bool        $is_active   = true,
+        public readonly ?int        $client_id   = null,
     ) {}
 
     public static function fromRequest(array $data): self
@@ -24,6 +25,7 @@ class ProjectData
             color:       $data['color'],
             description: $data['description'] ?? null,
             is_active:   isset($data['is_active']) ? (bool) $data['is_active'] : true,
+            client_id:   isset($data['client_id']) ? (int) $data['client_id'] : null,
         );
     }
 }

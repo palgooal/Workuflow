@@ -2,7 +2,24 @@
 <div class="bg-white rounded-2xl border border-gray-100 p-6"
      x-data="{
          selectedColor: '{{ old('color', $project->color ?? '#6366F1') }}',
-         selectedType: '{{ old('type', $project->type->value ?? 'business') }}'
+         selectedType: '{{ old('type', $project->type->value ?? 'business') }}',
+         services: {{ json_encode(
+             old('services', isset($project)
+                 ? $project->services->map(fn($s) => [
+                     'service_id' => $s->id,
+                     'amount'     => $s->pivot->amount,
+                     'type'       => $s->pivot->type,
+                     'notes'      => $s->pivot->notes ?? '',
+                 ])->toArray()
+                 : []
+             )
+         ) }},
+         addService() {
+             this.services.push({ service_id: '', amount: '', type: 'income', notes: '' });
+         },
+         removeService(index) {
+             this.services.splice(index, 1);
+         }
      }">
 
     <div class="space-y-5">
@@ -142,6 +159,138 @@
             @error('description')
                 <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
             @enderror
+        </div>
+
+        {{-- Client --}}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                العميل <span class="text-gray-400 font-normal">(اختياري)</span>
+            </label>
+            @if($clients->isEmpty())
+                <div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    لا يوجد عملاء بعد.
+                    <a href="{{ route('clients.create') }}" class="font-medium underline">أضف عميلاً الآن</a>
+                </div>
+            @else
+                <select name="client_id"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">— بدون عميل —</option>
+                    @foreach($clients as $client)
+                        <option value="{{ $client->id }}"
+                                {{ old('client_id', $project->client_id ?? '') == $client->id ? 'selected' : '' }}>
+                            {{ $client->name }}{{ $client->company ? ' — ' . $client->company : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('client_id')
+                    <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
+                @enderror
+            @endif
+        </div>
+
+        {{-- Services --}}
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <label class="block text-sm font-medium text-gray-700">
+                    الخدمات المقدمة <span class="text-gray-400 font-normal">(اختياري)</span>
+                </label>
+                <button type="button" @click="addService()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
+                               text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    إضافة خدمة
+                </button>
+            </div>
+
+            {{-- Services List --}}
+            <div class="space-y-3" x-show="services.length > 0">
+                <template x-for="(svc, index) in services" :key="index">
+                    <div class="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-xl border border-gray-200">
+
+                        {{-- Service Dropdown --}}
+                        <div class="col-span-5">
+                            <label class="block text-xs text-gray-500 mb-1">الخدمة</label>
+                            <select :name="`services[${index}][service_id]`"
+                                    x-model="svc.service_id"
+                                    class="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-sm bg-white
+                                           focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">اختر خدمة...</option>
+                                @foreach($services as $service)
+                                    <option value="{{ $service->id }}">
+                                        {{ $service->name_ar ?? $service->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Amount --}}
+                        <div class="col-span-3">
+                            <label class="block text-xs text-gray-500 mb-1">القيمة</label>
+                            <input type="number"
+                                   :name="`services[${index}][amount]`"
+                                   x-model="svc.amount"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00"
+                                   class="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-sm
+                                          focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        {{-- Type --}}
+                        <div class="col-span-3">
+                            <label class="block text-xs text-gray-500 mb-1">النوع</label>
+                            <select :name="`services[${index}][type]`"
+                                    x-model="svc.type"
+                                    class="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-sm bg-white
+                                           focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="income">💚 دخل</option>
+                                <option value="expense">🔴 مصروف</option>
+                            </select>
+                        </div>
+
+                        {{-- Remove Button --}}
+                        <div class="col-span-1 flex items-end pb-0.5">
+                            <button type="button"
+                                    @click="removeService(index)"
+                                    class="w-8 h-8 flex items-center justify-center text-red-400
+                                           hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        {{-- Notes (full width) --}}
+                        <div class="col-span-12 mt-1">
+                            <input type="text"
+                                   :name="`services[${index}][notes]`"
+                                   x-model="svc.notes"
+                                   placeholder="ملاحظات (اختياري)..."
+                                   class="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600
+                                          focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+
+            {{-- Empty state --}}
+            <div x-show="services.length === 0"
+                 class="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-gray-200 rounded-xl text-center">
+                <span class="text-2xl">💼</span>
+                <p class="text-sm text-gray-400">لم تُضَف خدمات بعد</p>
+                <button type="button" @click="addService()"
+                        class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                    + أضف أول خدمة
+                </button>
+            </div>
         </div>
 
         {{-- Active toggle (only in edit) --}}

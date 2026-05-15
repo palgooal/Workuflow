@@ -19,6 +19,7 @@ class UpdateTransactionAction
             'category_id'      => $data->category_id,
             'notes'            => $data->notes,
             'reference'        => $data->reference,
+            'payee'            => $data->payee,
         ]);
 
         return $transaction->fresh();

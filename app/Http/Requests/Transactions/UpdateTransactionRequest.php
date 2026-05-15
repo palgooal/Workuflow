@@ -18,8 +18,9 @@ class UpdateTransactionRequest extends FormRequest
         return [
             'type'             => ['required', new Enum(TransactionType::class)],
             'amount'           => ['required', 'numeric', 'min:0.01', 'max:999999999'],
-            'currency'         => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'         => ['required', 'string', 'in:SAR,ILS,USD,EUR,GBP,AED,KWD'],
             'description'      => ['required', 'string', 'max:255'],
+            'payee'            => ['nullable', 'string', 'max:255'],
             'transaction_date' => ['required', 'date'],
             'project_id'       => ['nullable', 'string', 'exists:projects,id'],
             'category_id'      => ['nullable', 'string', 'exists:categories,id'],

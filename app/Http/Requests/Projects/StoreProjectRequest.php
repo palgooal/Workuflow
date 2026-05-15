@@ -18,10 +18,17 @@ class StoreProjectRequest extends FormRequest
         return [
             'name'        => ['required', 'string', 'max:100'],
             'type'        => ['required', new Enum(ProjectType::class)],
-            'currency'    => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'    => ['required', 'string', 'in:SAR,ILS,USD,EUR,GBP,AED,KWD'],
             'color'       => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'description' => ['nullable', 'string', 'max:500'],
             'is_active'   => ['nullable', 'boolean'],
+            'client_id'   => ['nullable', 'integer', 'exists:clients,id'],
+            // services[]: [{service_id, amount, type, notes}]
+            'services'              => ['nullable', 'array'],
+            'services.*.service_id' => ['required_with:services', 'integer', 'exists:services,id'],
+            'services.*.amount'     => ['required_with:services', 'numeric', 'min:0'],
+            'services.*.type'       => ['required_with:services', 'in:income,expense'],
+            'services.*.notes'      => ['nullable', 'string', 'max:255'],
         ];
     }
 
