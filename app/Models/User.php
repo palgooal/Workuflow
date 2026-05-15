@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Enums\SubscriptionPlan;
+use App\Support\Enums\UserStatus;
 // use Illuminate\Contracts\Auth\MustVerifyEmail; // TODO: إعادة تفعيله قبل الإطلاق (Phase 13)
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -24,6 +25,7 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
         'currency',
         'timezone',
         'subscription_plan',
+        'status',
         'payment_customer_id',  // يُملأ عند ربط مزود الدفع
     ];
 
@@ -38,6 +40,7 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'subscription_plan' => SubscriptionPlan::class,
+            'status'            => UserStatus::class,
         ];
     }
 
@@ -96,10 +99,20 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
         return $this->projects()->count() < $max;
     }
 
+    public function isActive(): bool
+    {
+        return ($this->status ?? UserStatus::Active) === UserStatus::Active;
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->status === UserStatus::Suspended;
+    }
+
     // ==================== Filament Admin ====================
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasRole('super_admin');
+        return $this->hasRole('super_admin') && $this->isActive();
     }
 }

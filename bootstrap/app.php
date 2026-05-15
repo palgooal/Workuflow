@@ -14,7 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'subscription' => \App\Http\Middleware\CheckSubscriptionLimits::class,
+            'subscription'   => \App\Http\Middleware\CheckSubscriptionLimits::class,
+            'active.account' => \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
+
+        // تطبيق التحقق من حالة الحساب على جميع الـ web routes المحمية
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

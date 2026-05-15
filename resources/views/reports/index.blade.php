@@ -10,6 +10,60 @@
         <div>
             <h1 class="text-xl font-bold text-gray-900">التقارير والتحليلات</h1>
             <p class="mt-0.5 text-sm text-gray-500">تحليل مالي شامل للفترة المحددة</p>
+
+            {{-- أزرار التصدير --}}
+            <div class="flex items-center gap-2 mt-3">
+                @if(auth()->user()->currentPlan()->canExport())
+                    {{-- PDF --}}
+                    <a href="{{ route('reports.export.pdf', ['from' => $from, 'to' => $to]) }}"
+                       target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100
+                              text-red-700 text-xs font-medium rounded-lg border border-red-200 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        تصدير PDF
+                    </a>
+
+                    {{-- Excel --}}
+                    <a href="{{ route('reports.export.excel', ['from' => $from, 'to' => $to]) }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 hover:bg-green-100
+                              text-green-700 text-xs font-medium rounded-lg border border-green-200 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        تصدير Excel
+                    </a>
+                @else
+                    {{-- مستخدم Free — رسالة ترقية --}}
+                    <div x-data="{ show: false }" class="relative">
+                        <button @click="show = !show"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-400
+                                       text-xs font-medium rounded-lg border border-gray-200 cursor-not-allowed">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            تصدير PDF / Excel
+                        </button>
+                        <div x-show="show" @click.outside="show = false"
+                             class="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-xl
+                                    shadow-lg p-4 w-64 z-10 text-right">
+                            <p class="text-sm font-semibold text-gray-800 mb-1">ميزة مدفوعة 🔒</p>
+                            <p class="text-xs text-gray-500 mb-3">
+                                تصدير التقارير متاح لمشتركي <strong>Pro</strong> و<strong>Business</strong> فقط.
+                            </p>
+                            <a href="{{ route('billing.index') }}"
+                               class="block text-center px-3 py-2 bg-indigo-600 hover:bg-indigo-700
+                                      text-white text-xs font-medium rounded-lg transition">
+                                ترقية الخطة الآن
+                            </a>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
 
         {{-- Period Filter --}}

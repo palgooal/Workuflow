@@ -5,12 +5,14 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use App\Support\Enums\SubscriptionPlan;
+use App\Support\Enums\UserStatus;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Mail;
 
 class UserResource extends Resource
 {
@@ -55,6 +57,15 @@ class UserResource extends Resource
                     ])
                     ->required(),
 
+                Forms\Components\Select::make('status')
+                    ->label('الحالة')
+                    ->options([
+                        UserStatus::Active->value    => 'نشط',
+                        UserStatus::Suspended->value => 'موقوف',
+                    ])
+                    ->default(UserStatus::Active->value)
+                    ->required(),
+
                 Forms\Components\Select::make('currency')
                     ->label('العملة')
                     ->options([
@@ -94,14 +105,23 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->label('البريد الإلكتروني')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->copyable(),
+
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('الحالة')
+                    ->formatStateUsing(fn ($state) => $state instanceof UserStatus ? $state->label() : $state)
+                    ->colors([
+                        'success' => fn ($state) => $state === UserStatus::Active    || $state?->value === 'active',
+                        'danger'  => fn ($state) => $state === UserStatus::Suspended || $state?->value === 'suspended',
+                    ]),
 
                 Tables\Columns\BadgeColumn::make('subscription_plan')
                     ->label('الخطة')
                     ->formatStateUsing(fn ($state) => $state instanceof SubscriptionPlan ? $state->label() : $state)
                     ->colors([
-                        'gray'    => fn ($state) => $state === SubscriptionPlan::Free  || $state?->value === 'free',
-                        'primary' => fn ($state) => $state === SubscriptionPlan::Pro   || $state?->value === 'pro',
+                        'gray'    => fn ($state) => $state === SubscriptionPlan::Free     || $state?->value === 'free',
+                        'primary' => fn ($state) => $state === SubscriptionPlan::Pro      || $state?->value === 'pro',
                         'success' => fn ($state) => $state === SubscriptionPlan::Business || $state?->value === 'business',
                     ]),
 
@@ -133,13 +153,194 @@ class UserResource extends Resource
                         'pro'      => 'Pro',
                         'business' => 'Business',
                     ]),
+
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('الحالة')
+                    ->options([
+                        'active'    => 'نشط',
+                        'suspended' => 'موقوف',
+                    ]),
             ])
             ->actions([
+                // ─── تعديل ───────────────────────────────────────────
                 Tables\Actions\EditAction::make()->label('تعديل'),
-                Tables\Actions\DeleteAction::make()->label('حذف'),
+
+                // ─── تعليق الحساب ────────────────────────────────────
+                Tables\Actions\Action::make('suspend')
+                    ->label('تعليق')
+                    ->icon('heroicon-o-no-symbol')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('تعليق الحساب')
+                    ->modalDescription(fn (User $record) => "هل أنت متأكد من تعليق حساب {$record->name}؟ لن يتمكن من تسجيل الدخول.")
+                    ->modalSubmitActionLabel('نعم، علّق الحساب')
+                    ->visible(fn (User $record) => $record->status !== UserStatus::Suspended)
+                    ->action(function (User $record): void {
+                        $record->update(['status' => UserStatus::Suspended]);
+                        Notification::make()
+                            ->title('تم تعليق الحساب')
+                            ->body("تم تعليق حساب {$record->name} بنجاح.")
+                            ->warning()
+                            ->send();
+                    }),
+
+                // ─── تفعيل الحساب ────────────────────────────────────
+                Tables\Actions\Action::make('activate')
+                    ->label('تفعيل')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('تفعيل الحساب')
+                    ->modalDescription(fn (User $record) => "هل تريد إعادة تفعيل حساب {$record->name}؟")
+                    ->modalSubmitActionLabel('نعم، فعّل الحساب')
+                    ->visible(fn (User $record) => $record->status === UserStatus::Suspended)
+                    ->action(function (User $record): void {
+                        $record->update(['status' => UserStatus::Active]);
+                        Notification::make()
+                            ->title('تم تفعيل الحساب')
+                            ->body("تم تفعيل حساب {$record->name} بنجاح.")
+                            ->success()
+                            ->send();
+                    }),
+
+                // ─── إعادة ضبط الخطة إلى مجاني ──────────────────────
+                Tables\Actions\Action::make('resetPlan')
+                    ->label('خطة مجانية')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('إعادة ضبط الخطة')
+                    ->modalDescription(fn (User $record) => "سيتم تحويل {$record->name} إلى الخطة المجانية وإلغاء اشتراكه الحالي.")
+                    ->modalSubmitActionLabel('نعم، أعد الضبط')
+                    ->visible(fn (User $record) => $record->subscription_plan !== SubscriptionPlan::Free)
+                    ->action(function (User $record): void {
+                        // إلغاء الاشتراك النشط
+                        $record->subscriptions()
+                            ->where('status', 'active')
+                            ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+
+                        // إعادة الخطة إلى Free
+                        $record->update(['subscription_plan' => SubscriptionPlan::Free]);
+
+                        Notification::make()
+                            ->title('تم إعادة الضبط')
+                            ->body("تم تحويل {$record->name} إلى الخطة المجانية.")
+                            ->warning()
+                            ->send();
+                    }),
+
+                // ─── إرسال بريد إلكتروني ─────────────────────────────
+                Tables\Actions\Action::make('sendEmail')
+                    ->label('إرسال بريد')
+                    ->icon('heroicon-o-envelope')
+                    ->color('info')
+                    ->form([
+                        Forms\Components\TextInput::make('subject')
+                            ->label('موضوع البريد')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('موضوع الرسالة...'),
+
+                        Forms\Components\Textarea::make('message')
+                            ->label('نص الرسالة')
+                            ->required()
+                            ->rows(5)
+                            ->placeholder('اكتب رسالتك هنا...'),
+                    ])
+                    ->modalHeading('إرسال بريد إلكتروني')
+                    ->modalSubmitActionLabel('إرسال')
+                    ->action(function (User $record, array $data): void {
+                        try {
+                            Mail::raw($data['message'], function ($mail) use ($record, $data) {
+                                $mail->to($record->email, $record->name)
+                                     ->subject($data['subject'])
+                                     ->from(config('mail.from.address'), config('mail.from.name'));
+                            });
+
+                            Notification::make()
+                                ->title('تم إرسال البريد')
+                                ->body("تم إرسال البريد إلى {$record->email} بنجاح.")
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('فشل الإرسال')
+                                ->body('حدث خطأ أثناء إرسال البريد: ' . $e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
+                // ─── حذف بيانات المستخدم ─────────────────────────────
+                Tables\Actions\Action::make('deleteData')
+                    ->label('حذف البيانات')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('حذف بيانات المستخدم')
+                    ->modalDescription(fn (User $record) => "⚠️ سيتم حذف جميع بيانات {$record->name} (المشاريع، المعاملات، الديون، الميزانيات، الإشعارات). هذا الإجراء لا يمكن التراجع عنه!")
+                    ->modalSubmitActionLabel('نعم، احذف كل البيانات')
+                    ->form([
+                        Forms\Components\Checkbox::make('confirm')
+                            ->label('أؤكد حذف جميع البيانات بشكل نهائي')
+                            ->required()
+                            ->accepted(),
+                    ])
+                    ->action(function (User $record): void {
+                        // حذف جميع البيانات المرتبطة (مع الحفاظ على الحساب)
+                        $record->transactions()->delete();
+                        $record->debts()->delete();
+                        $record->budgets()->delete();
+                        $record->recurringTransactions()->delete();
+                        $record->subscriptions()->delete();
+                        $record->notifications()->delete();
+                        // الفئات والمشاريع تُحذف أخيراً (لأن المعاملات مرتبطة بها)
+                        $record->categories()->delete();
+                        $record->projects()->delete();
+                        // إعادة الخطة إلى Free
+                        $record->update([
+                            'subscription_plan' => SubscriptionPlan::Free,
+                        ]);
+
+                        Notification::make()
+                            ->title('تم حذف البيانات')
+                            ->body("تم حذف جميع بيانات {$record->name} بنجاح.")
+                            ->danger()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    // ─── تعليق جماعي ──────────────────────────────────
+                    Tables\Actions\BulkAction::make('suspendAll')
+                        ->label('تعليق المحدد')
+                        ->icon('heroicon-o-no-symbol')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(function ($records): void {
+                            $records->each->update(['status' => UserStatus::Suspended]);
+                            Notification::make()
+                                ->title('تم التعليق')
+                                ->body('تم تعليق الحسابات المحددة.')
+                                ->warning()
+                                ->send();
+                        }),
+
+                    // ─── تفعيل جماعي ──────────────────────────────────
+                    Tables\Actions\BulkAction::make('activateAll')
+                        ->label('تفعيل المحدد')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(function ($records): void {
+                            $records->each->update(['status' => UserStatus::Active]);
+                            Notification::make()
+                                ->title('تم التفعيل')
+                                ->body('تم تفعيل الحسابات المحددة.')
+                                ->success()
+                                ->send();
+                        }),
+
                     Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
                 ]),
             ]);
@@ -162,5 +363,10 @@ class UserResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
     }
 }

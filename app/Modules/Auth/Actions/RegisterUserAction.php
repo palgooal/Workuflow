@@ -3,6 +3,7 @@
 namespace App\Modules\Auth\Actions;
 
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Jobs\SendWelcomeEmailJob;
 use App\Models\Category;
 use App\Models\User;
 use App\Support\Enums\SubscriptionPlan;
@@ -29,6 +30,9 @@ class RegisterUserAction
 
         // إنشاء الفئات الافتراضية للمستخدم الجديد
         $this->createDefaultCategories($user);
+
+        // إرسال بريد الترحيب عبر Queue (لا يُعيق التسجيل)
+        SendWelcomeEmailJob::dispatch($user)->delay(now()->addSeconds(5));
 
         // تسجيل الدخول تلقائياً
         Auth::login($user);

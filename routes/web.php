@@ -11,6 +11,7 @@ use App\Http\Controllers\RecurringController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Reports — Phase 9
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    // Reports Export — U.2
+    Route::get('/reports/export/pdf',   [ReportExportController::class, 'pdf'])->name('reports.export.pdf');
+    Route::get('/reports/export/excel', [ReportExportController::class, 'excel'])->name('reports.export.excel');
 
     // Notifications — Phase 10
     Route::get('/notifications',                          [NotificationController::class, 'index'])->name('notifications.index');

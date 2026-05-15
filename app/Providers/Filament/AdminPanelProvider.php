@@ -2,7 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\MrrTrendWidget;
+use App\Filament\Widgets\RevenueChartWidget;
+use App\Filament\Widgets\RevenueStatsWidget;
 use App\Filament\Widgets\StatsOverviewWidget;
+use App\Filament\Widgets\SystemHealthWidget;
 use App\Filament\Widgets\UsersChartWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -39,9 +43,13 @@ class AdminPanelProvider extends PanelProvider
 
             ->pages([Pages\Dashboard::class])
             ->widgets([
-                StatsOverviewWidget::class,
-                UsersChartWidget::class,
                 Widgets\AccountWidget::class,
+                StatsOverviewWidget::class,     // sort: 1 — إحصائيات عامة
+                UsersChartWidget::class,         // sort: 2 — نمو المستخدمين
+                RevenueStatsWidget::class,       // sort: 3 — MRR / ARR / Churn
+                RevenueChartWidget::class,       // sort: 4 — Donut توزيع الخطط
+                MrrTrendWidget::class,           // sort: 5 — خط نمو الإيرادات
+                SystemHealthWidget::class,       // sort: 6 — صحة النظام
             ])
 
             ->middleware([
