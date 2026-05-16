@@ -309,6 +309,99 @@ UX+      → تحسينات تجربة المستخدم                      ✅
 
 ---
 
+---
+
+## 🆕 Phase 16 — تحسينات مايو 2026
+
+### ✅ 16.1 — إضافة عملة الشيكل الإسرائيلي (ILS)
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `app/Support/Helpers/MoneyFormatter.php` — إضافة `'ILS' => '₪ ' . $formatted`
+- [x] `app/Http/Controllers/SettingsController.php` — إضافة `'ILS' => 'شيكل إسرائيلي ₪'` للقائمة
+- [x] `app/Http/Controllers/ProjectController.php` — إضافة ILS للعملات في create/edit
+- [x] `app/Http/Requests/Transactions/StoreTransactionRequest.php` — إضافة ILS لقائمة `in:`
+- [x] `app/Http/Requests/Transactions/UpdateTransactionRequest.php` — نفسه
+- [x] `app/Http/Requests/Projects/StoreProjectRequest.php` — نفسه
+- [x] `app/Http/Requests/Projects/UpdateProjectRequest.php` — نفسه
+
+---
+
+### ✅ 16.2 — موديول العملاء (Clients)
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Migration: `2026_05_15_100001_create_clients_table.php` — (id, user_id, name, phone, email, company, notes, is_active, softDeletes)
+- [x] `app/Models/Client.php` — BelongsToUser, SoftDeletes, scopeActive, hasMany projects
+- [x] `app/Policies/ClientPolicy.php` — التحقق من الملكية على update/delete
+- [x] `app/Http/Controllers/ClientController.php` — CRUD كامل (index, create, store, edit, update, destroy)
+- [x] `app/Filament/Resources/ClientResource.php` — لوحة Admin
+- [x] Views: `clients/index`, `create`, `edit`, `_form` — تصميم بطاقات مع بيانات العميل
+- [x] Sidebar: قسم "الأعمال" مع رابط العملاء (أيقونة users)
+- [x] Routes: `Route::resource('clients', ...)` في `routes/web.php`
+
+---
+
+### ✅ 16.3 — موديول الخدمات (Services)
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Migration: `2026_05_15_100002_create_services_table.php` — (id, user_id nullable, name, name_ar, icon, color, is_global, is_active)
+- [x] `app/Models/Service.php` — scopeForUser (global + owned), belongsToMany projects
+- [x] `app/Filament/Resources/ServiceResource.php` — لوحة Admin (حذف محمي للـ global)
+- [x] `database/seeders/ServicesSeeder.php` — 12 خدمة افتراضية عالمية (تصميم هوية، سيو، تسويق رقمي، موشن جرافيك...)
+- [x] `app/Http/Controllers/ServiceController.php` — store (مخصص للمستخدم) + destroy
+- [x] Routes: `Route::resource('services', ...)->only(['index','store','destroy'])`
+
+**الخدمات الافتراضية الـ 12:**
+تصميم هوية البراند، تصميم شعار، استراتيجية البراند، تحسين محركات البحث، تسويق رقمي، موشن جرافيك، إدارة وسائل التواصل، تصميم مواقع، تصميم UI/UX، تصوير، إنتاج فيديو، كتابة محتوى
+
+---
+
+### ✅ 16.4 — ربط الخدمات بالمشاريع (project_service pivot)
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Migration: `2026_05_15_100003_add_client_id_to_projects_table.php` — عمود `client_id` nullable على projects
+- [x] Migration: `2026_05_15_100004_create_project_service_table.php` — pivot (project_id string ULID, service_id, client_id nullable, amount, type enum, notes)
+- [x] `app/Models/Project.php` — إضافة `client_id` للـ fillable + علاقة `client()` و `services()`
+- [x] `app/Modules/Projects/DTOs/ProjectData.php` — إضافة `client_id`
+- [x] `app/Modules/Projects/Actions/CreateProjectAction.php` — حفظ client_id
+- [x] `app/Modules/Projects/Actions/UpdateProjectAction.php` — تحديث client_id وmync الخدمات
+- [x] `app/Http/Controllers/ProjectController.php` — تمرير clients وservices للـ views + sync pivot
+- [x] `resources/views/projects/_form.blade.php` — Alpine.js: إضافة/حذف خدمات ديناميكياً مع المبلغ والنوع
+
+> **ملاحظة تقنية:** project_id في جدول pivot من نوع `string` (وليس `foreignId`) لأن المشاريع تستخدم ULID.
+
+---
+
+### ✅ 16.5 — حقل "جهة الدفع" (Payee) على المعاملات
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Migration: `2026_05_16_000001_add_payee_to_transactions_table.php` — عمود `payee` nullable string بعد `description`
+- [x] `app/Models/Transaction.php` — إضافة `'payee'` للـ fillable
+- [x] `resources/views/transactions/_form.blade.php` — حقل يظهر فقط عند اختيار "مصروف" بـ `x-show="selectedType === 'expense'"` + أيقونة مبنى
+- [x] `app/Http/Requests/Transactions/StoreTransactionRequest.php` — `'payee' => ['nullable','string','max:255']`
+- [x] `app/Http/Requests/Transactions/UpdateTransactionRequest.php` — نفسه
+- [x] `app/Modules/Transactions/DTOs/TransactionData.php` — إضافة `public readonly ?string $payee = null`
+- [x] `app/Modules/Transactions/Actions/CreateTransactionAction.php` — تمرير `'payee' => $data->payee`
+- [x] `app/Modules/Transactions/Actions/UpdateTransactionAction.php` — نفسه
+
+**الاستخدام:** يظهر الحقل فقط للمصروفات ويمكن تسجيل جهة الدفع (مورد، شركة، فريلانسر...).
+
+---
+
+### ⚠️ إجراءات مطلوبة على السيرفر
+```bash
+# تشغيل على السيرفر بعد رفع الملفات
+php artisan migrate --force
+php artisan db:seed --class=ServicesSeeder --force
+php artisan optimize:clear && php artisan optimize
+```
+
+---
+
 ## 📋 جدول التتبع السريع
 
 | # | المهمة | الحالة |
@@ -335,7 +428,12 @@ UX+      → تحسينات تجربة المستخدم                      ✅
 | A.4 | SystemHealth Widget | ✅ |
 | U.1 | بريد الترحيب | ⬜ |
 | U.2 | تصدير PDF/Excel | ⬜ |
-| U.3 | Onboarding | ⬜ |
+| U.3 | Onboarding | ✅ |
+| 16.1 | عملة ILS | ✅ |
+| 16.2 | موديول العملاء | ✅ |
+| 16.3 | موديول الخدمات | ✅ |
+| 16.4 | ربط الخدمات بالمشاريع | ✅ |
+| 16.5 | حقل جهة الدفع (Payee) | ✅ |
 | — | ربط مزود الدفع | ⬜ مستقبلي |
 | — | REST API | ⬜ مستقبلي |
 
@@ -345,9 +443,8 @@ UX+      → تحسينات تجربة المستخدم                      ✅
 
 | المهمة | الأولوية | الوصف |
 |--------|----------|-------|
-| U.1 — بريد الترحيب | 🔴 قريباً | Mailable + Queue Job عند التسجيل |
-| U.2 — تصدير PDF/Excel | 🔴 قريباً | مكتبة PDF + Excel في التقارير |
-| U.3 — Onboarding | 🟠 مهم | شريط تقدم للمستخدم الجديد |
+| عرض Payee في صفحة المعاملات | 🟠 مفيد | إظهار جهة الدفع في قائمة/تفاصيل المعاملة |
+| Payee في تصدير PDF | 🟡 لاحقاً | إضافة عمود جهة الدفع في تقرير PDF للمصروفات |
 | ربط مزود الدفع | 🟡 عند الجاهزية | تنفيذ `PaymentProviderInterface` |
 | REST API | 🟡 لاحقاً | Sanctum + API Resources |
 

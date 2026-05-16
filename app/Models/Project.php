@@ -27,13 +27,17 @@ class Project extends Model
         'currency',
         'type',
         'is_active',
+        'contract_value',
+        'expense_budget',
     ];
 
     protected function casts(): array
     {
         return [
-            'type'      => ProjectType::class,
-            'is_active' => 'boolean',
+            'type'           => ProjectType::class,
+            'is_active'      => 'boolean',
+            'contract_value' => 'decimal:2',
+            'expense_budget' => 'decimal:2',
         ];
     }
 

@@ -31,6 +31,29 @@ class ServiceController extends Controller
         return back()->with('success', 'تم إضافة الخدمة "' . $data['name_ar'] . '".');
     }
 
+    /**
+     * إضافة سريعة للخدمة من فورم المشروع (يُرجع JSON)
+     */
+    public function quickStore(Request $request)
+    {
+        $data = $request->validate([
+            'name_ar' => ['required', 'string', 'max:100'],
+        ]);
+
+        $service = Service::create([
+            'name'      => $data['name_ar'],
+            'name_ar'   => $data['name_ar'],
+            'user_id'   => auth()->id(),
+            'is_global' => false,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'id'      => $service->id,
+            'name_ar' => $service->name_ar,
+        ]);
+    }
+
     public function destroy(Service $service): RedirectResponse
     {
         if (! $service->is_global && $service->user_id === auth()->id()) {

@@ -14,9 +14,11 @@ class CreateProjectAction
             'type'        => $data->type,
             'currency'    => $data->currency,
             'color'       => $data->color,
-            'description' => $data->description,
-            'is_active'   => $data->is_active,
-            'client_id'   => $data->client_id,
+            'description'    => $data->description,
+            'is_active'      => $data->is_active,
+            'client_id'      => $data->client_id,
+            'contract_value' => $data->contract_value,
+            'expense_budget' => $data->expense_budget,
         ]);
     }
 }

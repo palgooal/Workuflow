@@ -66,6 +66,7 @@
             title="إجمالي الدخل"
             :value="number_format($summary['income'], 2)"
             color="green"
+            tooltip="مجموع كل المبالغ المسجّلة كمعاملات «دخل» في هذا المشروع حتى اليوم."
         >
             <x-slot name="icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,6 +79,7 @@
             title="إجمالي المصروفات"
             :value="number_format($summary['expenses'], 2)"
             color="red"
+            tooltip="مجموع كل المبالغ المسجّلة كمعاملات «مصروف» في هذا المشروع — تكاليف التنفيذ والأدوات والمساعدين."
         >
             <x-slot name="icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,6 +93,7 @@
             :value="number_format(abs($summary['net_profit']), 2)"
             :color="$summary['net_profit'] >= 0 ? 'green' : 'red'"
             :prefix="$summary['net_profit'] >= 0 ? '+' : '-'"
+            tooltip="إجمالي الدخل ناقص إجمالي المصروفات. هذا ما تبقّى في جيبك فعلياً من هذا المشروع."
         >
             <x-slot name="icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,6 +107,7 @@
             title="هامش الربح"
             :value="$summary['margin'] . '%'"
             :color="$summary['margin'] >= 30 ? 'green' : ($summary['margin'] >= 0 ? 'yellow' : 'red')"
+            tooltip="نسبة صافي الربح من إجمالي الدخل. 30% فأكثر = ممتاز، أقل من 0% = المشروع خاسر."
         >
             <x-slot name="icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,6 +119,124 @@
             </x-slot>
         </x-stats-card>
     </div>
+
+    {{-- Contract Value & Expense Budget Progress --}}
+    @if($summary['contract_value'] || $summary['expense_budget'])
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {{-- قيمة العقد --}}
+        @if($summary['contract_value'])
+        <div class="bg-white rounded-2xl border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-900">قيمة العقد</span>
+                    <div class="relative" x-data="{ show: false }">
+                        <button type="button" @mouseenter="show=true" @mouseleave="show=false"
+                                class="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center
+                                       justify-center text-gray-500 text-xs font-bold cursor-help">?</button>
+                        <div x-show="show" x-cloak
+                             class="absolute bottom-full mb-2 right-0 z-50 w-60 p-3 bg-gray-900 text-white
+                                    text-xs rounded-xl shadow-xl leading-relaxed">
+                            المبلغ المتفق عليه مع العميل في العقد. الشريط يوضح كم استلمت منه فعلياً حتى الآن من خلال معاملات الدخل.
+                            <div class="absolute top-full right-2 w-0 h-0"
+                                 style="border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid rgb(17 24 39)"></div>
+                        </div>
+                    </div>
+                </div>
+                <span class="text-xs font-bold
+                    {{ $summary['contract_collected'] >= 100 ? 'text-green-600' : 'text-blue-600' }}">
+                    {{ $summary['contract_collected'] }}%
+                </span>
+            </div>
+
+            {{-- Progress Bar --}}
+            <div class="w-full bg-gray-100 rounded-full h-2.5 mb-3">
+                <div class="h-2.5 rounded-full transition-all duration-500
+                    {{ $summary['contract_collected'] >= 100 ? 'bg-green-500' : 'bg-blue-500' }}"
+                     style="width: {{ min($summary['contract_collected'], 100) }}%"></div>
+            </div>
+
+            <div class="flex justify-between text-xs text-gray-500">
+                <span>مُستلم: <strong class="text-gray-800">{{ number_format($summary['income'], 2) }}</strong></span>
+                <span>العقد: <strong class="text-gray-800">{{ number_format($summary['contract_value'], 2) }}</strong></span>
+            </div>
+            @if($summary['contract_remaining'] > 0)
+            <p class="mt-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-2.5 py-1.5">
+                متبقي استلام: <strong>{{ number_format($summary['contract_remaining'], 2) }} {{ $project->currency }}</strong>
+            </p>
+            @else
+            <p class="mt-2 text-xs text-green-600 bg-green-50 rounded-lg px-2.5 py-1.5">
+                ✅ تم استلام قيمة العقد كاملاً
+            </p>
+            @endif
+        </div>
+        @endif
+
+        {{-- ميزانية التكاليف --}}
+        @if($summary['expense_budget'])
+        <div class="bg-white rounded-2xl border border-gray-100 p-5
+            {{ $summary['budget_overrun'] ? 'border-red-200' : '' }}">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center
+                        {{ $summary['budget_overrun'] ? 'bg-red-100' : 'bg-orange-100' }}">
+                        <svg class="w-4 h-4 {{ $summary['budget_overrun'] ? 'text-red-600' : 'text-orange-600' }}"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-900">ميزانية التكاليف</span>
+                    <div class="relative" x-data="{ show: false }">
+                        <button type="button" @mouseenter="show=true" @mouseleave="show=false"
+                                class="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center
+                                       justify-center text-gray-500 text-xs font-bold cursor-help">?</button>
+                        <div x-show="show" x-cloak
+                             class="absolute bottom-full mb-2 right-0 z-50 w-60 p-3 bg-gray-900 text-white
+                                    text-xs rounded-xl shadow-xl leading-relaxed">
+                            الحد الأقصى للمصروفات الذي خططت له مسبقاً. الشريط يتحول أحمر تلقائياً إذا تجاوزت هذا السقف.
+                            <div class="absolute top-full right-2 w-0 h-0"
+                                 style="border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid rgb(17 24 39)"></div>
+                        </div>
+                    </div>
+                </div>
+                <span class="text-xs font-bold {{ $summary['budget_overrun'] ? 'text-red-600' : 'text-orange-600' }}">
+                    {{ $summary['budget_used_percent'] }}%
+                </span>
+            </div>
+
+            {{-- Progress Bar --}}
+            <div class="w-full bg-gray-100 rounded-full h-2.5 mb-3">
+                <div class="h-2.5 rounded-full transition-all duration-500
+                    {{ $summary['budget_overrun'] ? 'bg-red-500' : ($summary['budget_used_percent'] >= 80 ? 'bg-amber-500' : 'bg-orange-400') }}"
+                     style="width: {{ min($summary['budget_used_percent'], 100) }}%"></div>
+            </div>
+
+            <div class="flex justify-between text-xs text-gray-500">
+                <span>مُنفَق: <strong class="text-gray-800">{{ number_format($summary['expenses'], 2) }}</strong></span>
+                <span>الميزانية: <strong class="text-gray-800">{{ number_format($summary['expense_budget'], 2) }}</strong></span>
+            </div>
+            @if($summary['budget_overrun'])
+            <p class="mt-2 text-xs text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">
+                ⚠️ تجاوز الميزانية بـ
+                <strong>{{ number_format($summary['expenses'] - $summary['expense_budget'], 2) }} {{ $project->currency }}</strong>
+            </p>
+            @elseif($summary['budget_remaining'] !== null)
+            <p class="mt-2 text-xs text-green-600 bg-green-50 rounded-lg px-2.5 py-1.5">
+                متبقي من الميزانية: <strong>{{ number_format($summary['budget_remaining'], 2) }} {{ $project->currency }}</strong>
+            </p>
+            @endif
+        </div>
+        @endif
+
+    </div>
+    @endif
 
     {{-- Recent Transactions --}}
     <div class="bg-white rounded-2xl border border-gray-100">

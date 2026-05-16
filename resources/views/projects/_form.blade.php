@@ -3,10 +3,11 @@
      x-data="{
          selectedColor: '{{ old('color', $project->color ?? '#6366F1') }}',
          selectedType: '{{ old('type', $project->type->value ?? 'business') }}',
+         allServiceOptions: {{ $services->map(fn($s) => ['id' => $s->id, 'name_ar' => $s->name_ar ?? $s->name])->toJson() }},
          services: {{ json_encode(
              old('services', isset($project)
                  ? $project->services->map(fn($s) => [
-                     'service_id' => $s->id,
+                     'service_id' => (string) $s->id,
                      'amount'     => $s->pivot->amount,
                      'type'       => $s->pivot->type,
                      'notes'      => $s->pivot->notes ?? '',
@@ -161,6 +162,53 @@
             @enderror
         </div>
 
+        {{-- Contract Value + Expense Budget --}}
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    قيمة العقد
+                    <span class="text-gray-400 font-normal">(المبلغ المتفق عليه)</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <input type="number" name="contract_value" step="0.01" min="0"
+                           value="{{ old('contract_value', $project->contract_value ?? '') }}"
+                           placeholder="0.00"
+                           class="w-full pr-9 pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm
+                                  focus:outline-none focus:ring-2 focus:ring-indigo-500
+                                  @error('contract_value') border-red-300 @enderror">
+                </div>
+                @error('contract_value') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    ميزانية التكاليف
+                    <span class="text-gray-400 font-normal">(سقف المصروفات)</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <input type="number" name="expense_budget" step="0.01" min="0"
+                           value="{{ old('expense_budget', $project->expense_budget ?? '') }}"
+                           placeholder="0.00"
+                           class="w-full pr-9 pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm
+                                  focus:outline-none focus:ring-2 focus:ring-indigo-500
+                                  @error('expense_budget') border-red-300 @enderror">
+                </div>
+                @error('expense_budget') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+        </div>
+
         {{-- Client --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -193,10 +241,44 @@
         </div>
 
         {{-- Services --}}
-        <div>
+        <div x-data="{
+                quickAddOpen: false,
+                quickName: '',
+                quickLoading: false,
+                quickError: '',
+                async submitQuick() {
+                    if (! this.quickName.trim()) return;
+                    this.quickLoading = true;
+                    this.quickError   = '';
+                    try {
+                        const res = await fetch('{{ route('services.quick-store') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ name_ar: this.quickName }),
+                        });
+                        if (! res.ok) throw new Error('فشل الحفظ');
+                        const svc = await res.json();
+                        allServiceOptions.push({ id: svc.id, name_ar: svc.name_ar });
+                        services.push({ service_id: String(svc.id), amount: '', type: 'income', notes: '' });
+                        this.quickName   = '';
+                        this.quickAddOpen = false;
+                    } catch (e) {
+                        this.quickError = 'حدث خطأ، حاول مرة أخرى.';
+                    } finally {
+                        this.quickLoading = false;
+                    }
+                }
+             }">
+
+            {{-- Header --}}
             <div class="flex items-center justify-between mb-3">
                 <label class="block text-sm font-medium text-gray-700">
-                    الخدمات المقدمة <span class="text-gray-400 font-normal">(اختياري)</span>
+                    الخدمات المقدمة
+                    <span class="text-gray-400 font-normal text-xs">(اختياري)</span>
                 </label>
                 <button type="button" @click="addService()"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
@@ -209,88 +291,154 @@
             </div>
 
             {{-- Services List --}}
-            <div class="space-y-3" x-show="services.length > 0">
+            <div class="space-y-2" x-show="services.length > 0">
                 <template x-for="(svc, index) in services" :key="index">
-                    <div class="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
 
-                        {{-- Service Dropdown --}}
-                        <div class="col-span-5">
-                            <label class="block text-xs text-gray-500 mb-1">الخدمة</label>
-                            <select :name="`services[${index}][service_id]`"
-                                    x-model="svc.service_id"
-                                    class="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-sm bg-white
-                                           focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="">اختر خدمة...</option>
-                                @foreach($services as $service)
-                                    <option value="{{ $service->id }}">
-                                        {{ $service->name_ar ?? $service->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- Amount --}}
-                        <div class="col-span-3">
-                            <label class="block text-xs text-gray-500 mb-1">القيمة</label>
-                            <input type="number"
-                                   :name="`services[${index}][amount]`"
-                                   x-model="svc.amount"
-                                   min="0"
-                                   step="0.01"
-                                   placeholder="0.00"
-                                   class="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-sm
-                                          focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-
-                        {{-- Type --}}
-                        <div class="col-span-3">
-                            <label class="block text-xs text-gray-500 mb-1">النوع</label>
-                            <select :name="`services[${index}][type]`"
-                                    x-model="svc.type"
-                                    class="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-sm bg-white
-                                           focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="income">💚 دخل</option>
-                                <option value="expense">🔴 مصروف</option>
-                            </select>
-                        </div>
-
-                        {{-- Remove Button --}}
-                        <div class="col-span-1 flex items-end pb-0.5">
+                        {{-- Row 1: Service + Remove --}}
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">الخدمة</label>
+                                <select :name="`services[${index}][service_id]`"
+                                        x-model="svc.service_id"
+                                        class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white
+                                               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    <option value="">— اختر خدمة —</option>
+                                    <template x-for="opt in allServiceOptions" :key="opt.id">
+                                        <option :value="String(opt.id)" x-text="opt.name_ar"
+                                                :selected="String(opt.id) === String(svc.service_id)"></option>
+                                    </template>
+                                </select>
+                            </div>
                             <button type="button"
                                     @click="removeService(index)"
-                                    class="w-8 h-8 flex items-center justify-center text-red-400
-                                           hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                                    class="mt-5 w-8 h-8 flex-shrink-0 flex items-center justify-center
+                                           text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                          d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </button>
                         </div>
 
-                        {{-- Notes (full width) --}}
-                        <div class="col-span-12 mt-1">
+                        {{-- Row 2: Amount + Type --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">القيمة</label>
+                                <input type="number"
+                                       :name="`services[${index}][amount]`"
+                                       x-model="svc.amount"
+                                       min="0" step="0.01"
+                                       placeholder="0.00"
+                                       class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm
+                                              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">النوع</label>
+                                <div class="flex gap-2">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" :name="`services[${index}][type]`"
+                                               value="income" x-model="svc.type" class="sr-only">
+                                        <div class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2
+                                                    text-xs font-medium transition cursor-pointer"
+                                             :class="svc.type === 'income'
+                                                 ? 'border-green-500 bg-green-50 text-green-700'
+                                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                                      d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+                                            </svg>
+                                            دخل
+                                        </div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" :name="`services[${index}][type]`"
+                                               value="expense" x-model="svc.type" class="sr-only">
+                                        <div class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2
+                                                    text-xs font-medium transition cursor-pointer"
+                                             :class="svc.type === 'expense'
+                                                 ? 'border-red-500 bg-red-50 text-red-700'
+                                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                                      d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+                                            </svg>
+                                            مصروف
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Row 3: Notes --}}
+                        <div>
                             <input type="text"
                                    :name="`services[${index}][notes]`"
                                    x-model="svc.notes"
                                    placeholder="ملاحظات (اختياري)..."
-                                   class="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600
-                                          focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600
+                                          focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white">
                         </div>
 
                     </div>
                 </template>
             </div>
 
-            {{-- Empty state --}}
+            {{-- Empty State --}}
             <div x-show="services.length === 0"
-                 class="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-gray-200 rounded-xl text-center">
-                <span class="text-2xl">💼</span>
-                <p class="text-sm text-gray-400">لم تُضَف خدمات بعد</p>
+                 class="flex flex-col items-center gap-2 py-8 border-2 border-dashed border-gray-200 rounded-xl text-center">
+                <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <p class="text-sm text-gray-400">لا توجد خدمات مضافة بعد</p>
                 <button type="button" @click="addService()"
-                        class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                    + أضف أول خدمة
+                        class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                    + أضف خدمة للمشروع
                 </button>
             </div>
+
+            {{-- Quick Add Service --}}
+            <div class="mt-3">
+                <button type="button"
+                        @click="quickAddOpen = !quickAddOpen"
+                        class="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-indigo-600 transition">
+                    <svg class="w-3.5 h-3.5 transition-transform" :class="quickAddOpen ? 'rotate-45' : ''"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span x-text="quickAddOpen ? 'إلغاء' : 'خدمتك غير موجودة؟ أضفها هنا'"></span>
+                </button>
+
+                <div x-show="quickAddOpen" x-transition
+                     class="mt-3 p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+                    <p class="text-xs font-medium text-indigo-800 mb-2.5">
+                        إضافة خدمة مخصصة
+                        <span class="text-indigo-400 font-normal">(ستُحفظ في قائمة خدماتك)</span>
+                    </p>
+                    <div class="flex gap-2">
+                        <input type="text"
+                               x-model="quickName"
+                               @keydown.enter.prevent="submitQuick()"
+                               placeholder="مثال: تصوير منتجات، تدريب، استشارة..."
+                               class="flex-1 px-3 py-2 rounded-lg border border-indigo-200 text-sm bg-white
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        <button type="button"
+                                @click="submitQuick()"
+                                :disabled="quickLoading || !quickName.trim()"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium
+                                       rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="!quickLoading">إضافة</span>
+                            <span x-show="quickLoading">...</span>
+                        </button>
+                    </div>
+                    <p x-show="quickError" x-text="quickError"
+                       class="mt-1.5 text-xs text-red-600"></p>
+                </div>
+            </div>
+
         </div>
 
         {{-- Active toggle (only in edit) --}}

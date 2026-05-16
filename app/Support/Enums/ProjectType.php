@@ -18,8 +18,8 @@ enum ProjectType: string
     public function icon(): string
     {
         return match($this) {
-            self::Personal => 'user',
-            self::Business => 'briefcase',
+            self::Personal => '🏠',
+            self::Business => '💼',
         };
     }
 }

@@ -41,6 +41,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('services', ServiceController::class)
         ->only(['index', 'store', 'destroy'])
         ->names('services');
+    // Quick-create service via JSON (from project form)
+    Route::post('services/quick', [ServiceController::class, 'quickStore'])->name('services.quick-store');
 
     // Categories — Phase 5
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
