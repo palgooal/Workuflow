@@ -8,7 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style> body { font-family: 'Tajawal', sans-serif; } </style>
+    <style>
+        body { font-family: 'Tajawal', sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">
 
