@@ -2,7 +2,12 @@
     Onboarding Modal — يظهر للمستخدمين الجدد الذين لم يُغلقوه بعد
     يُعرض فقط إذا كان onboarding_dismissed_at = null
 --}}
-@if(! auth()->user()->onboarding_dismissed_at)
+@php
+    $user = auth()->user();
+    $showOnboarding = ! $user->onboarding_dismissed_at
+                   && $user->created_at->gt(now()->subDays(7));
+@endphp
+@if($showOnboarding)
 <div
     x-data="{
         open: true,
