@@ -40,6 +40,7 @@ Phase 15 → لوحة الإدارة (Laravel Filament)             ✅ مكتم
 Marketing→ الصفحة التسويقية (Landing Page)             ✅ مكتمل
 Admin+   → تطوير Admin المتقدم                         ✅ مكتمل (A.1→A.4)
 UX+      → تحسينات تجربة المستخدم                      ✅ مكتمل (U.1→U.3)
+Phase 16 → تحسينات مايو 2026 (16.1→16.10)             ✅ مكتمل
 ```
 
 ---
@@ -392,6 +393,99 @@ UX+      → تحسينات تجربة المستخدم                      ✅
 
 ---
 
+### ✅ 16.6 — واتساب في بطاقات العملاء والفريق
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `resources/views/clients/index.blade.php` — زر واتساب أسفل كل بطاقة عميل (يظهر فقط إذا وُجد رقم الهاتف)
+- [x] `resources/views/team/index.blade.php` — زر واتساب في بطاقة كل عضو فريق
+- [x] `preg_replace('/[^0-9]/', '', $phone)` لتنظيف الرقم قبل إرساله لـ `wa.me`
+
+---
+
+### ✅ 16.7 — قيمة العقد وميزانية التكاليف للمشاريع
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Migration: `2026_05_16_000002_add_financials_to_projects_table.php` — عمودا `contract_value` و `expense_budget` (decimal 12,2 nullable)
+- [x] `app/Models/Project.php` — إضافتهما للـ fillable والـ casts
+- [x] `app/Modules/Projects/DTOs/ProjectData.php` — `?float $contract_value` و `?float $expense_budget`
+- [x] `app/Modules/Projects/Actions/CreateProjectAction.php` و `UpdateProjectAction.php` — حفظ الحقلين
+- [x] `app/Http/Requests/Projects/StoreProjectRequest.php` و `UpdateProjectRequest.php` — validation (nullable, numeric, min:0, max:999999999)
+- [x] `app/Modules/Projects/Services/ProjectFinancialService.php` — حساب `contract_collected%`، `budget_used%`، `budget_overrun`، `contract_remaining`، `budget_remaining`
+- [x] `resources/views/projects/_form.blade.php` — حقلا الإدخال
+- [x] `resources/views/projects/show.blade.php` — بطاقتا Progress Bar (أزرق/أخضر للعقد، برتقالي/أحمر للميزانية)
+
+---
+
+### ✅ 16.8 — إعادة تصميم قسم الخدمات + الإضافة السريعة
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] تصميم جديد لقسم الخدمات: بطاقات مع Radio toggle للنوع (دخل/مصروف) بدل القائمة المنسدلة القديمة
+- [x] حقل عضو الفريق وتكلفته مباشرةً داخل كل بطاقة خدمة
+- [x] لوحة "إضافة خدمة جديدة" سريعة: مدخل الاسم + زر حفظ بدون مغادرة الصفحة (Alpine.js + fetch API)
+- [x] `app/Http/Controllers/ServiceController.php::quickStore()` — endpoint JSON POST `services/quick` يُنشئ الخدمة ويعيد `{id, name_ar}`
+- [x] `routes/web.php` — `Route::post('services/quick', ...)` باسم `services.quick-store`
+- [x] التحديث الفوري لقائمة الخدمات في Alpine.js state بعد الإضافة
+
+---
+
+### ✅ 16.9 — Tooltips على المقاييس المالية في صفحة المشروع
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `resources/views/components/stats-card.blade.php` — إضافة prop اختياري `$tooltip`
+- [x] عند توفير tooltip تظهر دائرة `?` صغيرة مع فقاعة شرح تظهر عند hover (Alpine.js)
+- [x] تطبيقه على جميع البطاقات المالية الست: إجمالي الدخل، إجمالي المصروف، صافي الربح، قيمة العقد، ميزانية التكاليف
+
+---
+
+### ✅ 16.10 — موديول الفريق (Team Members)
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] Migration: `2026_05_17_000001_create_team_members_table.php` — (id ULID, user_id, name, type enum[employee/freelancer], specialty, phone, email, default_rate, notes, is_active, timestamps, softDeletes)
+- [x] Migration: `2026_05_17_000002_add_team_to_project_service_table.php` — إضافة `team_member_id`, `team_cost`, `team_cost_paid` لجدول `project_service`
+- [x] `app/Models/TeamMember.php` — HasUlids, SoftDeletes, BelongsToUser، `typeLabel()`, `typeBadgeColor()`, `scopeActive()`
+- [x] `app/Http/Controllers/TeamMemberController.php` — CRUD كامل (index, create, store, edit, update, destroy)
+- [x] Views: `resources/views/team/index.blade.php` — شبكة بطاقات مع شارة النوع، بيانات التواصل، زر واتساب
+- [x] Views: `resources/views/team/create.blade.php` و `edit.blade.php` و `_form.blade.php` — نموذج Alpine.js مع Radio للنوع
+- [x] `resources/views/layouts/app.blade.php` — رابط "الفريق" في قسم الأعمال بالشريط الجانبي
+- [x] `routes/web.php` — `Route::resource('team', TeamMemberController::class)` + `Route::post('projects/{project}/pay-team/{serviceId}', ...)`
+- [x] `app/Http/Controllers/ProjectController.php` — تمرير `$teamMembers` لـ create/edit، sync `team_member_id`/`team_cost`/`team_cost_paid` في pivot، دالة `payTeamMember()` تُنشئ Transaction مصروف وتُحدِّث الـ pivot
+- [x] `resources/views/projects/_form.blade.php` — قائمة منسدلة لاختيار عضو الفريق وحقل تكلفته داخل كل خدمة
+- [x] `resources/views/projects/show.blade.php` — قسم "الفريق المعين على المشروع" مع أسماء الأعضاء والتكاليف وزر "تسجيل دفعة"
+- [x] `app/Support/Enums/ProjectType.php` — إصلاح `icon()` من نص Heroicon (`'briefcase'`) إلى Emoji (`'💼'`)
+
+**الآلية:** عند الضغط على "تسجيل دفعة" → يُنشئ تلقائياً معاملة مصروف للمشروع باسم عضو الفريق، ويُسجِّل `team_cost_paid = true` في pivot.
+
+---
+
+### ✅ 16.11 — نظام الشروحات (Help Center)
+**الحالة:** `completed`
+
+**المنجز:**
+- [x] `app/Http/Controllers/HelpController.php` — Controller بسيط يعرض صفحة المساعدة
+- [x] `resources/views/help/index.blade.php` — صفحة شاملة بـ 10 تبويبات (Alpine.js): البداية السريعة، المشاريع، المعاملات، العملاء، الفريق، الديون، الميزانية، الالتزامات الثابتة، التقارير، نصائح وحيل
+- [x] `resources/views/components/tooltip.blade.php` — مكوّن Tooltip عام يقبل `text`، `position` (top/bottom/left/right)، `width` — يستخدم Alpine.js hover
+- [x] `resources/views/components/onboarding-modal.blade.php` — Modal ترحيب متعدد الخطوات (5 خطوات): يظهر تلقائياً للمستخدم الجديد، يتحقق من `onboarding_dismissed_at`، يُغلق بـ fetch POST + يحفظ الحالة
+- [x] `resources/views/components/help-section.blade.php` — مكوّن Blade لعنوان قسم
+- [x] `resources/views/components/help-card.blade.php` — بطاقة شرح بعنوان ومحتوى
+- [x] `resources/views/components/help-step.blade.php` — خطوة مرقمة بشكل بصري
+- [x] `resources/views/components/help-tip.blade.php` — مربع نصيحة باللون الأصفر
+- [x] `routes/web.php` — إضافة `Route::get('/help', ...)` باسم `help.index`
+- [x] `resources/views/layouts/app.blade.php` — إضافة قسم "الدعم" مع رابط "مركز المساعدة" في الشريط الجانبي، وتضمين `<x-onboarding-modal />` قبل نهاية الصفحة
+
+**آلية الـ Onboarding Modal:**
+- يظهر تلقائياً لأي مستخدم لم يُسجَّل فيه `onboarding_dismissed_at`
+- 5 خطوات: ترحيب → المشاريع → المعاملات → العملاء/الفريق → جاهز!
+- شريط تقدم علوي + نقاط تنقل سفلية
+- زر الإغلاق (X) يُرسل POST فوراً لـ `onboarding.dismiss` بدون reload
+- الخطوة الأخيرة تقود مباشرةً لإنشاء المشروع الأول
+
+---
+
 ### ⚠️ إجراءات مطلوبة على السيرفر
 ```bash
 # تشغيل على السيرفر بعد رفع الملفات
@@ -434,6 +528,12 @@ php artisan optimize:clear && php artisan optimize
 | 16.3 | موديول الخدمات | ✅ |
 | 16.4 | ربط الخدمات بالمشاريع | ✅ |
 | 16.5 | حقل جهة الدفع (Payee) | ✅ |
+| 16.6 | واتساب في بطاقات العملاء/الفريق | ✅ |
+| 16.7 | قيمة العقد + ميزانية التكاليف | ✅ |
+| 16.8 | إعادة تصميم الخدمات + إضافة سريعة | ✅ |
+| 16.9 | Tooltips على المقاييس المالية | ✅ |
+| 16.10 | موديول الفريق (Team Members) | ✅ |
+| 16.11 | نظام الشروحات (Help Center) | ✅ |
 | — | ربط مزود الدفع | ⬜ مستقبلي |
 | — | REST API | ⬜ مستقبلي |
 

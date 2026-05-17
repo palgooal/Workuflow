@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtController;
@@ -37,6 +39,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
         ->names('clients');
 
+    // Team Members
+    Route::resource('team', TeamMemberController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+        ->names('team');
+
+    // Pay team member for a service
+    Route::post('projects/{project}/pay-team/{serviceId}', [ProjectController::class, 'payTeamMember'])->name('projects.pay-team');
+
     // Services (catalog)
     Route::resource('services', ServiceController::class)
         ->only(['index', 'store', 'destroy'])
@@ -63,6 +73,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Onboarding — U.3
     Route::post('/onboarding/dismiss', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
+
+    // Help Center
+    Route::get('/help', [HelpController::class, 'index'])->name('help.index');
 
     // Reports Export — U.2
     Route::get('/reports/export/pdf',   [ReportExportController::class, 'pdf'])->name('reports.export.pdf');

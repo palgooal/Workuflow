@@ -4,19 +4,22 @@
          selectedColor: '{{ old('color', $project->color ?? '#6366F1') }}',
          selectedType: '{{ old('type', $project->type->value ?? 'business') }}',
          allServiceOptions: {{ $services->map(fn($s) => ['id' => $s->id, 'name_ar' => $s->name_ar ?? $s->name])->toJson() }},
+         teamMembers: {{ $teamMembers->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toJson() }},
          services: {{ json_encode(
              old('services', isset($project)
                  ? $project->services->map(fn($s) => [
-                     'service_id' => (string) $s->id,
-                     'amount'     => $s->pivot->amount,
-                     'type'       => $s->pivot->type,
-                     'notes'      => $s->pivot->notes ?? '',
+                     'service_id'     => (string) $s->id,
+                     'amount'         => $s->pivot->amount,
+                     'type'           => $s->pivot->type,
+                     'notes'          => $s->pivot->notes ?? '',
+                     'team_member_id' => (string) ($s->pivot->team_member_id ?? ''),
+                     'team_cost'      => $s->pivot->team_cost ?? '',
                  ])->toArray()
                  : []
              )
          ) }},
          addService() {
-             this.services.push({ service_id: '', amount: '', type: 'income', notes: '' });
+             this.services.push({ service_id: '', amount: '', type: 'income', notes: '', team_member_id: '', team_cost: '' });
          },
          removeService(index) {
              this.services.splice(index, 1);
@@ -263,7 +266,7 @@
                         if (! res.ok) throw new Error('فشل الحفظ');
                         const svc = await res.json();
                         allServiceOptions.push({ id: svc.id, name_ar: svc.name_ar });
-                        services.push({ service_id: String(svc.id), amount: '', type: 'income', notes: '' });
+                        services.push({ service_id: String(svc.id), amount: '', type: 'income', notes: '', team_member_id: '', team_cost: '' });
                         this.quickName   = '';
                         this.quickAddOpen = false;
                     } catch (e) {
@@ -378,6 +381,29 @@
                                    placeholder="ملاحظات (اختياري)..."
                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600
                                           focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white">
+                        </div>
+
+                        {{-- Team Member Assignment --}}
+                        <div class="col-span-12 grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 mt-1">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">المسؤول عن الخدمة</label>
+                                <select :name="`services[${index}][team_member_id]`" x-model="svc.team_member_id"
+                                        class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white
+                                               focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">— بدون تعيين —</option>
+                                    <template x-for="member in teamMembers" :key="member.id">
+                                        <option :value="String(member.id)" x-text="member.name"
+                                                :selected="String(member.id) === String(svc.team_member_id)"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">تكلفته على المشروع</label>
+                                <input type="number" :name="`services[${index}][team_cost]`" x-model="svc.team_cost"
+                                       min="0" step="0.01" placeholder="0.00"
+                                       class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm
+                                              focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
                         </div>
 
                     </div>

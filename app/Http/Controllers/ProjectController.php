@@ -12,7 +12,10 @@ use App\Modules\Projects\DTOs\ProjectData;
 use App\Modules\Projects\Services\ProjectFinancialService;
 use App\Models\Client;
 use App\Models\Service;
+use App\Models\TeamMember;
 use App\Support\Enums\ProjectType;
+use App\Support\Enums\TransactionType;
+use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -42,12 +45,13 @@ class ProjectController extends Controller
     {
         $this->authorize('create', Project::class);
 
-        $currencies = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
-        $colors     = $this->defaultColors();
-        $clients    = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
-        $services   = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
+        $currencies  = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $colors      = $this->defaultColors();
+        $clients     = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
+        $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
+        $teamMembers = TeamMember::where('user_id', auth()->id())->active()->orderBy('name')->get();
 
-        return view('projects.create', compact('currencies', 'colors', 'clients', 'services'));
+        return view('projects.create', compact('currencies', 'colors', 'clients', 'services', 'teamMembers'));
     }
 
     public function store(StoreProjectRequest $request): RedirectResponse
@@ -70,9 +74,12 @@ class ProjectController extends Controller
             $syncData = [];
             foreach ($validated['services'] as $svc) {
                 $syncData[$svc['service_id']] = [
-                    'amount' => $svc['amount'],
-                    'type'   => $svc['type'],
-                    'notes'  => $svc['notes'] ?? null,
+                    'amount'         => $svc['amount'],
+                    'type'           => $svc['type'],
+                    'notes'          => $svc['notes'] ?? null,
+                    'team_member_id' => $svc['team_member_id'] ?? null,
+                    'team_cost'      => $svc['team_cost'] ?? null,
+                    'team_cost_paid' => false,
                 ];
             }
             $project->services()->sync($syncData);
@@ -105,12 +112,13 @@ class ProjectController extends Controller
         $this->authorize('update', $project);
 
         $project->load(['client', 'services']);
-        $currencies = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
-        $colors     = $this->defaultColors();
-        $clients    = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
-        $services   = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
+        $currencies  = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $colors      = $this->defaultColors();
+        $clients     = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
+        $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
+        $teamMembers = TeamMember::where('user_id', auth()->id())->active()->orderBy('name')->get();
 
-        return view('projects.edit', compact('project', 'currencies', 'colors', 'clients', 'services'));
+        return view('projects.edit', compact('project', 'currencies', 'colors', 'clients', 'services', 'teamMembers'));
     }
 
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
@@ -132,9 +140,12 @@ class ProjectController extends Controller
             $syncData = [];
             foreach ($validated['services'] as $svc) {
                 $syncData[$svc['service_id']] = [
-                    'amount' => $svc['amount'],
-                    'type'   => $svc['type'],
-                    'notes'  => $svc['notes'] ?? null,
+                    'amount'         => $svc['amount'],
+                    'type'           => $svc['type'],
+                    'notes'          => $svc['notes'] ?? null,
+                    'team_member_id' => $svc['team_member_id'] ?? null,
+                    'team_cost'      => $svc['team_cost'] ?? null,
+                    'team_cost_paid' => false,
                 ];
             }
             $project->services()->sync($syncData);
@@ -157,6 +168,34 @@ class ProjectController extends Controller
         return redirect()
             ->route('projects.index')
             ->with('success', 'تم حذف المشروع "' . $name . '".');
+    }
+
+    public function payTeamMember(Project $project, string $serviceId): RedirectResponse
+    {
+        $this->authorize('update', $project);
+
+        $service = $project->services()->where('service_id', $serviceId)->first();
+        if (! $service || ! $service->pivot->team_cost || $service->pivot->team_cost_paid) {
+            return back()->with('error', 'لا يمكن تسجيل الدفعة.');
+        }
+
+        $member = TeamMember::find($service->pivot->team_member_id);
+
+        Transaction::create([
+            'user_id'          => auth()->id(),
+            'project_id'       => $project->id,
+            'type'             => TransactionType::Expense,
+            'amount'           => $service->pivot->team_cost,
+            'currency'         => $project->currency,
+            'description'      => 'دفعة لـ ' . ($member?->name ?? 'فريق') . ' - ' . ($service->name_ar ?? $service->name),
+            'payee'            => $member?->name,
+            'transaction_date' => now(),
+            'reference'        => 'team_service_' . $serviceId,
+        ]);
+
+        $project->services()->updateExistingPivot($serviceId, ['team_cost_paid' => true]);
+
+        return back()->with('success', 'تم تسجيل الدفعة كمصروف على المشروع.');
     }
 
     private function defaultColors(): array

@@ -238,6 +238,61 @@
     </div>
     @endif
 
+    {{-- Team Assignments --}}
+    @php
+        $teamAssignments = $project->services->filter(fn($s) => $s->pivot->team_member_id);
+    @endphp
+    @if($teamAssignments->count() > 0)
+    <div class="bg-white rounded-2xl border border-gray-100 p-5">
+        <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            الفريق المعين على المشروع
+        </h3>
+        <div class="space-y-3">
+            @foreach($teamAssignments as $service)
+            @php $member = \App\Models\TeamMember::find($service->pivot->team_member_id); @endphp
+            @if($member)
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                        {{ mb_substr($member->name, 0, 1) }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ $member->name }}</p>
+                        <p class="text-xs text-gray-400">{{ $service->name_ar ?? $service->name }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    @if($service->pivot->team_cost)
+                    <div class="text-left">
+                        <p class="text-sm font-semibold {{ $service->pivot->team_cost_paid ? 'text-green-600' : 'text-gray-900' }}">
+                            {{ number_format($service->pivot->team_cost, 2) }} {{ $project->currency }}
+                        </p>
+                        <p class="text-xs {{ $service->pivot->team_cost_paid ? 'text-green-500' : 'text-amber-500' }}">
+                            {{ $service->pivot->team_cost_paid ? '✅ تم الدفع' : '⏳ لم يُدفع' }}
+                        </p>
+                    </div>
+                    @if(! $service->pivot->team_cost_paid)
+                    <form method="POST" action="{{ route('projects.pay-team', [$project, $service->id]) }}">
+                        @csrf
+                        <button type="submit"
+                                class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition">
+                            تسجيل دفعة
+                        </button>
+                    </form>
+                    @endif
+                    @endif
+                </div>
+            </div>
+            @endif
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     {{-- Recent Transactions --}}
     <div class="bg-white rounded-2xl border border-gray-100">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
