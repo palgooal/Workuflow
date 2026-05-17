@@ -10,18 +10,26 @@
 @if($showOnboarding)
 <div
     x-data="{
-        open: true,
+        open: false,
         step: 1,
         totalSteps: 5,
+        init() {
+            // تحقق من localStorage أولاً (النسخة الاحتياطية الفورية)
+            if (localStorage.getItem('onboarding_dismissed') !== '1') {
+                this.open = true;
+            }
+        },
         dismiss() {
             this.open = false;
-            fetch('{{ route('onboarding.dismiss') }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                    'Content-Type': 'application/json'
-                }
-            });
+            // حفظ فوري في المتصفح — يعمل حتى لو فشل الطلب للسيرفر
+            try { localStorage.setItem('onboarding_dismissed', '1'); } catch(e) {}
+            // إرسال للسيرفر باستخدام sendBeacon — مضمون الوصول حتى عند تغيير الصفحة
+            const token = document.querySelector('meta[name=csrf-token]')?.content;
+            if (token) {
+                const data = new FormData();
+                data.append('_token', token);
+                navigator.sendBeacon('{{ route('onboarding.dismiss') }}', data);
+            }
         }
     }"
     x-show="open"
