@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مرحباً بك في Workuflow</title>
+    <title>مرحباً بك في دراهم</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
 
@@ -238,7 +238,7 @@
         </div>
 
         <p class="intro">
-            يسعدنا انضمامك إلى <strong>Workuflow</strong> — منصتك الشاملة لإدارة مشاريعك
+            يسعدنا انضمامك إلى <strong>دراهم</strong> — منصتك الشاملة لإدارة مشاريعك
             وتتبع معاملاتك المالية باحترافية وسهولة.
             حسابك جاهز الآن، وكل أدواتك بانتظارك!
         </p>
@@ -276,7 +276,7 @@
                 <div class="feature-icon"><div class="feature-icon-inner">🔔</div></div>
                 <div class="feature-text">
                     <div class="feature-name">تنبيهات ذكية</div>
-                    <div class="feature-desc">لن تفوتك ديون مستحقة أو تجاوز ميزانية — Workuflow يتابع نيابةً عنك.</div>
+                    <div class="feature-desc">لن تفوتك ديون مستحقة أو تجاوز ميزانية — دراهم يتابع نيابةً عنك.</div>
                 </div>
             </div>
         </div>
@@ -292,7 +292,7 @@
         <hr class="divider">
 
         <p class="note">
-            تلقيت هذا البريد لأنك سجّلت مؤخراً في Workuflow.
+            تلقيت هذا البريد لأنك سجّلت مؤخراً في دراهم.
             إذا لم تكن أنت من فعل ذلك، يمكنك تجاهل هذه الرسالة بأمان.
             لأي استفسار تواصل معنا على
             <a href="mailto:{{ config('mail.from.address') }}" style="color:#4f46e5;">{{ config('mail.from.address') }}</a>.
@@ -302,10 +302,10 @@
 
     {{-- Footer --}}
     <div class="footer">
-        <div class="footer-brand">Workuflow</div>
+        <div class="footer-brand">دراهم</div>
         <div class="footer-text">
             منصة إدارة الأعمال والمالية الشخصية<br>
-            © {{ date('Y') }} Workuflow. جميع الحقوق محفوظة.
+            © {{ date('Y') }} دراهم. جميع الحقوق محفوظة.
         </div>
         <div class="footer-links">
             <a href="{{ $dashboardUrl }}" class="footer-link">لوحة التحكم</a>

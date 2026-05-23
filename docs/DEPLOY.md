@@ -1,6 +1,6 @@
 # 🚀 دليل النشر على Shared Hosting (cPanel)
 
-> Workuflow — Laravel 12 / PHP 8.2  
+> دراهم — Laravel 12 / PHP 8.2  
 > آخر تحديث: مايو 2026
 
 ---
@@ -100,7 +100,7 @@ git clone https://github.com/your-repo/workuflow.git workuflow
 3. انسخ محتوى `.env.production.example` وعدّل القيم:
 
 ```env
-APP_NAME=Workuflow
+APP_NAME=دراهم
 APP_ENV=production
 APP_KEY=                   # سيتم توليده في الخطوة 6
 APP_DEBUG=false

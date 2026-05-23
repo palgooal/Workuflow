@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Workuflow') }}{{ isset($title) ? ' — ' . $title : '' }}</title>
+    <meta name="description" content="دراهم — منصة إدارة مال وأعمال للمستقلين وأصحاب المشاريع">
+    <title>{{ config('app.name', 'دراهم') }}{{ isset($title) ? ' — ' . $title : '' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -25,7 +26,7 @@
                             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <span class="text-white font-bold text-xl">Workuflow</span>
+                <span class="text-white font-bold text-xl">دراهم</span>
             </div>
 
             {{-- Headline --}}
@@ -55,7 +56,7 @@
             </div>
         </div>
 
-        <p class="text-indigo-300 text-sm">© {{ date('Y') }} Workuflow. جميع الحقوق محفوظة.</p>
+        <p class="text-indigo-300 text-sm">© {{ date('Y') }} دراهم. جميع الحقوق محفوظة.</p>
     </div>
 
     {{-- الجانب الأيمن — النموذج --}}
@@ -70,7 +71,7 @@
                             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <span class="font-bold text-gray-900 text-lg">Workuflow</span>
+                <span class="font-bold text-gray-900 text-lg">دراهم</span>
             </div>
 
             {{ $slot }}

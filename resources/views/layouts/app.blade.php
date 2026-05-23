@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', config('app.name', 'Workuflow')) — {{ config('app.name', 'Workuflow') }}</title>
+    <meta name="description" content="دراهم — منصة إدارة مال وأعمال للمستقلين وأصحاب المشاريع">
+    <title>@yield('title', config('app.name', 'دراهم')) — {{ config('app.name', 'دراهم') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -33,8 +34,8 @@
                 </svg>
             </div>
             <div>
-                <span class="font-bold text-gray-900">Workuflow</span>
-                <p class="text-xs text-gray-400">{{ auth()->user()->currency ?? 'SAR' }}</p>
+                <span class="font-bold text-gray-900">دراهم</span>
+                <p class="text-xs text-gray-400">مال وأعمال</p>
             </div>
         </div>
 

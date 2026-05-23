@@ -13,6 +13,12 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                tajawal: ['Tajawal', 'sans-serif'],
+                alexandria: ['Alexandria', 'sans-serif'],
+            },
+            colors: {
+                brand:  '#3730A3',
+                accent: '#2DCEA8',
             },
         },
     },

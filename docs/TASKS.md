@@ -1,4 +1,4 @@
-# ✅ خطة المهام الكاملة — Workuflow SaaS Financial Platform
+# ✅ خطة المهام الكاملة — دراهم SaaS Financial Platform
 
 > وثيقة تتبع المهام — Laravel 12 / PHP 8.2  
 > آخر تحديث: مايو 2026

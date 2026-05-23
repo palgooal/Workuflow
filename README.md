@@ -1,4 +1,4 @@
-# 💰 Workuflow — SaaS Financial Platform
+# 💰 دراهم — SaaS Financial Platform
 
 > نظّم فلوسك ومشاريعك كلها من مكان واحد واعرف بالضبط أين يذهب ربحك.
 
@@ -172,7 +172,7 @@ Project::with(['transactions', 'debts'])->get();
 ## 🔑 متغيرات البيئة المهمة
 
 ```env
-APP_NAME=Workuflow
+APP_NAME=دراهم
 APP_ENV=local
 APP_URL=http://workuflow.test
 
@@ -210,4 +210,4 @@ Phase 14 → الإنتاج والـ API
 
 ---
 
-*Workuflow © 2026 — SaaS Financial Platform*
+*دراهم © 2026 — SaaS Financial Platform*

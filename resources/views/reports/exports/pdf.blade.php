@@ -157,7 +157,7 @@
 
     {{-- Header --}}
     <div class="header">
-        <div class="brand">Workuflow</div>
+        <div class="brand">دراهم</div>
         <div class="brand-sub">منصة إدارة الأعمال والمالية</div>
         <div class="report-meta">
             تاريخ الإنشاء: {{ now()->format('Y-m-d H:i') }} &nbsp;|&nbsp; {{ auth()->user()->name }}
@@ -242,7 +242,7 @@
 
     {{-- Footer --}}
     <div class="footer">
-        تم إنشاء هذا التقرير تلقائياً بواسطة Workuflow — {{ config('app.url') }}<br>
+        تم إنشاء هذا التقرير تلقائياً بواسطة دراهم — {{ config('app.url') }}<br>
         جميع الأرقام بالعملة الافتراضية للحساب ({{ auth()->user()->currency }})
     </div>
 

@@ -13,7 +13,7 @@
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🚀</div>
                 <div>
-                    <h3 class="text-sm font-bold text-white">ابدأ رحلتك مع Workuflow</h3>
+                    <h3 class="text-sm font-bold text-white">ابدأ رحلتك مع دراهم</h3>
                     <p class="text-xs text-indigo-200 mt-0.5">
                         {{ $completed }} من {{ $total }} خطوات مكتملة
                     </p>
@@ -110,7 +110,7 @@
         @if($progress === 100)
             <div class="mt-3 p-3 bg-green-50 border border-green-100 rounded-xl text-center">
                 <p class="text-sm font-semibold text-green-700">🎉 أحسنت! أكملت جميع الخطوات</p>
-                <p class="text-xs text-green-600 mt-0.5">حسابك جاهز بالكامل. استمتع بـ Workuflow!</p>
+                <p class="text-xs text-green-600 mt-0.5">حسابك جاهز بالكامل. استمتع بـ دراهم!</p>
             </div>
         @endif
     </div>

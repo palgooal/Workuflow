@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Workuflow REST API  — v1
+| دراهم REST API  — v1
 |--------------------------------------------------------------------------
 | المصادقة: Laravel Sanctum (Bearer Token)
 | التثبيت: composer require laravel/sanctum

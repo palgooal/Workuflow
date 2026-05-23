@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors(['primary' => Color::Indigo])
-            ->brandName('Workuflow Admin')
+            ->brandName('دراهم — Admin')
             ->favicon(asset('favicon.ico'))
 
             // Auto-discover Resources, Pages, Widgets

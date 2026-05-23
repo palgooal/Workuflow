@@ -20,7 +20,7 @@ class WelcomeEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'مرحباً بك في Workuflow 🎉',
+            subject: 'مرحباً بك في دراهم 🎉',
         );
     }
 
