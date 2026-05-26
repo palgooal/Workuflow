@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <form method="POST" action="<?php echo e(route('clients.update', $client->public_id)); ?>" class="space-y-5">
+    <form id="edit-form" method="POST" action="<?php echo e(route('clients.update', $client->public_id)); ?>" class="space-y-5">
         <?php echo csrf_field(); ?>
         <?php echo method_field('PUT'); ?>
 
@@ -151,16 +151,14 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
         
         <div class="flex items-center justify-between">
+            
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('delete', $client)): ?>
-            <form method="POST" action="<?php echo e(route('clients.destroy', $client->public_id)); ?>"
-                  onsubmit="return confirm('هل أنت متأكد من حذف هذا العميل نهائياً؟')">
-                <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
-                <button type="submit"
-                        class="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 border border-red-200
-                               rounded-xl transition">
-                    حذف العميل
-                </button>
-            </form>
+            <button type="submit" form="delete-form"
+                    onclick="return confirm('هل أنت متأكد من حذف هذا العميل نهائياً؟')"
+                    class="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 border border-red-200
+                           rounded-xl transition">
+                حذف العميل
+            </button>
             <?php else: ?> <div></div> <?php endif; ?>
 
             <div class="flex gap-3">
@@ -169,7 +167,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                           rounded-xl hover:bg-gray-50 transition">
                     إلغاء
                 </a>
-                <button type="submit"
+                <button type="submit" form="edit-form"
                         class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm
                                font-medium rounded-xl transition">
                     حفظ التعديلات
@@ -178,6 +176,14 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         </div>
 
     </form>
+
+    
+    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('delete', $client)): ?>
+    <form id="delete-form" method="POST" action="<?php echo e(route('clients.destroy', $client->public_id)); ?>" class="hidden">
+        <?php echo csrf_field(); ?>
+        <?php echo method_field('DELETE'); ?>
+    </form>
+    <?php endif; ?>
 
 </div>
 <?php $__env->stopSection(); ?>

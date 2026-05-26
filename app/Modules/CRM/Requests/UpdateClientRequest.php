@@ -11,14 +11,24 @@ class UpdateClientRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $client = $this->route('client');
+        $publicId = $this->route('client');
+
+        if (! $publicId) {
+            return false;
+        }
+
+        $client = \App\Models\Client::where('public_id', $publicId)
+            ->where('user_id', $this->user()->id)
+            ->first();
 
         return $client && $this->user()->can('update', $client);
     }
 
     public function rules(): array
     {
-        $clientId = $this->route('client')?->id;
+        $clientId = \App\Models\Client::where('public_id', $this->route('client'))
+            ->where('user_id', $this->user()->id)
+            ->value('id');
 
         return [
             'name'    => ['sometimes', 'required', 'string', 'max:100'],

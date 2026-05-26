@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('clients.update', $client->public_id) }}" class="space-y-5">
+    <form id="edit-form" method="POST" action="{{ route('clients.update', $client->public_id) }}" class="space-y-5">
         @csrf
         @method('PUT')
 
@@ -135,18 +135,16 @@
             </div>
         </div>
 
-        {{-- أزرار --}}
+        {{-- أزرار التعديل --}}
         <div class="flex items-center justify-between">
+            {{-- زر الحذف: يُرسل فورم الحذف المنفصل خارج الـ form --}}
             @can('delete', $client)
-            <form method="POST" action="{{ route('clients.destroy', $client->public_id) }}"
-                  onsubmit="return confirm('هل أنت متأكد من حذف هذا العميل نهائياً؟')">
-                @csrf @method('DELETE')
-                <button type="submit"
-                        class="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 border border-red-200
-                               rounded-xl transition">
-                    حذف العميل
-                </button>
-            </form>
+            <button type="submit" form="delete-form"
+                    onclick="return confirm('هل أنت متأكد من حذف هذا العميل نهائياً؟')"
+                    class="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 border border-red-200
+                           rounded-xl transition">
+                حذف العميل
+            </button>
             @else <div></div> @endcan
 
             <div class="flex gap-3">
@@ -155,7 +153,7 @@
                           rounded-xl hover:bg-gray-50 transition">
                     إلغاء
                 </a>
-                <button type="submit"
+                <button type="submit" form="edit-form"
                         class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm
                                font-medium rounded-xl transition">
                     حفظ التعديلات
@@ -164,6 +162,14 @@
         </div>
 
     </form>
+
+    {{-- فورم الحذف منفصل تماماً خارج فورم التعديل --}}
+    @can('delete', $client)
+    <form id="delete-form" method="POST" action="{{ route('clients.destroy', $client->public_id) }}" class="hidden">
+        @csrf
+        @method('DELETE')
+    </form>
+    @endcan
 
 </div>
 @endsection

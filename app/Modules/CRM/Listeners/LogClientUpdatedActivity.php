@@ -25,7 +25,10 @@ class LogClientUpdatedActivity
             $from = $event->before['status'] ?? '—';
             $to   = $event->after['status']  ?? '—';
 
-            $this->logger->statusChanged($clientId, $userId, (string) $from, (string) $to);
+            $fromStr = $from instanceof \BackedEnum ? $from->value : (string) $from;
+            $toStr   = $to   instanceof \BackedEnum ? $to->value   : (string) $to;
+
+            $this->logger->statusChanged($clientId, $userId, $fromStr, $toStr);
         }
 
         // تسجيل الحقول الأخرى كـ field_updated
