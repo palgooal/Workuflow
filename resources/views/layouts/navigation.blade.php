@@ -13,7 +13,28 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                        {{ __('لوحة التحكم') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('clients.index')" :active="request()->routeIs('clients.*')">
+                        {{ __('العملاء') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                        {{ __('المشاريع') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+                        {{ __('المعاملات') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('clients.follow-ups.index')" :active="request()->routeIs('clients.follow-ups.*')">
+                        {{ __('المتابعات') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('clients.segments.index')" :active="request()->routeIs('clients.segments.*')">
+                        {{ __('الشرائح') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('clients.automation-rules.index')" :active="request()->routeIs('clients.automation-rules.*')">
+                        {{ __('الأتمتة') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                        {{ __('التقارير') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -68,7 +89,28 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+                {{ __('لوحة التحكم') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('clients.index')" :active="request()->routeIs('clients.*')">
+                {{ __('العملاء') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                {{ __('المشاريع') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+                {{ __('المعاملات') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('clients.follow-ups.index')" :active="request()->routeIs('clients.follow-ups.*')">
+                {{ __('المتابعات') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('clients.segments.index')" :active="request()->routeIs('clients.segments.*')">
+                {{ __('الشرائح') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('clients.automation-rules.index')" :active="request()->routeIs('clients.automation-rules.*')">
+                {{ __('الأتمتة') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                {{ __('التقارير') }}
             </x-responsive-nav-link>
         </div>
 

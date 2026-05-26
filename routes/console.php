@@ -37,5 +37,28 @@ Schedule::command('recurring:process')
 // تنظيف الجلسات المنتهية الصلاحية يومياً
 Schedule::command('session:gc')->daily()->runInBackground();
 
+// ==================== CRM — Sprint 5 ====================
+
+// إعادة حساب مؤشرات صحة العملاء + تطبيق الوسوم الذكية يومياً الساعة 02:00
+Schedule::command('crm:recalculate-health-scores --apply-tags')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/crm-health-scores.log'));
+
+// مطابقة إجماليات العملاء يومياً الساعة 03:00
+Schedule::command('crm:reconcile-aggregates')
+    ->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/crm-reconcile.log'));
+
+// تحديث أعداد الشرائح الديناميكية يومياً الساعة 03:30
+Schedule::command('crm:refresh-segments')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/crm-segments.log'));
+
 // إحماء الـ Cache كل ساعة (اختياري في الإنتاج)
 // Schedule::command('cache:prune-stale-tags')->hourly();

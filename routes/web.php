@@ -34,10 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('subscription:projects')
         ->name('projects.store');
 
-    // Clients
-    Route::resource('clients', ClientController::class)
-        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
-        ->names('clients');
+    // Clients — تم نقله إلى CRM Module (routes/crm.php via CRMServiceProvider)
+    // Route::resource('clients', ...) — replaced by full CRM module
 
     // Team Members
     Route::resource('team', TeamMemberController::class)

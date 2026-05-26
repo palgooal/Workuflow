@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "laravel-debug", "runs": [{"id": "eval-1-silent-form-failure-with_skill", "prompt": "My Laravel form for adding a new client isn't working. When I click the submit button nothing visible happens \u2014 no error, no redirect, just stays on the same page. The form posts to /clients and the controller stores the client. How do I find out what's wrong and fix it?", "eval_id": 1, "outputs": [{"name": "response.md", "type": "text", "content": "# Diagnosing and Fixing a Silent Laravel Form Failure\n\nYour form posts to `/clients`, the controller runs, but nothing happens \u2014 no error, no redirect, just the same page sitting there. This is one of the most frustrating failure modes because there is no visible signal. This guide walks you through every likely cause in the order you should check them, with concrete fixes for each.\n\n---\n\n## Step 1 \u2014 Confirm a request is actually being sent\n\nBefore assuming it is a server-side problem, verify the browser is sending anything at all.\n\nOpen your browser DevTools (F12), go to the **Network** tab, then click Submit. Look for a `POST /clients` request in the list.\n\n**If no request appears at all**, the form is never submitted. Skip to the \"JavaScript blocking submission\" section below.\n\n**If a request appears**, click it and note the HTTP status code in the response:\n\n| Status | What it means |\n|--------|---------------|\n| 200 | The controller returned an HTML page (itself, or another one) instead of redirecting. |\n| 201 | The controller returned a JSON response \u2014 the browser rendered it as text. |\n| 302 | A redirect happened but something re-rendered the same page (unlikely but check the Location header). |\n| 422 | Validation failed \u2014 required fields are missing or invalid. |\n| 419 | CSRF token mismatch \u2014 missing `@csrf` in the form. |\n| 500 | Unhandled exception in the controller or service layer. |\n\nEach of these is a different root cause and has its own fix. Read the response body in the Network tab's Preview or Response pane \u2014 it will show the Ignition error page, raw JSON, or validation errors.\n\n---\n\n## Step 2 \u2014 Check the server-side log immediately\n\nEven before reading the browser response, tail the Laravel log:\n\n```bash\ntail -f storage/logs/laravel.log\n```\n\nThen submit the form again. Any exception \u2014 validation error, null constraint violation, missing relationship, listener failure \u2014 will appear here with a full stack trace. The log entry almost always points to the exact file and line number.\n\nIf the log shows nothing new at all after submitting, the request never reached PHP (check your web server configuration, missing rewrite rules, or a JavaScript block as described in Step 4).\n\n---\n\n## Step 3 \u2014 The most common causes and their fixes\n\n### Cause A: Missing `@csrf` directive (HTTP 419)\n\nEvery Laravel POST form must include the CSRF token. If it is absent, Laravel's middleware rejects the request with a 419 \"Page Expired\" response \u2014 which in some configurations just re-renders the same page silently.\n\n**Check your Blade form:**\n\n```blade\n<form method=\"POST\" action=\"{{ route('clients.store') }}\">\n    @csrf   {{-- This line MUST be here --}}\n    ...\n</form>\n```\n\nWithout `@csrf`, every POST will be rejected by `VerifyCsrfToken` middleware before it ever reaches your controller. Add it as the very first line inside the `<form>` tag.\n\n---\n\n### Cause B: Controller returns JSON instead of redirecting (HTTP 200/201 with JSON body)\n\nIf your controller method has a `: JsonResponse` return type or calls `response()->json(...)` unconditionally, a browser form submission will receive raw JSON. The browser does not know how to handle it, so it renders the JSON text or \u2014 if a JavaScript fetch interceptor is active \u2014 silently does nothing.\n\n**Symptom:** The Network tab shows a 200 or 201 response, and the response body contains `{\"data\": {...}, \"message\": \"Created.\"}`.\n\n**Fix \u2014 branch on `wantsJson()`:**\n\n```php\n// BEFORE \u2014 always returns JSON, breaks HTML form submissions\npublic function store(StoreClientRequest $request): JsonResponse\n{\n    $client = $this->clientService->create($request->validated());\n    return response()->json(['data' => $client, 'message' => 'Client created.'], 201);\n}\n\n// AFTER \u2014 returns JSON for AJAX/API calls, redirect for HTML form submissions\npublic function store(StoreClientRequest $request)  // remove the :JsonResponse annotation\n{\n    $client = $this->clientService->create($request->validated());\n\n    if ($request->wantsJson()) {\n        return response()->json(['data' => $client, 'message' => 'Client created.'], 201);\n    }\n\n    return redirect()\n        ->route('clients.index')\n        ->with('success', 'Client added successfully.');\n}\n```\n\nA regular HTML form submission never sends `Accept: application/json`, so `wantsJson()` returns `false` and the `redirect()` branch executes. Remove the `: JsonResponse` return-type annotation \u2014 PHP will enforce it and throw a TypeError if you leave it while returning a `RedirectResponse`.\n\n---\n\n### Cause C: Validation failure with no visible error (HTTP 422)\n\nLaravel's `FormRequest` validation redirects back to the form with errors when validation fails on an HTML request. If your form is not displaying `$errors`, the redirect back happens silently \u2014 you just see the same page.\n\n**Check 1 \u2014 Are you displaying validation errors in the Blade view?**\n\n```blade\n@if ($errors->any())\n    <div class=\"alert alert-danger\">\n        <ul>\n            @foreach ($errors->all() as $error)\n                <li>{{ $error }}</li>\n            @endforeach\n        </ul>\n    </div>\n@endif\n```\n\nAdd this block near the top of your form. If validation is failing, the errors will appear immediately.\n\n**Check 2 \u2014 Does the `FormRequest` require a field that is not in the form body?**\n\nA common trap: a `FormRequest` rule like `'client_id' => ['required', 'integer']` expects the value in the POST body, but the client ID only lives in the URL route parameter \u2014 not in any `<input>` the user fills out.\n\nLook at your `StoreClientRequest::rules()` method:\n\n```php\npublic function rules(): array\n{\n    return [\n        'name'       => ['required', 'string', 'max:255'],\n        'email'      => ['required', 'email'],\n        'client_id'  => ['required', 'integer'],  // <-- Is this coming from the form or the URL?\n    ];\n}\n```\n\nIf `client_id` (or any other FK or hidden value) is required but not present in the form, validation always fails. Fix it by adding a hidden input:\n\n```blade\n<form method=\"POST\" action=\"{{ route('clients.store') }}\">\n    @csrf\n    <input type=\"hidden\" name=\"client_id\" value=\"{{ $client->id }}\">\n    <input type=\"text\" name=\"name\" ...>\n    <input type=\"email\" name=\"email\" ...>\n    <button type=\"submit\">Add Client</button>\n</form>\n```\n\n---\n\n### Cause D: DTO or model `toArray()` sends explicit `null`, hitting a NOT NULL constraint (HTTP 500)\n\nIf your service layer uses a Data Transfer Object (DTO) to build the array passed to `Model::create()`, and that DTO includes `'column' => null` explicitly for optional fields, MySQL will throw `SQLSTATE[23000]: Integrity constraint violation: Column 'X' cannot be null`.\n\nThis happens because a column's `DEFAULT` value only applies when the column is **absent** from the INSERT statement. Passing `NULL` explicitly overrides the default.\n\n**Bad DTO:**\n\n```php\npublic function toArray(): array\n{\n    return [\n        'name'   => $this->name,\n        'source' => $this->source?->value,  // sends NULL when not provided\n        'status' => $this->status?->value,  // sends NULL when not provided\n    ];\n}\n```\n\n**Fixed DTO \u2014 omit null fields entirely:**\n\n```php\npublic function toArray(): array\n{\n    $data = [\n        'name'  => $this->name,\n        'email' => $this->email,\n    ];\n\n    if ($this->source !== null) {\n        $data['source'] = $this->source->value;\n    }\n    if ($this->status !== null) {\n        $data['status'] = $this->status->value;\n    }\n\n    return $data;\n}\n```\n\nNow when `source` and `status` are not provided, they are absent from the INSERT, and the database applies its DEFAULT values.\n\n---\n\n### Cause E: A JavaScript error is silently swallowing the submit event\n\nIf your app has a JavaScript event listener on the form's `submit` event (common with Alpine.js, Livewire, or custom JavaScript), an unhandled error inside that listener can call `event.preventDefault()` implicitly (some frameworks do this) and swallow the submission entirely.\n\n**Check for JS errors:**\n\n1. Open DevTools \u2192 Console tab\n2. Look for any red error messages\n3. Submit the form and watch for new errors appearing\n\n**Check which element is actually the submit button:**\n\nSometimes a `<div>` or `<a>` tag is styled to look like a submit button but has no form submission behavior. Verify:\n\n```html\n<!-- Correct \u2014 this submits the form -->\n<button type=\"submit\">Add Client</button>\n\n<!-- Wrong \u2014 this does nothing by default -->\n<div class=\"btn btn-primary\">Add Client</div>\n<a href=\"#\" class=\"btn btn-primary\">Add Client</a>\n```\n\n**Check that your form is not intercepted by a global AJAX handler:**\n\nSome admin templates (AdminLTE, Metronic, etc.) add jQuery event handlers that intercept all form submissions and send them as AJAX. If your controller returns a redirect, the AJAX handler discards the response and nothing happens.\n\nCheck for this in your layout JavaScript:\n\n```javascript\n// Look for something like this in your app.js or layout scripts:\n$('form').on('submit', function(e) {\n    e.preventDefault();\n    $.post(this.action, $(this).serialize(), function(response) {\n        // If controller returned a redirect, 'response' is the redirected page's HTML\n        // and no action is taken \u2014 the form just stays where it is\n    });\n});\n```\n\nIf this is present, either remove the global handler or make your controller return JSON consistently (see Cause B) and handle the JSON response in JavaScript.\n\n---\n\n### Cause F: An event listener or observer crashes silently\n\nLaravel fires model events (`creating`, `created`, etc.) and dispatches events like `ClientCreated` that listeners handle. If a listener throws an exception and the exception is caught somewhere upstream without being rethrown, the creation may partially succeed or fail without any visible feedback.\n\nCheck if you have listeners registered for client creation:\n\n```bash\ngrep -r \"ClientCreated\\|creating\\|created\" app/Listeners app/Observers app/Models/Client.php\n```\n\nIf a listener tries to write to an `activities` or `audit_log` table that does not exist yet (or has a schema mismatch), it throws, rolls back the transaction, and you see nothing.\n\n**Fix \u2014 wrap listener logic in try/catch:**\n\n```php\npublic function handle(ClientCreated $event): void\n{\n    try {\n        $this->activityLogger->logClientCreated($event->client);\n    } catch (\\Throwable $e) {\n        \\Log::warning('Activity logging failed for client ' . $event->client->id . ': ' . $e->getMessage());\n        // Do not rethrow \u2014 logging failure should not break client creation\n    }\n}\n```\n\n---\n\n### Cause G: Route not defined or pointing to wrong controller method\n\nVerify the route actually exists and maps to the right controller:\n\n```bash\nphp artisan route:list --name=clients\n```\n\nConfirm the output shows:\n- Method: `POST`\n- URI: `clients`\n- Action: `App\\Http\\Controllers\\ClientController@store` (or your actual namespace)\n\nIf the route is missing, check `routes/web.php` for:\n\n```php\nRoute::post('/clients', [ClientController::class, 'store'])->name('clients.store');\n// Or as a resource route:\nRoute::resource('clients', ClientController::class);\n```\n\nIf `Route::resource` is used, the `store` method is automatically mapped to `POST /clients`.\n\n---\n\n## Step 4 \u2014 Bypass JavaScript and force a direct server response\n\nThe most reliable diagnostic technique is to submit the form directly from the browser console, bypassing all JavaScript event handlers:\n\n```javascript\n// First, inspect ALL forms on the page \u2014 the first form is often a hidden logout form\nconst forms = document.querySelectorAll('form');\nArray.from(forms).map((f, i) => ({\n    index: i,\n    action: f.action,\n    method: f.method,\n    fields: Array.from(f.elements).map(e => e.name).filter(Boolean)\n}));\n```\n\nFind the form whose `action` ends in `/clients`, then fill it and submit:\n\n```javascript\nconst clientForm = forms[1]; // adjust the index based on the output above\nclientForm.querySelector('[name=\"name\"]').value = 'Test Client';\nclientForm.querySelector('[name=\"email\"]').value = 'test@example.com';\nclientForm.submit(); // This bypasses all JS event listeners\n```\n\n`form.submit()` sends the POST directly without triggering any `submit` event listeners, so you get the raw server response in the browser window. If the page now shows an error, a redirect, or a JSON blob \u2014 you have found the layer where the failure lives.\n\n---\n\n## Step 5 \u2014 Clear all caches before retesting\n\nAfter making any code change, stale cached Blade views and config can mask your fix:\n\n```bash\n# Clear everything at once (preferred)\nphp artisan optimize:clear\n\n# Or manually:\nrm -f storage/framework/views/*.php\nrm -rf storage/framework/cache/data/*\nrm -f bootstrap/cache/config.php\nrm -f bootstrap/cache/routes-v7.php\n```\n\nThen re-submit the form and confirm:\n1. The page redirects away from `/clients/create`\n2. A success message appears on the destination page\n3. The new client appears in the list\n4. `storage/logs/laravel.log` has no new errors\n\n---\n\n## Diagnostic checklist \u2014 work through this in order\n\n| # | Check | How to check |\n|---|-------|--------------|\n| 1 | Is `@csrf` present in the form? | Read the Blade file |\n| 2 | Is a POST request sent at all? | DevTools Network tab or `form.submit()` in console |\n| 3 | What HTTP status does the server return? | DevTools Network tab response |\n| 4 | Are there errors in `storage/logs/laravel.log`? | `tail -f storage/logs/laravel.log` |\n| 5 | Are validation errors displayed? | Add `@if ($errors->any())` block to Blade |\n| 6 | Does `FormRequest::rules()` require fields not in the form? | Read the FormRequest class |\n| 7 | Does the controller return `JsonResponse` unconditionally? | Read the `store()` method |\n| 8 | Does the DTO's `toArray()` include explicit `null` values? | Read the DTO class |\n| 9 | Is there a global JS form interceptor? | Check app.js, layout scripts |\n| 10 | Are there event listeners or observers that might throw? | `grep -r ClientCreated app/Listeners` |\n| 11 | Does `php artisan route:list` show the route? | Run in terminal |\n\nWork down this list in order. Most silent form failures are resolved by items 1\u20137. The full stack trace in `laravel.log` usually pinpoints the exact file and line.\n"}], "grading": null}, {"id": "eval-1-silent-form-failure-without_skill", "prompt": "My Laravel form for adding a new client isn't working. When I click the submit button nothing visible happens \u2014 no error, no redirect, just stays on the same page. The form posts to /clients and the controller stores the client. How do I find out what's wrong and fix it?", "eval_id": 1, "outputs": [{"name": "response.md", "type": "text", "content": "# Laravel Silent Form Failure: Diagnostic and Fix Guide\n\nWhen a Laravel form submits and nothing visible happens \u2014 no error, no redirect, just a silent page reload \u2014 there are several well-known root causes. This guide walks through every one of them in order of likelihood, with concrete checks and fixes for each.\n\n---\n\n## 1. Missing or Wrong CSRF Token\n\n**Most common cause of silent failure.** Laravel requires every POST form to include a `@csrf` directive (or a manual `_token` field). Without it, Laravel returns a `419 Page Expired` response. Some browser/server configurations silently swallow this response and reload the page.\n\n**Check:** Open browser DevTools \u2192 Network tab \u2192 submit the form \u2192 look at the response for the POST to `/clients`. If you see `419`, this is your problem.\n\n**Fix:** Add `@csrf` inside your `<form>` tag.\n\n```html\n<form method=\"POST\" action=\"/clients\">\n    @csrf\n    <!-- your fields -->\n    <button type=\"submit\">Add Client</button>\n</form>\n```\n\nIf you are using the `route()` helper, this is the correct pattern:\n\n```html\n<form method=\"POST\" action=\"{{ route('clients.store') }}\">\n    @csrf\n    ...\n</form>\n```\n\n---\n\n## 2. Validation Failing and Silently Redirecting Back\n\nLaravel's validation failure behavior redirects back to the form and flashes errors to the session. If your Blade view is not displaying `$errors`, you will see no feedback.\n\n**Check:** Add a temporary dump at the top of your Blade view:\n\n```blade\n@if ($errors->any())\n    <ul>\n        @foreach ($errors->all() as $error)\n            <li>{{ $error }}</li>\n        @endforeach\n    </ul>\n@endif\n```\n\nIf errors appear after this change, validation is failing. Fix either your validation rules or your form fields (name mismatches are common \u2014 e.g. the rule expects `email` but the input is named `client_email`).\n\n**In your controller**, ensure you are using `$request->validate()` or a Form Request, not just silently discarding bad input:\n\n```php\npublic function store(Request $request)\n{\n    $validated = $request->validate([\n        'name'  => 'required|string|max:255',\n        'email' => 'required|email|unique:clients,email',\n        // add all your rules here\n    ]);\n\n    Client::create($validated);\n\n    return redirect()->route('clients.index')->with('success', 'Client added.');\n}\n```\n\n---\n\n## 3. Missing `$fillable` on the Model (Silent Mass-Assignment Guard)\n\nIf `Client::create($data)` is called but the `$fillable` array on the model is empty or missing, Eloquent will insert a row with no data (or throw a `MassAssignmentException` in strict mode). In non-strict mode it silently does nothing useful.\n\n**Check:** Open `app/Models/Client.php` and look for `$fillable`.\n\n**Fix:** Add every column you want to save:\n\n```php\nclass Client extends Model\n{\n    protected $fillable = [\n        'name',\n        'email',\n        'phone',\n        // all columns that the form populates\n    ];\n}\n```\n\nAlternatively (not recommended for production) you can use `$guarded = []` to allow all fields, but explicit `$fillable` is safer.\n\n---\n\n## 4. Controller Not Returning a Redirect\n\nIf the `store` method does not return a redirect, Laravel returns a blank `200` response and the browser stays on the same URL \u2014 which looks exactly like \"nothing happened.\"\n\n**Check your controller's store method.** It must end with:\n\n```php\nreturn redirect()->route('clients.index');\n// or\nreturn redirect('/clients');\n// or\nreturn redirect()->back()->with('success', 'Saved.');\n```\n\nA common mistake is forgetting the `return` keyword:\n\n```php\n// BUG \u2014 missing return\nredirect()->route('clients.index');\n```\n\n---\n\n## 5. Route Not Registered or Pointing to the Wrong Method\n\nIf no route matches `POST /clients`, Laravel returns a `404` or `405 Method Not Allowed`. Again, DevTools will reveal this.\n\n**Check:** Run `php artisan route:list | grep clients` (or on Windows: `php artisan route:list` and scan the output). You should see a `POST` route for `/clients` pointing to `ClientController@store`.\n\n**Fix:** In `routes/web.php`, ensure you have one of:\n\n```php\nRoute::post('/clients', [ClientController::class, 'store']);\n// or if using resource routes:\nRoute::resource('clients', ClientController::class);\n```\n\nResource routes automatically create `POST /clients \u2192 store`, `GET /clients \u2192 index`, etc.\n\n---\n\n## 6. Form Action or Method Is Wrong\n\n**Check the rendered HTML.** In the browser, right-click the form \u2192 Inspect Element. Confirm:\n\n- `action` is `/clients` (or the full URL you expect)\n- `method` is `POST`\n\nA common mistake is an action that resolves to the wrong URL, e.g. `action=\"clients\"` (relative, resolves differently depending on current URL) vs `action=\"/clients\"` (absolute).\n\nAlways use the `route()` helper to avoid this class of bug:\n\n```html\n<form method=\"POST\" action=\"{{ route('clients.store') }}\">\n```\n\n---\n\n## 7. JavaScript Interference\n\nIf the page has JavaScript that listens to `submit` events and calls `event.preventDefault()`, the form will not submit natively.\n\n**Check:** In DevTools \u2192 Network tab, submit the form. If you see no network request at all, JavaScript is blocking the submission.\n\n**Quick test:** Temporarily disable JavaScript in the browser (DevTools \u2192 Settings \u2192 Disable JavaScript) and try again.\n\n**Fix:** Find the JS event listener that calls `preventDefault()` and either remove it, or ensure it calls `form.submit()` or uses `fetch`/`axios` to send the data programmatically and then handles the response.\n\n---\n\n## 8. Database Error Being Swallowed\n\nIf the database insert fails (e.g. a unique constraint violation, wrong column name, missing required column), Laravel may catch the exception silently depending on your error handling.\n\n**Check:** Look at `storage/logs/laravel.log` \u2014 this is always the first place to look for any exception. Run:\n\n```bash\ntail -n 100 storage/logs/laravel.log\n```\n\nOn Windows (PowerShell):\n\n```powershell\nGet-Content storage\\logs\\laravel.log -Tail 100\n```\n\n**Also check:** Make sure `APP_DEBUG=true` in your `.env` file during development. With debug off, many errors render a generic 500 page with no detail.\n\n---\n\n## 9. Session / Cookie Issues Preventing Redirect Flash\n\nIf `redirect()->with('success', ...)` is used but the success message never appears, sessions may not be persisting. This usually means:\n\n- The session driver is misconfigured (check `SESSION_DRIVER` in `.env`)\n- The session file directory (`storage/framework/sessions`) is not writable\n- You are mixing HTTPS and HTTP, causing the session cookie to be dropped\n\n**Fix:** Ensure storage is writable:\n\n```bash\nchmod -R 775 storage bootstrap/cache\n```\n\nAnd confirm your `.env`:\n\n```\nSESSION_DRIVER=file\nAPP_URL=http://localhost  # must match actual URL\n```\n\n---\n\n## 10. Middleware Blocking the Request\n\nCustom middleware on the route (or a global middleware) might be short-circuiting the request before it reaches the controller, returning a redirect that sends the user back to the form.\n\n**Check:** In `app/Http/Kernel.php` and your route definition, look for any middleware applied to `POST /clients`. Temporarily remove them one at a time to isolate the cause.\n\n---\n\n## Systematic Debugging Checklist\n\nWork through these steps in order \u2014 each one either reveals the problem or rules out a category:\n\n1. Open browser **DevTools \u2192 Network tab**. Submit the form. Note the HTTP status code of the POST request.\n   - `419` \u2192 CSRF token missing (fix: add `@csrf`)\n   - `404` \u2192 Route not registered (fix: add route)\n   - `405` \u2192 Method mismatch (fix: check `method=\"POST\"`)\n   - `302` \u2192 Redirect is happening \u2014 follow it to see where\n   - `200` with no redirect \u2192 Controller not returning redirect, or validation failing silently\n   - No request at all \u2192 JavaScript is blocking the form\n\n2. Check **`storage/logs/laravel.log`** for any exception stack traces.\n\n3. Temporarily add `dd($request->all())` at the very top of your `store` controller method. If nothing dumps, the controller is not being reached.\n\n4. Temporarily add `@if($errors->any())` error display to your Blade view to expose validation failures.\n\n5. Run `php artisan route:list` and verify the route exists and maps to the right controller/method.\n\n6. Verify `$fillable` on the `Client` model includes all form fields.\n\n---\n\n## Complete Working Example\n\n**routes/web.php**\n```php\nRoute::resource('clients', ClientController::class);\n```\n\n**app/Http/Controllers/ClientController.php**\n```php\npublic function store(Request $request)\n{\n    $validated = $request->validate([\n        'name'    => 'required|string|max:255',\n        'email'   => 'required|email|unique:clients,email',\n        'phone'   => 'nullable|string|max:20',\n    ]);\n\n    Client::create($validated);\n\n    return redirect()->route('clients.index')\n                     ->with('success', 'Client added successfully.');\n}\n```\n\n**app/Models/Client.php**\n```php\nclass Client extends Model\n{\n    protected $fillable = ['name', 'email', 'phone'];\n}\n```\n\n**resources/views/clients/create.blade.php**\n```blade\n@if ($errors->any())\n    <div class=\"alert alert-danger\">\n        <ul>\n            @foreach ($errors->all() as $error)\n                <li>{{ $error }}</li>\n            @endforeach\n        </ul>\n    </div>\n@endif\n\n@if (session('success'))\n    <div class=\"alert alert-success\">{{ session('success') }}</div>\n@endif\n\n<form method=\"POST\" action=\"{{ route('clients.store') }}\">\n    @csrf\n\n    <label>Name</label>\n    <input type=\"text\" name=\"name\" value=\"{{ old('name') }}\">\n\n    <label>Email</label>\n    <input type=\"email\" name=\"email\" value=\"{{ old('email') }}\">\n\n    <label>Phone</label>\n    <input type=\"text\" name=\"phone\" value=\"{{ old('phone') }}\">\n\n    <button type=\"submit\">Add Client</button>\n</form>\n```\n\n---\n\n## Summary of Root Causes by Symptom\n\n| Symptom in Network Tab | Most Likely Cause |\n|---|---|\n| No request fired at all | JavaScript `preventDefault()` without submission |\n| `419 Page Expired` | Missing `@csrf` |\n| `404 Not Found` | Route not registered |\n| `405 Method Not Allowed` | Form using GET instead of POST, or route registered as GET |\n| `302` redirect back to same page | Validation failing (check `$errors`) |\n| `200` with form re-rendered, no errors shown | Validation failing but errors not displayed in Blade |\n| `200` blank page or stays on same page | Controller not returning redirect |\n| `500 Server Error` | Exception in controller \u2014 check `laravel.log` |\n\nThe DevTools Network tab + `laravel.log` together will identify the root cause within a minute in virtually every case.\n"}], "grading": null}, {"id": "eval-2-null-constraint-with_skill", "prompt": "I'm getting a 500 error: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'source' cannot be null. My Laravel controller uses a DTO pattern \u2014 the CreateClientDTO has a nullable ?ClientSource $source property, and toArray() returns 'source' => $this->source?->value. The database column has DEFAULT 'direct'. Why is this happening and how do I fix it?", "eval_id": 2, "outputs": [{"name": "response.md", "type": "text", "content": "# Why `Column 'source' cannot be null` Despite `DEFAULT 'direct'`\n\n## Root Cause\n\nThe error occurs because of a subtle but critical distinction in how MySQL handles `NULL` values versus absent columns in an `INSERT` statement.\n\n### The MySQL DEFAULT Trap\n\nA column's `DEFAULT` value is **only applied when the column is entirely absent from the INSERT statement**. When your DTO's `toArray()` method explicitly includes `'source' => null`, MySQL receives:\n\n```sql\nINSERT INTO clients (user_id, name, source, ...) VALUES (1, 'Acme', NULL, ...)\n```\n\nThis is an explicit instruction to store `NULL`. MySQL obeys it \u2014 and then enforces the `NOT NULL` constraint, throwing `SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'source' cannot be null`.\n\nThe `DEFAULT 'direct'` would only kick in if the INSERT looked like:\n\n```sql\nINSERT INTO clients (user_id, name, ...) VALUES (1, 'Acme', ...)\n-- source column is absent \u2192 MySQL fills it with 'direct'\n```\n\nSo the sequence of events in your case is:\n\n1. Form submits without selecting a source value\n2. `CreateClientDTO` is constructed with `$source = null`\n3. `toArray()` evaluates `$this->source?->value` \u2192 `null` (nullsafe operator returns `null` when `$this->source` is `null`)\n4. The array includes `'source' => null`\n5. Eloquent builds an INSERT that explicitly sets `source = NULL`\n6. MySQL sees the explicit `NULL` and checks the `NOT NULL` constraint \u2192 **exception**\n\n### Why the Nullsafe Operator Doesn't Help Here\n\nThe nullsafe operator `?->` is not a guard that removes the key from the array. It is a shorthand for:\n\n```php\n$this->source !== null ? $this->source->value : null\n```\n\nSo when `$this->source` is `null`, the expression evaluates to `null`, and the key `'source'` is still present in the returned array with the value `null`.\n\n---\n\n## The Fix\n\n**Remove the key from the array entirely when the value is `null`.** This allows the database `DEFAULT` to apply.\n\n### Before (broken)\n\n```php\npublic function toArray(): array\n{\n    return [\n        'user_id' => $this->userId,\n        'name'    => $this->name,\n        'source'  => $this->source?->value,  // explicit null when not set \u2014 overrides DB default\n        'status'  => $this->status?->value,  // same problem\n    ];\n}\n```\n\n### After (correct)\n\n```php\npublic function toArray(): array\n{\n    $data = [\n        'user_id' => $this->userId,\n        'name'    => $this->name,\n    ];\n\n    if ($this->source !== null) {\n        $data['source'] = $this->source->value;\n    }\n\n    if ($this->status !== null) {\n        $data['status'] = $this->status->value;\n    }\n\n    return $data;\n}\n```\n\nWhen `$this->source` is `null`, the `source` key is never added to `$data`. Eloquent's INSERT will omit the column, and MySQL will apply the `DEFAULT 'direct'` automatically.\n\n---\n\n## Alternative Fix: Use `array_filter` (use with caution)\n\n```php\npublic function toArray(): array\n{\n    return array_filter([\n        'user_id' => $this->userId,\n        'name'    => $this->name,\n        'source'  => $this->source?->value,\n        'status'  => $this->status?->value,\n    ], fn($v) => $v !== null);\n}\n```\n\n**Warning:** `array_filter` without a callback also removes `false`, `0`, `''`, and `'0'`. Always use the explicit `fn($v) => $v !== null` callback to only strip `null`. This is safe but the conditional approach above is more explicit and easier to reason about.\n\n---\n\n## Alternative Fix: Set the Default in the DTO Constructor\n\nIf you prefer to keep a flat `toArray()`, set a default value in the DTO itself:\n\n```php\npublic function __construct(\n    public readonly int $userId,\n    public readonly string $name,\n    public readonly ClientSource $source = ClientSource::Direct,  // PHP-side default\n    // ...\n) {}\n```\n\nThen `toArray()` can remain flat and `source` will never be `null`. **Trade-off:** the default is now defined in two places (PHP enum and database migration). If the default ever changes, you must update both.\n\n---\n\n## Why the Database DEFAULT Alone Is Not Enough\n\nThis is a common misconception. `DEFAULT 'direct'` in MySQL means:\n\n> \"If this column is not mentioned in the INSERT, use `'direct'`.\"\n\nIt does **not** mean:\n\n> \"If `NULL` is passed, substitute `'direct'`.\"\n\nTo make the column accept `NULL` and fall back to `'direct'`, you would need to either:\n- Make the column `NULL`-able in the schema (removes the constraint entirely)\n- Use a `BEFORE INSERT` trigger to coerce `NULL` to `'direct'` (fragile, not recommended)\n- Fix the application layer \u2014 which is the correct approach\n\n---\n\n## Checklist After Applying the Fix\n\n1. Update `toArray()` in `CreateClientDTO` to use conditional key assignment.\n2. Check all other DTOs in the project for the same `?->value` pattern \u2014 any DTO property that maps to a `NOT NULL` column with a database default has this same bug.\n3. Clear compiled caches before retesting:\n\n```bash\nphp artisan optimize:clear\n# or manually:\nrm -f storage/framework/views/*.php\nrm -f bootstrap/cache/config.php\nrm -f bootstrap/cache/routes-v7.php\n```\n\n4. Resubmit the form without selecting a source. The record should be created with `source = 'direct'`.\n5. Verify in the database that the row has `source = 'direct'`, not `NULL`.\n"}], "grading": null}, {"id": "eval-2-null-constraint-without_skill", "prompt": "I'm getting a 500 error: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'source' cannot be null. My Laravel controller uses a DTO pattern \u2014 the CreateClientDTO has a nullable ?ClientSource $source property, and toArray() returns 'source' => $this->source?->value. The database column has DEFAULT 'direct'. Why is this happening and how do I fix it?", "eval_id": 2, "outputs": [{"name": "response.md", "type": "text", "content": "# Why You Get SQLSTATE[23000]: Column 'source' Cannot Be Null\n\n## Root Cause\n\nThe database column has `DEFAULT 'direct'`, but that default is **never applied** because your `toArray()` method explicitly passes `'source' => null` to the INSERT statement. When Eloquent (or a raw query) sends an explicit `NULL` value for a column, MySQL uses that value \u2014 it does not fall back to the column's `DEFAULT`. The `DEFAULT` only fires when the column is **omitted entirely** from the INSERT statement.\n\nIn other words, there is a critical difference between:\n\n```sql\n-- MySQL uses the DEFAULT \u2014 this works fine\nINSERT INTO clients (name) VALUES ('Acme');\n\n-- MySQL receives an explicit NULL \u2014 DEFAULT is bypassed, NOT NULL constraint fires\nINSERT INTO clients (name, source) VALUES ('Acme', NULL);\n```\n\nYour `toArray()` returns `'source' => null` whenever `$this->source` is `null`. Eloquent then includes `source = NULL` in the INSERT, which violates the `NOT NULL` constraint even though a default exists.\n\n---\n\n## Why the DTO Pattern Makes This Subtle\n\n```php\n// CreateClientDTO.php\nclass CreateClientDTO\n{\n    public function __construct(\n        public readonly ?ClientSource $source = null,\n        // ... other properties\n    ) {}\n\n    public function toArray(): array\n    {\n        return [\n            'source' => $this->source?->value,  // Returns null when $source is null\n            // ... other fields\n        ];\n    }\n}\n```\n\nWhen `$source` is `null`, `$this->source?->value` evaluates to `null`. The key `'source'` is still present in the returned array with the value `null`. When you pass this array to `Client::create($dto->toArray())`, Eloquent includes every key it receives \u2014 including `'source' => null` \u2014 in the INSERT query.\n\n---\n\n## The Fix: Exclude Null Values From toArray()\n\nThe correct fix is to **omit the key entirely** when the value is null, so MySQL can apply the column default.\n\n### Option 1 \u2014 Filter nulls out of toArray() (simplest)\n\n```php\npublic function toArray(): array\n{\n    return array_filter([\n        'source' => $this->source?->value,\n        // ... other fields\n    ], fn($value) => $value !== null);\n}\n```\n\n`array_filter` with the strict `!== null` check removes any key whose value is `null`, leaving the rest intact. MySQL will then apply `DEFAULT 'direct'` for the missing `source` column.\n\n> **Caveat:** `array_filter` without a callback removes all falsy values (0, false, ''). Always pass the explicit callback `fn($v) => $v !== null` to only strip actual nulls.\n\n### Option 2 \u2014 Conditionally add the key\n\n```php\npublic function toArray(): array\n{\n    $data = [\n        // ... other required fields\n    ];\n\n    if ($this->source !== null) {\n        $data['source'] = $this->source->value;\n    }\n\n    return $data;\n}\n```\n\nMore verbose but very explicit \u2014 no risk of accidentally filtering out legitimate falsy values.\n\n### Option 3 \u2014 Use a null-coalescing default in toArray()\n\nIf you always want `'direct'` as the fallback and prefer not to rely on the DB default:\n\n```php\npublic function toArray(): array\n{\n    return [\n        'source' => $this->source?->value ?? ClientSource::Direct->value,\n        // ... other fields\n    ];\n}\n```\n\nThis makes the PHP layer responsible for the default, which is more portable (works even if someone changes the DB schema later). The tradeoff is that your application code now duplicates the database default.\n\n### Option 4 \u2014 Set the default in the DTO constructor\n\n```php\npublic function __construct(\n    public readonly ClientSource $source = ClientSource::Direct,\n    // note: no longer nullable\n) {}\n```\n\nMake `$source` non-nullable with a default value of `ClientSource::Direct`. This is the cleanest approach if \"no source provided\" semantically means \"direct\". The DTO always carries a concrete value, so `toArray()` never produces `null` for this field.\n\n---\n\n## Which Fix to Choose\n\n| Scenario | Recommended fix |\n|---|---|\n| `null` means \"let the DB decide\" and the DB default is authoritative | Option 1 or 2 \u2014 omit the key |\n| You want a single source of truth in PHP | Option 3 \u2014 coalesce in `toArray()` |\n| `null` should never be a valid input state | Option 4 \u2014 non-nullable DTO property with default |\n\n---\n\n## Summary\n\nThe bug is a **misunderstanding of how MySQL DEFAULT works**: the database default only activates when a column is absent from the INSERT. Your DTO's `toArray()` includes the key `'source'` with an explicit `null` value, which bypasses the default and hits the `NOT NULL` constraint. Fix it by either omitting the key when the value is null (options 1\u20132), providing a PHP-side fallback value (option 3), or making the DTO property non-nullable with a default (option 4).\n"}], "grading": null}, {"id": "eval-3-json-response-enum-with_skill", "prompt": "When I submit my follow-up form in Laravel, the browser shows raw JSON like {\"data\": {...}, \"message\": \"\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.\"} instead of redirecting back to the client page. The controller method is typed as : JsonResponse. Also, my Blade view compares $followUp->status === 'pending' but the status column is cast to a FollowUpStatus enum \u2014 is that related?", "eval_id": 3, "outputs": [{"name": "response.md", "type": "text", "content": "# Fixing Two Laravel Issues: Raw JSON Response & Enum Blade Comparison\n\nYou have two separate but related problems. Both have clear, targeted fixes.\n\n---\n\n## Issue 1 \u2014 Controller Returns Raw JSON Instead of Redirecting\n\n### Root Cause\n\nYour controller method is typed `: JsonResponse` and unconditionally calls `response()->json(...)`. When a browser submits an HTML form, it never sends an `Accept: application/json` header, so `$request->wantsJson()` is `false` \u2014 but the controller ignores this and dumps JSON to the browser anyway, which the browser renders as raw text.\n\n### Before\n\n```php\nuse Illuminate\\Http\\JsonResponse;\n\npublic function store(StoreFollowUpRequest $request, string $clientPublicId): JsonResponse\n{\n    $dto = FollowUpData::fromRequest($request);\n    $followUp = $this->followUpService->create($dto);\n\n    return response()->json([\n        'data'    => $followUp,\n        'message' => '\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.',\n    ], 201);\n}\n```\n\n### After\n\nRemove the `: JsonResponse` return type (so PHP doesn't enforce it), then branch on `wantsJson()` \u2014 AJAX/API callers still get JSON, HTML form submissions get a redirect:\n\n```php\n// Remove the JsonResponse import if it's no longer used elsewhere\n// use Illuminate\\Http\\JsonResponse;  <-- remove or keep only if used in other methods\n\npublic function store(StoreFollowUpRequest $request, string $clientPublicId)\n{\n    $dto = FollowUpData::fromRequest($request);\n    $followUp = $this->followUpService->create($dto);\n\n    if ($request->wantsJson()) {\n        return response()->json([\n            'data'    => $followUp,\n            'message' => '\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.',\n        ], 201);\n    }\n\n    return redirect()\n        ->route('clients.show', $clientPublicId)\n        ->with('success', '\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.');\n}\n```\n\n**Key points:**\n- `$request->wantsJson()` returns `true` only when the caller sends `Accept: application/json` (Axios, fetch with the right header, Postman, etc.).\n- A standard `<form method=\"POST\">` never sets that header, so it takes the `redirect()` branch.\n- Remove `: JsonResponse` from the method signature \u2014 it is a type contract that prevents returning a `RedirectResponse`.\n- Adjust the route name (`clients.show`) and parameter to match your actual named route.\n\n---\n\n## Issue 2 \u2014 Blade Compares Enum Object Against a String\n\n### Root Cause\n\nYes, this is absolutely related to the cast. When Laravel's Eloquent casts a column to a PHP-backed enum (e.g., `FollowUpStatus`), `$followUp->status` is a `FollowUpStatus` enum **object**, not a plain string. Comparing it with `===` to a string literal like `'pending'` always evaluates to `false` because PHP's strict equality checks both type and value \u2014 and an object is never `===` to a string.\n\n```php\n// In your model:\nprotected $casts = [\n    'status' => FollowUpStatus::class,  // status is now a FollowUpStatus enum, not a string\n];\n```\n\n```blade\n{{-- This always evaluates to false \u2014 $followUp->status is an Enum object, not a string --}}\n@if ($followUp->status === 'pending')\n    <span class=\"badge badge-warning\">\u0645\u0639\u0644\u0642</span>\n@endif\n```\n\n### Fix Option A \u2014 Use `.value` inline (simple cases)\n\n```blade\n{{-- Extract the raw string value from the enum before comparing --}}\n@if ($followUp->status->value === 'pending')\n    <span class=\"badge badge-warning\">\u0645\u0639\u0644\u0642</span>\n@endif\n\n@if ($followUp->status->value === 'completed')\n    <span class=\"badge badge-success\">\u0645\u0643\u062a\u0645\u0644</span>\n@endif\n\n@if ($followUp->status->value === 'cancelled')\n    <span class=\"badge badge-danger\">\u0645\u0644\u063a\u0649</span>\n@endif\n```\n\n### Fix Option B \u2014 Compare Against the Enum Case Directly (type-safe, preferred)\n\n```blade\n{{-- Compare against the enum case itself \u2014 no string magic, IDE-friendly --}}\n@if ($followUp->status === \\App\\Modules\\CRM\\Enums\\FollowUpStatus::Pending)\n    <span class=\"badge badge-warning\">\u0645\u0639\u0644\u0642</span>\n@endif\n```\n\n### Fix Option C \u2014 Extract to a variable at the top of the view (cleanest for multiple checks)\n\n```blade\n@php\n    use App\\Modules\\CRM\\Enums\\FollowUpStatus;\n    $status     = $followUp->status instanceof FollowUpStatus\n                    ? $followUp->status->value\n                    : (string) $followUp->status;\n    $isPending   = $status === 'pending';\n    $isCompleted = $status === 'completed';\n    $isCancelled = $status === 'cancelled';\n    $isOverdue   = $isPending && $followUp->due_at->isPast();\n@endphp\n\n@if ($isPending)\n    <span class=\"badge badge-warning\">\u0645\u0639\u0644\u0642</span>\n@endif\n\n@if ($isOverdue)\n    <span class=\"badge badge-danger\">\u0645\u062a\u0623\u062e\u0631</span>\n@endif\n\n@if ($isCompleted)\n    <span class=\"badge badge-success\">\u0645\u0643\u062a\u0645\u0644</span>\n@endif\n```\n\nOption C is the most defensive \u2014 it handles the edge case where `status` could arrive as a plain string (e.g., in tests or when the cast is temporarily bypassed).\n\n---\n\n## After Both Fixes \u2014 Clear Caches\n\nStale compiled Blade views will keep showing the old comparison logic even after you edit the file:\n\n```bash\n# Preferred if artisan is available\nphp artisan optimize:clear\n\n# Or manually\nrm -f storage/framework/views/*.php\nrm -f bootstrap/cache/config.php\nrm -f bootstrap/cache/routes-v7.php\n```\n\n---\n\n## Summary\n\n| Issue | Symptom | Root Cause | Fix |\n|---|---|---|---|\n| Raw JSON in browser | Browser renders `{\"data\":...}` instead of redirecting | Controller typed `: JsonResponse`, always returns `response()->json()` | Remove `: JsonResponse` return type; branch on `$request->wantsJson()` |\n| Enum comparison fails | Badge never shows, condition always `false` | `$followUp->status` is a `FollowUpStatus` enum object, not a string | Use `->value` on the enum, or compare against the enum case constant |\n\nThe two issues are independent \u2014 fixing the controller does not fix the Blade view, and vice versa. Both need to be addressed.\n"}], "grading": null}, {"id": "eval-3-json-response-enum-without_skill", "prompt": "When I submit my follow-up form in Laravel, the browser shows raw JSON like {\"data\": {...}, \"message\": \"\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.\"} instead of redirecting back to the client page. The controller method is typed as : JsonResponse. Also, my Blade view compares $followUp->status === 'pending' but the status column is cast to a FollowUpStatus enum \u2014 is that related?", "eval_id": 3, "outputs": [{"name": "response.md", "type": "text", "content": "# Laravel Follow-Up Form: Two Bugs Explained and Fixed\n\n---\n\n## Issue 1: Controller Returns JSON Instead of Redirecting\n\n### Root Cause\n\nThe controller method is typed as `: JsonResponse`, which forces it to always return a JSON response. When your HTML form submits, Laravel sees the return type annotation and returns JSON \u2014 which the browser renders as raw text instead of following a redirect.\n\nA traditional form submission expects a `RedirectResponse`, not JSON. The `: JsonResponse` return type is appropriate for API endpoints consumed by JavaScript/Axios/fetch, not for standard `<form>` submissions.\n\n### Before (broken)\n\n```php\nuse Illuminate\\Http\\JsonResponse;\n\npublic function store(StoreFollowUpRequest $request, Client $client): JsonResponse\n{\n    $followUp = FollowUp::create([\n        'client_id' => $client->id,\n        'note'      => $request->input('note'),\n        'status'    => $request->input('status'),\n        'due_date'  => $request->input('due_date'),\n    ]);\n\n    return response()->json([\n        'data'    => $followUp,\n        'message' => '\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.',\n    ]);\n}\n```\n\n### After (fixed \u2014 standard form submission)\n\n```php\nuse Illuminate\\Http\\RedirectResponse;\n\npublic function store(StoreFollowUpRequest $request, Client $client): RedirectResponse\n{\n    FollowUp::create([\n        'client_id' => $client->id,\n        'note'      => $request->input('note'),\n        'status'    => $request->input('status'),\n        'due_date'  => $request->input('due_date'),\n    ]);\n\n    return redirect()\n        ->route('clients.show', $client)\n        ->with('success', '\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.');\n}\n```\n\nKey changes:\n- Return type changed from `JsonResponse` to `RedirectResponse`.\n- `response()->json(...)` replaced with `redirect()->route(...)`.\n- A flash message is added via `->with('success', ...)` so the client page can display a confirmation banner.\n\n### If You Need Both (API + Form Support)\n\nIf the same endpoint must serve both AJAX requests and regular form submissions, use Laravel's `wantsJson()` check:\n\n```php\nuse Illuminate\\Http\\JsonResponse;\nuse Illuminate\\Http\\RedirectResponse;\n\npublic function store(StoreFollowUpRequest $request, Client $client): JsonResponse|RedirectResponse\n{\n    $followUp = FollowUp::create([\n        'client_id' => $client->id,\n        'note'      => $request->input('note'),\n        'status'    => $request->input('status'),\n        'due_date'  => $request->input('due_date'),\n    ]);\n\n    if ($request->wantsJson()) {\n        return response()->json([\n            'data'    => $followUp,\n            'message' => '\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.',\n        ], 201);\n    }\n\n    return redirect()\n        ->route('clients.show', $client)\n        ->with('success', '\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0628\u0646\u062c\u0627\u062d.');\n}\n```\n\n`wantsJson()` returns `true` when the request carries `Accept: application/json` (e.g., Axios requests), so API consumers get JSON and browser forms get a redirect.\n\n---\n\n## Issue 2: Blade Comparison Fails Because Status Is an Enum\n\n### Root Cause\n\nWhen a model column is cast to a PHP enum (backed enum), Eloquent returns an enum instance, not a plain string. Comparing an enum instance to a string literal with `===` will always be `false` because the types differ:\n\n```php\n// $followUp->status is FollowUpStatus::Pending (an enum instance)\n// 'pending' is a string\n// FollowUpStatus::Pending === 'pending'  \u2192  false, always\n```\n\nThe `===` operator in PHP checks both value AND type, so a `FollowUpStatus` enum object can never be strictly equal to the string `'pending'`.\n\n### Before (broken)\n\n**Model:**\n```php\nprotected $casts = [\n    'status' => FollowUpStatus::class,\n];\n```\n\n**Enum:**\n```php\nenum FollowUpStatus: string\n{\n    case Pending  = 'pending';\n    case Done     = 'done';\n    case Canceled = 'canceled';\n}\n```\n\n**Blade view:**\n```blade\n@if ($followUp->status === 'pending')\n    <span class=\"badge badge-warning\">\u0642\u064a\u062f \u0627\u0644\u0627\u0646\u062a\u0638\u0627\u0631</span>\n@endif\n```\n\nThis always renders nothing because `$followUp->status` is a `FollowUpStatus` enum, not the string `'pending'`.\n\n### After \u2014 Three Valid Options\n\n**Option A: Compare against the enum case (recommended)**\n\n```blade\n@if ($followUp->status === \\App\\Enums\\FollowUpStatus::Pending)\n    <span class=\"badge badge-warning\">\u0642\u064a\u062f \u0627\u0644\u0627\u0646\u062a\u0638\u0627\u0631</span>\n@endif\n```\n\nThis is the cleanest solution. It keeps strict type safety and is refactor-friendly \u2014 if you rename the backing value, your view still works.\n\n**Option B: Use the enum's `->value` property to get the string**\n\n```blade\n@if ($followUp->status->value === 'pending')\n    <span class=\"badge badge-warning\">\u0642\u064a\u062f \u0627\u0644\u0627\u0646\u062a\u0638\u0627\u0631</span>\n@endif\n```\n\n`->value` extracts the raw backing string from the enum instance, making string comparison valid again. Works, but ties you to the string value.\n\n**Option C: Add a helper method to the enum itself**\n\n```php\nenum FollowUpStatus: string\n{\n    case Pending  = 'pending';\n    case Done     = 'done';\n    case Canceled = 'canceled';\n\n    public function isPending(): bool\n    {\n        return $this === self::Pending;\n    }\n\n    public function label(): string\n    {\n        return match($this) {\n            self::Pending  => '\u0642\u064a\u062f \u0627\u0644\u0627\u0646\u062a\u0638\u0627\u0631',\n            self::Done     => '\u062a\u0645',\n            self::Canceled => '\u0645\u0644\u063a\u0649',\n        };\n    }\n}\n```\n\nThen in Blade:\n\n```blade\n@if ($followUp->status->isPending())\n    <span class=\"badge badge-warning\">{{ $followUp->status->label() }}</span>\n@endif\n```\n\nThis is the most maintainable approach for a full status system \u2014 labels and logic live in the enum, not scattered across multiple Blade files.\n\n---\n\n## Are the Two Issues Related?\n\nYes, indirectly. Both stem from a mismatch between the data type being produced and the type the consuming code expects:\n\n| Layer | Produces | Expected by consumer | Mismatch |\n|---|---|---|---|\n| Controller | `JsonResponse` (JSON body) | Browser form (redirect) | Browser renders raw JSON |\n| Eloquent cast | `FollowUpStatus` enum instance | Blade `===` string check | Comparison always false |\n\nNeither bug causes the other, but fixing one won't fix the other \u2014 both need to be addressed independently.\n\n---\n\n## Quick Checklist\n\n- [ ] Change controller return type from `JsonResponse` to `RedirectResponse`.\n- [ ] Replace `response()->json(...)` with `redirect()->route(...)`.\n- [ ] Add `->with('success', '...')` and display the flash message in your layout.\n- [ ] In Blade, compare `$followUp->status === FollowUpStatus::Pending` (or use `->value`).\n- [ ] Optionally move status labels into the enum via a `label()` method.\n"}], "grading": null}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "laravel-debug", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-05-26T09:28:00Z", "evals_run": [1, 2, 3], "runs_per_configuration": 3}, "runs": [{"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 94.8, "tokens": 14265, "tool_calls": 3, "errors": 0}, "expectations": [{"text": "Recommends checking the browser DevTools Network tab to observe the POST request and HTTP status code", "passed": true, "evidence": "Step 1 explicitly says: 'Open your browser DevTools (F12), go to the Network tab, then click Submit. Look for a POST /clients request in the list.' Also includes a table of status codes and their meanings."}, {"text": "Warns that multiple forms may exist on the page and document.querySelector('form') returns the first (often a logout form), not the target form", "passed": true, "evidence": "Step 4 says: 'the first form is often a hidden logout form' and uses querySelectorAll with a comment: '// document.querySelector('form') returns the FIRST form on the page \u2014 which is often the hidden logout form, NOT the target form. // Always inspect ALL forms first'"}, {"text": "Suggests using JavaScript form.submit() or querySelectorAll to bypass event listeners and get the raw server response", "passed": true, "evidence": "Step 4 shows: 'const forms = document.querySelectorAll('form'); ... clientForm.submit(); // This bypasses all JS event listeners' with explanation that this sends POST directly without triggering submit event listeners."}, {"text": "Mentions that a controller returning JsonResponse unconditionally causes HTML forms to receive JSON instead of a redirect", "passed": true, "evidence": "Cause B: 'If your controller method has a : JsonResponse return type or calls response()->json(...) unconditionally, a browser form submission will receive raw JSON.' Includes before/after code with wantsJson() branching."}, {"text": "Mentions that a DTO's toArray() including explicit null values can override DB DEFAULT and cause a NOT NULL constraint error", "passed": true, "evidence": "Cause D: 'if that DTO includes 'column' => null explicitly for optional fields, MySQL will throw SQLSTATE[23000]: Integrity constraint violation: Column 'X' cannot be null.' Includes before/after fix with conditional key assignment."}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 48.2, "tokens": 5215, "tool_calls": 3, "errors": 0}, "expectations": [{"text": "Correctly explains that MySQL DEFAULT only applies when the column is absent from the INSERT, not when NULL is passed explicitly", "passed": true, "evidence": "'A column's DEFAULT value is only applied when the column is entirely absent from the INSERT statement.' Then shows the two SQL queries contrasting NULL vs absent."}, {"text": "Correctly identifies that the nullsafe ?-> operator evaluates to null (not removes the key) when source is null, causing the key to be present with null value", "passed": true, "evidence": "Section 'Why the Nullsafe Operator Doesn't Help Here': 'The nullsafe operator ?-> is not a guard that removes the key from the array. It is a shorthand for: $this->source !== null ? $this->source->value : null. So when $this->source is null, the expression evaluates to null, and the key 'source' is still present in the returned array.'"}, {"text": "Provides a fix that conditionally omits the 'source' key from toArray() when source is null (conditional assignment or array_filter)", "passed": true, "evidence": "Shows 'After (correct)' code with conditional: 'if ($this->source !== null) { $data['source'] = $this->source->value; }' Also provides array_filter alternative with explicit warning about the callback."}], "notes": []}, {"eval_id": 3, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 49.0, "tokens": 5871, "tool_calls": 3, "errors": 0}, "expectations": [{"text": "Correctly identifies that the :JsonResponse return type must be removed to allow returning a RedirectResponse", "passed": true, "evidence": "'Remove the : JsonResponse return type (so PHP doesn't enforce it)' \u2014 explicitly stated in the Before/After fix. The After section shows the method signature without the return type annotation."}, {"text": "Provides a fix using $request->wantsJson() to branch between JSON (for AJAX) and redirect (for HTML forms)", "passed": true, "evidence": "Before/After code shows: 'if ($request->wantsJson()) { return response()->json([...]); } return redirect()->route(...)'. Explains: '$request->wantsJson() returns true only when the caller sends Accept: application/json.'"}, {"text": "Confirms that yes, the Enum cast is causing the status comparison to fail", "passed": true, "evidence": "'Yes, this is absolutely related to the cast. When Laravel's Eloquent casts a column to a PHP-backed enum (e.g., FollowUpStatus), $followUp->status is a FollowUpStatus enum object, not a plain string.'"}, {"text": "Provides a fix using ->value to extract the string from the enum before comparing in Blade", "passed": true, "evidence": "Fix Option A shows: '@if ($followUp->status->value === 'pending')'. Also Option C shows the @php block extracting value via instanceof check \u2014 matches the skill pattern exactly."}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.2, "passed": 1, "failed": 4, "total": 5, "time_seconds": 118.1, "tokens": 10564, "tool_calls": 3, "errors": 0}, "expectations": [{"text": "Recommends checking the browser DevTools Network tab to observe the POST request and HTTP status code", "passed": true, "evidence": "Section 1 says 'Open browser DevTools (F12) \u2192 Network tab \u2192 submit the form. The HTTP status code tells you everything.' Includes a table of status codes."}, {"text": "Warns that multiple forms may exist on the page and document.querySelector('form') returns the first (often a logout form), not the target form", "passed": false, "evidence": "No mention of multiple forms, document.querySelector returning the wrong form, or logout form interference anywhere in the response."}, {"text": "Suggests using JavaScript form.submit() or querySelectorAll to bypass event listeners and get the raw server response", "passed": false, "evidence": "Mentions disabling JavaScript in DevTools as a test, but does not suggest using querySelectorAll or form.submit() from the console to get a raw server response."}, {"text": "Mentions that a controller returning JsonResponse unconditionally causes HTML forms to receive JSON instead of a redirect", "passed": false, "evidence": "Does not mention wantsJson(), JsonResponse return type, or the pattern of a controller always returning JSON regardless of request type. The controller section only covers missing redirect/missing return keyword."}, {"text": "Mentions that a DTO's toArray() including explicit null values can override DB DEFAULT and cause a NOT NULL constraint error", "passed": false, "evidence": "No mention of DTOs, toArray(), nullsafe operator, or explicit null overriding DB DEFAULT. The database section only covers $fillable mass-assignment and constraint violations generically."}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 39.0, "tokens": 4721, "tool_calls": 2, "errors": 0}, "expectations": [{"text": "Correctly explains that MySQL DEFAULT only applies when the column is absent from the INSERT, not when NULL is passed explicitly", "passed": true, "evidence": "'MySQL's column default only fires when the column is omitted entirely from the INSERT statement. When your code sends an explicit NULL value for that column, MySQL uses NULL \u2014 it does not fall back to the default.'"}, {"text": "Correctly identifies that the nullsafe ?-> operator evaluates to null (not removes the key) when source is null, causing the key to be present with null value", "passed": true, "evidence": "Explanation states: 'When $this->source is null, this evaluates to null. The key 'source' is still present in the array. When Eloquent builds the INSERT, it includes source = NULL, which bypasses the DB default entirely.'"}, {"text": "Provides a fix that conditionally omits the 'source' key from toArray() when source is null (conditional assignment or array_filter)", "passed": true, "evidence": "Option 1 shows 'array_filter' approach. Option 2 shows conditional key inclusion: 'if ($this->source !== null) { $data['source'] = $this->source->value; }'. Multiple correct options provided."}], "notes": []}, {"eval_id": 3, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 45.4, "tokens": 6655, "tool_calls": 2, "errors": 0}, "expectations": [{"text": "Correctly identifies that the :JsonResponse return type must be removed to allow returning a RedirectResponse", "passed": true, "evidence": "'Change the return type to : RedirectResponse' and 'Remove the : JsonResponse return type' explicitly stated in the fix."}, {"text": "Provides a fix using $request->wantsJson() to branch between JSON (for AJAX) and redirect (for HTML forms)", "passed": true, "evidence": "'If the same endpoint must also serve API clients (Axios/fetch), use $request->wantsJson() to branch between JSON and redirect responses.' The After code shows this branching."}, {"text": "Confirms that yes, the Enum cast is causing the status comparison to fail", "passed": true, "evidence": "'Yes, the cast is the cause. Once status is cast to FollowUpStatus, $followUp->status is a PHP enum object. === 'pending' is strict equality \u2014 an object is never === to a string, so the condition is always false.'"}, {"text": "Provides a fix using ->value to extract the string from the enum before comparing in Blade", "passed": true, "evidence": "Three fix options provided: '$followUp->status->value === 'pending'' (option 2 with ->value) and comparing against enum case constant (option 1). Also suggests isPending() helper method."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 64.0, "stddev": 26.6766, "min": 48.2, "max": 94.8}, "tokens": {"mean": 8450.3333, "stddev": 5046.32, "min": 5215, "max": 14265}}, "without_skill": {"pass_rate": {"mean": 0.7333, "stddev": 0.4619, "min": 0.2, "max": 1.0}, "time_seconds": {"mean": 67.5, "stddev": 43.9376, "min": 39.0, "max": 118.1}, "tokens": {"mean": 7313.3333, "stddev": 2976.6112, "min": 4721, "max": 10564}}, "delta": {"pass_rate": "+0.27", "time_seconds": "-3.5", "tokens": "+1137"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

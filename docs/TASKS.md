@@ -1,7 +1,7 @@
 # ✅ خطة المهام الكاملة — دراهم SaaS Financial Platform
 
 > وثيقة تتبع المهام — Laravel 12 / PHP 8.2  
-> آخر تحديث: مايو 2026
+> آخر تحديث: 25 مايو 2026 — Sprint 6 مكتمل بالكامل (S6.1→S6.3) + Sprint 7 مكتمل (S7.1→S7.5)
 
 ---
 
@@ -9,10 +9,11 @@
 
 | البيان | القيمة |
 |--------|--------|
-| إجمالي المراحل | 15 مرحلة + Marketing + Admin+ + UX |
+| إجمالي المراحل | 17 مرحلة + Marketing + Admin+ + UX |
 | الحالة الحالية | ✅ على الهواء — workuflow.palgoals.com |
 | اختبارات Pest | 54/54 ✅ |
 | PHP | 8.2 / Laravel 12 |
+| مرجع CRM | `docs/CLIENTS-CRM-SPEC-V2.md` (2164 سطر) |
 
 ---
 
@@ -41,6 +42,7 @@ Marketing→ الصفحة التسويقية (Landing Page)             ✅ مك
 Admin+   → تطوير Admin المتقدم                         ✅ مكتمل (A.1→A.4)
 UX+      → تحسينات تجربة المستخدم                      ✅ مكتمل (U.1→U.3)
 Phase 16 → تحسينات مايو 2026 (16.1→16.12)             ✅ مكتمل
+Phase 17 → نظام CRM المتقدم (8 Sprints / 38 مهمة)     🔄 قيد التطوير
 ```
 
 ---
@@ -518,6 +520,743 @@ php artisan optimize:clear && php artisan optimize
 
 ---
 
+---
+
+## 🧩 Phase 17 — نظام CRM المتقدم (Advanced Client Relationship Management)
+
+> **المرجع الهندسي:** `docs/CLIENTS-CRM-SPEC-V2.md` — وثيقة معمارية من مستوى CTO (2164 سطر)  
+> **المرجع التفصيلي:** `docs/CLIENTS-CRM-SPEC.md` — المواصفات الكاملة V1 (1687 سطر)  
+> **المنهجية:** Domain-Driven Design — Service + Action + Event Architecture  
+> **الجدول الزمني:** 8 Sprints / 38 مهمة — Sprint 1 → Sprint 8 (تسلسل إجباري)
+
+### 🔗 خريطة تبعيات Sprints
+
+```
+Sprint 1 (Foundation)
+    └─► Sprint 2 (Services)
+            ├─► Sprint 3 (API Layer)
+            │       ├─► Sprint 7 (Frontend)
+            │       └─► Sprint 8 (Portal)
+            ├─► Sprint 4 (Import/Export)
+            ├─► Sprint 5 (Intelligence)
+            └─► Sprint 6 (Automation)
+```
+
+> ⚠️ **قاعدة ذهبية:** لا تبدأ Sprint جديدة قبل إكمال Sprint السابقة بالكامل.
+
+---
+
+### 🏗️ Sprint 1 — البنية الأساسية (Foundation) `#90–#97`
+
+> **الهدف:** بناء schema قاعدة البيانات V2 وطبقة البيانات الكاملة — كل ما يعتمد عليه كل شيء آخر.
+
+#### [x] #90 — S1.1: Migrations — مخطط قاعدة البيانات V2
+**الأولوية:** 🔴 حرج | **الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+
+**✅ المُنجز — 12 migration ملف:**
+
+| الملف | الجدول | الحالة |
+|-------|--------|--------|
+| `2026_05_24_001000_upgrade_clients_table_crm_v2.php` | clients (ALTER — إضافة 10 أعمدة CRM) | ✅ |
+| `2026_05_24_002000_create_client_tags_table.php` | client_tags | ✅ |
+| `2026_05_24_003000_create_client_tag_assignments_table.php` | client_tag_assignments | ✅ |
+| `2026_05_24_004000_create_client_activities_table.php` | client_activities | ✅ |
+| `2026_05_24_005000_create_client_health_scores_table.php` | client_health_scores | ✅ |
+| `2026_05_24_006000_create_client_follow_ups_table.php` | client_follow_ups | ✅ |
+| `2026_05_24_007000_create_client_field_definitions_table.php` | client_field_definitions | ✅ |
+| `2026_05_24_008000_create_client_field_values_table.php` | client_field_values | ✅ |
+| `2026_05_24_009000_create_client_attachments_table.php` | client_attachments | ✅ |
+| `2026_05_24_010000_create_client_portal_tokens_table.php` | client_portal_tokens | ✅ |
+| `2026_05_24_011000_create_saved_segments_table.php` | saved_segments | ✅ |
+| `2026_05_24_012000_create_client_import_logs_table.php` | client_import_logs | ✅ |
+
+**قرارات معمارية مُطبَّقة:**
+- VARCHAR بدل ENUM في جميع أعمدة الحالة (C-03 Fix — zero-downtime)
+- `public_id ULID` مُضاف على clients للروابط الخارجية
+- `client_activities` بجدول عادي + indexes مُركَّبة (بدل Partitioning — shared hosting)
+- `client_portal_tokens.token` يخزن SHA-256 hash فقط (C-04 Fix)
+- `client_import_logs.idempotency_key` UNIQUE لمنع الاستيراد المكرر
+- `client_follow_ups` و `client_attachments` و `saved_segments` تستخدم ULID primary key
+
+---
+
+#### [x] #91 — S1.2: Enums — طبقة Type Safety
+**الأولوية:** 🔴 حرج | **الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+
+**المُنجز — 8 Enums في `app/Modules/CRM/Enums/`:**
+
+| الملف | القيم | الدوال |
+|-------|-------|--------|
+| `ClientStatus` | active, inactive, prospect, archived | label, color, badgeClass, isVisible, canTransitionTo |
+| `ActivityType` | 14 نوع نشاط | label, icon, color, isHighPriority |
+| `ClientSource` | direct, referral, social_media, website, import, other | label, icon |
+| `FollowUpStatus` | pending, completed, overdue, cancelled | label, badgeColor, badgeClass, icon, isTerminal, resolveActual |
+| `PortalPermission` | view_invoices, download_invoices, make_payments, view_files | label, description, defaults |
+| `ImportStatus` | pending, processing, completed, failed, partial | label, progressColor, badgeClass, icon, isTerminal |
+| `TagType` | system, custom | label, isDeletable, isEditable |
+| `HealthScoreGrade` | excellent, good, fair, poor | label, color, badgeClass, icon, fromScore, minScore |
+
+---
+
+#### [x] #92 — S1.3: Models — طبقة البيانات + Casts + Scopes
+**الأولوية:** 🔴 حرج | **الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+
+**المُنجز — 12 Model:**
+
+| الملف | الموقع | المميزات |
+|-------|--------|---------|
+| `Client` | `app/Models/Client.php` (محدَّث) | 247 lines، 12 relation، 7 scopes، 4 accessors، backward compatible |
+| `ClientTag` | `app/Modules/CRM/Models/` | scopeForUser (system+custom)، isDeletable guard |
+| `ClientTagAssignment` | `app/Modules/CRM/Models/` | Pivot Model، assigned_at auto-fill |
+| `ClientActivity` | `app/Modules/CRM/Models/` | timestamps=false، scopeHighPriority، scopeRecent |
+| `ClientHealthScore` | `app/Modules/CRM/Models/` | grade()، factorBreakdown() |
+| `ClientFollowUp` | `app/Modules/CRM/Models/` | HasUlids، actualStatus()، daysUntilDue()، 4 scopes |
+| `ClientFieldDefinition` | `app/Modules/CRM/Models/` | isAvailableForPlan()، scopeOrdered |
+| `ClientFieldValue` | `app/Modules/CRM/Models/` | castValue() بحسب نوع الحقل |
+| `ClientAttachment` | `app/Modules/CRM/Models/` | HasUlids، url()، humanSize()، isImage()، isPdf() |
+| `ClientPortalToken` | `app/Modules/CRM/Models/` | hidden=['token']، findByPlaintext()، hasPermission() |
+| `SavedSegment` | `app/Modules/CRM/Models/` | HasUlids، refreshCount()، buildQuery() |
+| `ClientImportLog` | `app/Modules/CRM/Models/` | HasUlids، successRate()، summary() |
+
+**قرارات معمارية:**
+- `Client` يبقى في `app/Models/` للتوافق مع الكود القديم — يستورد CRM Enums والـ Models الجديدة
+- `ClientPortalToken.token` مخفي في JSON (`$hidden`) — لا يُرسل أبداً للواجهة
+- `ClientActivity.timestamps = false` — يستخدم `occurred_at` فقط لتوفير المساحة
+- `ClientFollowUp.actualStatus()` يكشف المتأخرة ديناميكياً بدون تحديث DB
+
+---
+
+#### [x] #93 — S1.4: System Tags Seeder — الوسوم الأساسية ✅
+**الأولوية:** 🔴 حرج | **التقدير:** 1 ساعة | **مكتمل:** مايو 2026
+
+**8 وسوم نظام ثابتة (غير قابلة للحذف):**
+
+| الوسم | اللون | الأيقونة | الأولوية |
+|-------|-------|---------|---------|
+| VIP | `#10B981` (أخضر زمردي) | ⭐ | 1 |
+| Late Payer | `#EF4444` (أحمر) | ⚠️ | 2 |
+| Hesitant | `#F59E0B` (أصفر ذهبي) | 🤔 | 3 |
+| New Client | `#3B82F6` (أزرق) | 🆕 | 4 |
+| Inactive | `#6B7280` (رمادي) | 💤 | 5 |
+| High Value | `#8B5CF6` (بنفسجي) | 💎 | 6 |
+| Referred | `#EC4899` (وردي) | 🤝 | 7 |
+| Pending Review | `#F97316` (برتقالي) | 🔍 | 8 |
+
+- [x] `database/seeders/SystemClientTagsSeeder.php` — `type = TagType::System`, `user_id = null` (global)
+- [x] تسجيل في `DatabaseSeeder` — Idempotent عبر `updateOrCreate` على أساس `slug`
+
+**الملفات المنشأة:**
+- `database/seeders/SystemClientTagsSeeder.php` — يقرأ من `config('crm.system_tags')`، updateOrCreate لكل وسم، يطبع إحصائيات التشغيل
+- `database/seeders/DatabaseSeeder.php` — تمت إضافة `SystemClientTagsSeeder::class`
+
+---
+
+#### [x] #94 — S1.5: ClientPolicy — التحكم في الصلاحيات ✅
+**الأولوية:** 🔴 حرج | **التقدير:** 1 ساعة | **مكتمل:** مايو 2026
+
+- [x] `viewAny` — المستخدم المسجل دخوله
+- [x] `view` — المالك فقط (`$client->user_id === $user->id`)
+- [x] `create` — فحص حد الخطة (Free: 10 | Pro: 500 | Business: ∞)
+- [x] `update` / `delete` / `restore` / `forceDelete` / `archive` — المالك فقط
+- [x] `managePortal` — Business فقط (`can_portal`)
+- [x] `importClients` / `exportClients` — Pro+ (`can_import` / `can_export`)
+- [x] `manageCustomFields` — Pro+ (`max_custom_fields > 0`)
+- [x] `viewAnalytics` — Pro+ (`can_health_score || can_segments`)
+
+**الملفات المنشأة في `app/Modules/CRM/Policies/`:**
+- `ClientPolicy.php` — 12 gate بالكامل مع helper `planLimits()` من config/crm.php
+- `ClientTagPolicy.php` — يحمي وسوم النظام من الحذف/التعديل
+- `ClientFollowUpPolicy.php` — owner isolation
+- `ClientImportLogPolicy.php` — Pro+ فقط
+- `SavedSegmentPolicy.php` — Pro+ فقط (`can_segments`)
+- `ClientPortalTokenPolicy.php` — Business فقط (`can_portal`)
+
+**إصلاح جانبي:** `CRMServiceProvider` — تصحيح namespace من `App\Modules\CRM\Models\Client` إلى `App\Models\Client`
+
+---
+
+#### [x] #95 — S1.6: Form Requests — Validation Layer ✅
+**الأولوية:** 🔴 حرج | **التقدير:** 2 ساعات | **مكتمل:** مايو 2026
+
+**الملفات المنشأة في `app/Modules/CRM/Requests/`:**
+
+| الملف | الوظيفة الرئيسية |
+|-------|----------------|
+| `StoreClientRequest` | name/email unique per user / tag_ids / authorize via create policy |
+| `UpdateClientRequest` | same + `ignore($clientId)` في unique + `sometimes` |
+| `StoreTagRequest` | name max:50 / color HEX regex / slug alpha_dash unique per user |
+| `BulkTagRequest` | client_ids (max:500) / tag_ids / action: assign|remove |
+| `StoreFollowUpRequest` | client_id exists per user / due_at after:now / reminder_at before:due_at |
+| `ImportClientRequest` | file mimes:xlsx,csv / max KB من config / column_map array |
+| `StorePortalTokenRequest` | permissions من PortalPermission::values() / expires_at before:+1year / prepareForValidation يضع defaults |
+
+---
+
+#### [x] #96 — S1.7: DTOs — Data Transfer Objects ✅
+**الأولوية:** 🔴 حرج | **التقدير:** 2 ساعات | **مكتمل:** مايو 2026
+
+**الملفات المنشأة في `app/Modules/CRM/DTOs/` — كلها `final readonly class`:**
+
+| الملف | Factory Methods | مميزات |
+|-------|----------------|--------|
+| `CreateClientDTO` | `fromRequest()` + `fromImportRow()` | `toArray()` جاهز لـ Model::create() |
+| `UpdateClientDTO` | `fromRequest(request, client)` | `toChangedArray()` فقط الحقول المتغيرة + `isEmpty()` |
+| `ClientFiltersDTO` | `fromRequest(Request)` | `hasFilters()` — perPage max:100 — sort whitelist |
+| `CreateTagDTO` | `fromRequest()` | slug auto-generated من الاسم + `toArray()` |
+| `CreateFollowUpDTO` | `fromRequest()` | Carbon parsing لـ due_at/reminder_at + `toArray()` |
+| `BulkTagDTO` | `fromRequest()` | `isAssign()` / `isRemove()` / `clientCount()` / `tagCount()` |
+| `ImportClientsDTO` | `fromRequest()` | يحفظ الملف في disk local مؤقتاً + idempotency_key hash |
+
+---
+
+#### [x] #97 — S1.8: ClientQueryBuilder — محرك البحث والفلترة ✅
+**الأولوية:** 🔴 حرج | **التقدير:** 3 ساعات | **مكتمل:** مايو 2026
+
+**الملف:** `app/Modules/CRM/Builders/ClientQueryBuilder.php` — 255 سطر، 14 method
+
+| الـ Method | الوصف |
+|-----------|------|
+| `__construct(int $userId)` | scope guard ثابت: `user_id` دائماً مُطبَّق |
+| `applyFilters(ClientFiltersDTO)` | يُطبّق جميع الفلاتر دفعةً واحدة |
+| `search(string $term)` | LIKE على name + email + company + phone (لا FULLTEXT) |
+| `byTags(array $tagIds)` | AND — العميل يمتلك جميع الوسوم |
+| `byTagsAny(array $tagIds)` | OR — يكفي وسم واحد |
+| `byHealthGrade(HealthScoreGrade)` | whereBetween min/max للدرجة |
+| `withFollowUpsDue()` | متابعات مستحقة أو متأخرة |
+| `withRelations(array)` | eager loading (افتراضي: tags + latestHealthScore) |
+| `withPendingFollowUpsCount()` | withCount بدون N+1 |
+| `cursorPaginate(int)` | **C-05** — cursor بدل offset |
+| `get()` / `count()` | تنفيذ مباشر |
+| `toExportQuery()` | Builder خام للتصدير |
+| `getQuery()` | للاستخدام في SavedSegment |
+
+**القرارات المعمارية:**
+- NULLS LAST للحقول nullable (health_score, last_contact_at, total_revenue)
+- ترتيب ثانوي ثابت على `id` لضمان حتمية cursor
+- `addcslashes()` للحماية من LIKE injection
+
+---
+
+### ⚙️ Sprint 2 — طبقة الخدمات (Services Layer) `#98–#104`
+
+> **المتطلبات:** إكمال Sprint 1 بالكامل | **التقدير الإجمالي:** 12 ساعة
+
+#### [ ] #98 — S2.1: ClientService — منطق الأعمال الأساسي
+**التقدير:** 3 ساعات
+
+```php
+// app/Modules/CRM/Services/ClientService.php
+class ClientService
+{
+    public function create(CreateClientDTO $dto): Client  // + fire ClientCreated event
+    public function update(Client $client, UpdateClientDTO $dto): Client  // + fire ClientUpdated
+    public function archive(Client $client): void  // soft archive (is_archived = true)
+    public function restore(Client $client): void
+    public function delete(Client $client): void  // SoftDelete
+    public function updateStatus(Client $client, ClientStatus $status): void
+    public function recalculateAggregates(Client $client): void  // fallback يدوي
+}
+```
+
+- [ ] **C-02 Fix:** تحديث aggregates بـ atomic increment لا بـ subquery:
+  `Client::where('id', $id)->update(['total_paid' => DB::raw("total_paid + {$amount}")])`
+- [ ] كل عملية تُطلق Event مناسب (لا Observer مباشر)
+
+---
+
+#### [ ] #99 — S2.2: TagService — إدارة الوسوم
+**التقدير:** 2 ساعة
+
+- [ ] `create(CreateTagDTO $dto, int $userId): ClientTag`
+- [ ] `assign(Client $client, array $tagIds, int $assignedBy): void` — bulk assign مع check تجاوز الحد
+- [ ] `remove(Client $client, array $tagIds): void` — حماية system tags من الحذف
+- [ ] `bulkAssign(BulkTagDTO $dto): array` — تقرير نتائج (success/failed per client)
+- [ ] `suggestTags(Client $client): array` — يستدعي `SmartTagSuggestionService` (Sprint 5)
+- [ ] حد الوسوم حسب الخطة: Free=3, Pro=10, Business=غير محدود
+
+---
+
+#### [ ] #100 — S2.3: FollowUpService — تتبع المتابعات
+**التقدير:** 2 ساعة
+
+- [ ] `schedule(CreateFollowUpDTO $dto): ClientFollowUp` + log activity
+- [ ] `complete(ClientFollowUp $followUp, ?string $notes): void` + log activity
+- [ ] `cancel(ClientFollowUp $followUp): void`
+- [ ] `getDueFollowUps(int $userId, Carbon $date = null): Collection` — للـ Command اليومي
+- [ ] `sendReminders(): int` — يُرسل إشعارات للمتابعات المستحقة + returns count
+
+---
+
+#### [ ] #101 — S2.4: ClientHealthScoreService — مؤشر صحة العميل
+**التقدير:** 3 ساعات
+
+**خوارزمية 5 عوامل موزونة (من V2):**
+
+| العامل | الوزن | الحساب |
+|--------|-------|--------|
+| معدل الدفع | 35% | paid_on_time / total_invoices |
+| تكرار العمل | 25% | invoice_count خلال 12 شهر |
+| قيمة الإيراد | 20% | total_revenue مقارنةً بمتوسط المستخدم |
+| انتظام التواصل | 10% | آخر تواصل ≤ 30 يوم |
+| معدل الاستجابة | 10% | سرعة قبول العروض |
+
+- [ ] **Recency Bias:** آخر 3 أشهر × 70% + السنة الكاملة × 30%
+- [ ] تخزين النتيجة في `client_health_scores` مع `factors JSON` لشرح السبب
+- [ ] `calculate(Client $client): HealthScoreSnapshot`
+- [ ] `recalculateForUser(int $userId): void` — للـ Command الليلي
+
+---
+
+#### [ ] #102 — S2.5: Events + Listeners — نظام الأحداث
+**التقدير:** 2 ساعة
+
+**Events (في `app/Modules/CRM/Events/`):**
+- [ ] `ClientCreated(Client $client)`
+- [ ] `ClientUpdated(Client $client, array $changes)`
+- [ ] `ClientStatusChanged(Client $client, ClientStatus $old, ClientStatus $new)`
+- [ ] `ClientTagAssigned(Client $client, ClientTag $tag, int $assignedBy)`
+- [ ] `ClientTagRemoved(Client $client, ClientTag $tag)`
+- [ ] `FollowUpScheduled(ClientFollowUp $followUp)`
+- [ ] `FollowUpCompleted(ClientFollowUp $followUp)`
+- [ ] `ClientImportCompleted(ClientImportLog $log)`
+
+**Listeners (مع `$afterCommit = true` — C-01 Fix من V2):**
+```php
+// app/Modules/CRM/Listeners/LogClientActivityListener.php
+class LogClientActivityListener implements ShouldQueue
+{
+    public bool $afterCommit = true;  // ← حرج: لتجنب logging داخل transaction
+    public string $queue = 'crm-default';
+    
+    public function handle(ClientCreated $event): void
+    {
+        LogClientActivityAction::run($event->client, ActivityType::StatusChanged, [
+            'description' => 'تم إنشاء العميل',
+        ]);
+    }
+}
+```
+- [ ] تسجيل كل Events في `EventServiceProvider`
+
+---
+
+#### [ ] #103 — S2.6: LogClientActivityAction — مسجّل النشاط
+**التقدير:** 1 ساعة
+
+- [ ] `run(Client $client, ActivityType $type, array $metadata, ?int $actorId = null): ClientActivity`
+- [ ] حفظ في `client_activities` مع `occurred_at = now()`
+- [ ] **لا تستدعِ مباشرةً من Observers** — استدعِ فقط من Listeners مع `$afterCommit = true`
+- [ ] يدعم metadata مفتوحة (JSON) للمرونة
+
+---
+
+### 🔌 Sprint 3 — طبقة API والـ Controllers `#104–#110`
+
+> **المتطلبات:** إكمال Sprint 2 | **التقدير الإجمالي:** 10 ساعات
+
+#### [ ] #104 — S3.1: ClientController — المتحكم الأساسي
+**التقدير:** 3 ساعات
+
+- [ ] `index(ClientFiltersRequest $request)` — يستخدم `ClientQueryBuilder` + cursor pagination
+- [ ] `show(Client $client)` — `ClientProfileResource` + eager load relations
+- [ ] `store(StoreClientRequest $request)` — `CreateClientDTO::fromRequest()` → `ClientService::create()`
+- [ ] `update(UpdateClientRequest $request, Client $client)` — `UpdateClientDTO` → `ClientService::update()`
+- [ ] `destroy(Client $client)` — `ClientService::delete()`
+- [ ] `archive(Client $client)` — `ClientService::archive()`
+- [ ] `restore(Client $client)` — `ClientService::restore()`
+- [ ] `timeline(Client $client)` — activity log مع cursor pagination
+- [ ] `stats(Client $client)` — aggregates + health score + last activities
+
+---
+
+#### [ ] #105 — S3.2: TagController — إدارة الوسوم
+**التقدير:** 2 ساعة
+
+- [ ] `index()` — كل وسوم المستخدم + system tags مع عدد العملاء لكل وسم
+- [ ] `store(StoreTagRequest)` — `TagService::create()`
+- [ ] `update(StoreTagRequest, ClientTag)` — حماية system tags
+- [ ] `destroy(ClientTag)` — حذف مع تحذير إذا كان مستخدماً
+- [ ] `assign(BulkTagRequest)` — `TagService::bulkAssign()`
+- [ ] `suggestions(Client)` — `TagService::suggestTags()`
+
+---
+
+#### [ ] #106 — S3.3: SegmentController — الشرائح المحفوظة
+**التقدير:** 2 ساعة
+
+- [ ] `index()` — كل Segments مع client_count
+- [ ] `store(StoreSegmentRequest)` — حفظ filters JSON
+- [ ] `preview(Request)` — تشغيل الفلاتر وعرض النتائج بدون حفظ
+- [ ] `execute(SavedSegment)` — تنفيذ فعلي + تحديث `client_count + last_executed_at`
+- [ ] `destroy(SavedSegment)`
+- [ ] `pin(SavedSegment)` — تثبيت في الشريط الجانبي
+
+---
+
+#### [ ] #107 — S3.4: API Resources — طبقة التحويل
+**التقدير:** 1 ساعة
+
+- [ ] `ClientListResource` — البيانات المختصرة للقائمة (name, email, company, health_score, tags[], last_contact_at, status badge)
+- [ ] `ClientProfileResource` — البيانات الكاملة (كل الحقول + relations + aggregates + latest activities)
+- [ ] `ClientActivityResource` — النشاط مع icon + description + actor + occurred_at
+- [ ] `ClientTagResource` — name, color, icon, type, client_count
+- [ ] `FollowUpResource` — title, due_at, status_badge, days_until_due
+- [ ] `HealthScoreResource` — score, grade, color, factors[], scored_at
+
+---
+
+#### [ ] #108 — S3.5: FollowUpController — متحكم المتابعات
+**التقدير:** 1 ساعة
+
+- [ ] `index(Request)` — قائمة بالفلاتر (client_id, status, due_date_range)
+- [ ] `store(StoreFollowUpRequest)` → `FollowUpService::schedule()`
+- [ ] `complete(ClientFollowUp, Request)` → `FollowUpService::complete()`
+- [ ] `cancel(ClientFollowUp)` → `FollowUpService::cancel()`
+- [ ] `upcoming(Request)` — المتابعات خلال 7 أيام (للـ Dashboard widget)
+
+---
+
+#### [ ] #109 — S3.6: CustomFieldController — الحقول المخصصة
+**التقدير:** 1 ساعة
+
+- [ ] `index()` — تعريفات الحقول للمستخدم (مرتبة بـ display_order)
+- [ ] `store(StoreFieldDefinitionRequest)` — check Business plan
+- [ ] `update(StoreFieldDefinitionRequest, ClientFieldDefinition)`
+- [ ] `destroy(ClientFieldDefinition)` — حذف + حذف القيم المرتبطة
+- [ ] `reorder(Request)` — تحديث display_order بـ PATCH
+- [ ] `saveValue(Client, ClientFieldDefinition, Request)` — upsert على `client_field_values`
+
+---
+
+### 📤 Sprint 4 — الاستيراد والتصدير (Import/Export) `#110–#114`
+
+> **المتطلبات:** إكمال Sprint 2 | **الحزمة:** `maatwebsite/excel`
+
+#### [x] #110 — S4.1: ClientImport — استيراد Excel/CSV
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 4 ساعات
+
+- [ ] `app/Modules/CRM/Imports/ClientsImport.php` — implements `ToModel, WithHeadingRow, WithValidation, SkipsOnError, WithBatchInserts, WithChunkReading`
+- [ ] Heading map: `['الاسم' => 'name', 'البريد' => 'email', 'الهاتف' => 'phone', 'الشركة' => 'company', 'المصدر' => 'source']`
+- [ ] `batchSize()` = 500 rows | `chunkSize()` = 1000 rows
+- [ ] `rules()` — validation على كل صف + تجميع الأخطاء
+- [ ] `upsert` mode: إذا `update_existing = true` → `updateOrCreate(['email' => ...], [...])`
+- [ ] **Idempotency:** `X-Idempotency-Key` header → مخزن في `client_import_logs.idempotency_key` — إذا موجود مسبقاً → return cached result
+- [ ] `ImportClientsJob` — Queue Job يشغّل الاستيراد + يُحدِّث log + يُطلق `ClientImportCompleted`
+- [ ] قالب Excel للتنزيل مع headers عربية + صف مثال
+
+---
+
+#### [x] #111 — S4.2: ClientExport — تصدير Excel/CSV
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 2 ساعة
+
+- [ ] `app/Modules/CRM/Exports/ClientsExport.php` — implements `FromQuery, WithHeadings, WithMapping, WithStyles, ShouldQueue`
+- [ ] `fromQuery()` — يستخدم `ClientQueryBuilder::toExportQuery()` (تطبيق نفس الفلاتر الحالية)
+- [ ] `headings()` — عربية: الاسم / البريد الإلكتروني / الهاتف / الشركة / الحالة / مؤشر الصحة / إجمالي الإيراد / الوسوم / آخر تواصل
+- [ ] RTL styling + header row ملوّن + عمود الإيراد بتنسيق عملة
+- [ ] تصدير CSV كـ fallback خفيف للخطة المجانية (بدون styling)
+
+---
+
+#### [x] #112 — S4.3: ImportController — متحكم الاستيراد
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 1 ساعة
+
+- [ ] `template()` — تنزيل قالب Excel
+- [ ] `store(ImportClientRequest)` — رفع الملف + إنشاء `ClientImportLog` + dispatch `ImportClientsJob`
+- [ ] `show(ClientImportLog)` — حالة الاستيراد الحالية (polling-friendly JSON)
+- [ ] `history()` — آخر 20 عملية استيراد
+
+---
+
+#### [x] #113 — S4.4: ExportController — متحكم التصدير
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 1 ساعة
+
+- [ ] `download(Request)` — يطبق نفس فلاتر ClientQueryBuilder على التصدير
+- [ ] `scheduleExport(Request)` — تصدير async مع Queue (للملفات الكبيرة) + notification عند الانتهاء
+
+---
+
+### 🧠 Sprint 5 — الذكاء والتحليلات (Intelligence) `#114–#118`
+
+> **المتطلبات:** إكمال Sprint 2 | **المستوى:** AI L1 (Rule-based) + Statistical
+
+#### [x] #114 — S5.1: SmartTagSuggestionService — اقتراح الوسوم الذكي
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 3 ساعات
+
+**L1 — قواعد محددة مسبقاً (Rule-based):**
+
+```php
+// app/Modules/CRM/Services/SmartTagSuggestionService.php
+class SmartTagSuggestionService
+{
+    private const RULES = [
+        'VIP'         => ['min_revenue' => 5000, 'min_invoices' => 5],
+        'Late Payer'  => ['overdue_rate' => 0.3],  // 30%+ فواتير متأخرة
+        'Hesitant'    => ['acceptance_rate_max' => 0.4],  // رفض 60%+ العروض
+        'Inactive'    => ['days_since_contact' => 90],
+        'High Value'  => ['min_revenue' => 10000],
+        'New Client'  => ['days_since_created_max' => 30],
+    ];
+    
+    public function suggest(Client $client): array  // [{tag, confidence, reason}]
+    public function suggestBulk(Collection $clients): array
+    public function applyAutoRules(int $userId): int  // returns applied count
+}
+```
+
+- [ ] كل اقتراح يُعيد: `{tag_slug, confidence: 0.0-1.0, reason: string}`
+- [ ] `applyAutoRules()` — Command ليلي يطبق الوسوم عالية الثقة (≥0.85) تلقائياً
+
+---
+
+#### [x] #115 — S5.2: RecalculateHealthScoresCommand — أمر ليلي
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 1 ساعة
+
+- [ ] `php artisan crm:recalculate-health-scores {--user=}` — يعيد حساب لكل العملاء أو مستخدم محدد
+- [ ] Chunk processing (200 client/batch) لتجنب memory overflow
+- [ ] تسجيل في Scheduler: `$schedule->command('crm:recalculate-health-scores')->dailyAt('02:00')`
+- [ ] Logging: عدد العملاء المعالجين + متوسط الوقت
+
+---
+
+#### [x] #116 — S5.3: ClientSegmentEngine — محرك الشرائح الديناميكية
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 2 ساعة
+
+- [ ] `evaluate(SavedSegment $segment): Builder` — تحويل filters JSON إلى Query Builder
+- [ ] دعم operators: `equals, not_equals, contains, greater_than, less_than, between, in, not_in, is_empty, is_not_empty`
+- [ ] دعم fields: `status, health_score, total_revenue, last_contact_at, created_at, tag_ids, source, has_overdue_followup`
+- [ ] `RefreshSegmentCountsCommand` — `php artisan crm:refresh-segments` — تشغيل يومي
+
+---
+
+#### [x] #117 — S5.4: AggregatesReconciliationCommand — مطابقة ليلية
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 2 ساعة
+
+- [ ] `php artisan crm:reconcile-aggregates {--user=} {--date=}` — إعادة حساب `total_revenue, total_paid, invoice_count` من المصدر
+- [ ] يُقارن القيمة الحالية بالمحسوبة من الفواتير → يُصحح أي تباين
+- [ ] يُسجّل كل تصحيح في log مع القيمة القديمة والجديدة
+- [ ] يُشغَّل يومياً `03:00` لضمان دقة aggregates بعد الـ atomic increments
+
+---
+
+### 🤖 Sprint 6 — الأتمتة (Automation Engine) `#118–#121`
+
+> **المتطلبات:** إكمال Sprint 2 و Sprint 5
+
+#### [x] #118 — S6.1: AutomationRuleEngine — محرك القواعد ✅
+**التقدير:** 4 ساعات
+
+```php
+// app/Modules/CRM/Services/AutomationRuleEngine.php
+class AutomationRuleEngine
+{
+    public function evaluate(Client $client, string $trigger, array $context = []): int
+    public function evaluateForAllClients(int $userId, string $trigger): int
+    // Dispatches ExecuteAutomationAction::dispatch(...)->onQueue('automations')
+}
+```
+
+- [x] **Triggers:** client_created, status_changed, tag_assigned, health_score_below, follow_up_overdue, days_since_contact, invoice_paid, invoice_overdue
+- [x] **Conditions:** field comparisons مع AND/OR logic (nested)
+- [x] **Actions:** تُنفَّذ async عبر Jobs — `ExecuteAutomationAction` على queue 'automations'
+- [x] **Migration:** `automation_rules` (user_id, name, trigger, conditions json, actions json, is_active, priority, run_count, last_run_at, softDeletes)
+- [x] **Model:** `AutomationRule` — SoftDeletes، JSON casts، `recordRun()`، scopes: active/forTrigger/forUser
+
+---
+
+#### [x] #119 — S6.2: AutomationActions — تنفيذ الإجراءات ✅
+**التقدير:** 2 ساعة
+
+- [x] `AssignTagAutomationAction` — `TagService::assign()`، params: `{tag_slug}`
+- [x] `CreateFollowUpAutomationAction` — `FollowUpService::create()` مع dedup check، params: `{message, days_from_now, type}`
+- [x] `SendNotificationAutomationAction` — `$user->notify(AutomationNotification)`، params: `{message, icon}`
+- [x] `UpdateStatusAutomationAction` — `ClientService::update(UpdateClientDTO)`، params: `{status}` مع `canTransitionTo()` guard
+- [x] `LogNoteAutomationAction` — `LogClientActivityAction::execute()` مع `ActivityType::NoteAdded`، params: `{note}`
+- [x] `BaseAutomationAction` — abstract، factory `make(string $type)`، `canExecute()` guard
+- [x] `AutomationNotification` — Laravel DB channel، toDatabase: message/client_id/client_name/type/icon
+- [x] `ExecuteAutomationAction` Job — `tries=3`، `timeout=60`، `uniqueId()` للـ deduplication
+
+---
+
+#### [x] #120 — S6.3: AutomationConditionEvaluator — تقييم الشروط ✅
+**التقدير:** 2 ساعة
+
+- [x] `evaluate(Client $client, mixed $conditions): bool`
+- [x] دعم nested AND/OR: `{operator: 'AND', conditions: [...]}`
+- [x] Field resolvers: health_score، tag_ids، overdue_follow_ups، payment_rate، date fields
+- [x] Per-cycle cache (`$this->cache`) — يُعاد ضبطه لكل `evaluate()` جديد
+
+---
+
+### 🎨 Sprint 7 — واجهة المستخدم (Frontend) `#121–#126`
+
+> **المتطلبات:** إكمال Sprint 3 | **Stack:** Blade + Alpine.js + Tailwind CSS
+
+#### [ ] #121 — S7.1: Client List View — صفحة قائمة العملاء
+**التقدير:** 4 ساعات
+
+**التصميم:**
+- [ ] Header: عنوان + إحصاءات سريعة (إجمالي / نشط / VIP / تستحق متابعة)
+- [ ] شريط أدوات: بحث فوري (debounced 300ms) + فلاتر منسدلة (الحالة / الوسوم / مؤشر الصحة)
+- [ ] عرض مزدوج: Grid (بطاقات) + List (جدول) — toggle محفوظ في localStorage
+- [ ] كل بطاقة: avatar (أحرف الاسم ملوّنة) + اسم + شركة + وسوم + health score badge + آخر تواصل + أزرار سريعة (واتساب / متابعة / تعديل)
+- [ ] Infinite scroll بـ `IntersectionObserver` + cursor pagination
+- [ ] Bulk select: checkbox + toolbar (تعيين وسم / تغيير حالة / تصدير / حذف)
+- [ ] Empty state ذكي: مختلف لـ (لا عملاء / لا نتائج بحث / فلتر فارغ)
+
+---
+
+#### [ ] #122 — S7.2: Client Profile View — صفحة ملف العميل
+**التقدير:** 4 ساعات
+
+**الأقسام:**
+- [ ] Header: اسم + شركة + حالة + health score gauge + أزرار (تعديل / أرشفة / بوابة / إضافة وسم)
+- [ ] KPIs: إجمالي الإيراد / إجمالي المدفوع / عدد الفواتير / آخر دفعة
+- [ ] تبويبات Alpine.js:
+  - **المعلومات:** بيانات التواصل + الحقول المخصصة + المصدر + ملاحظات
+  - **النشاط:** timeline عمودي (icon + description + actor + timestamp) مع cursor pagination
+  - **المتابعات:** قائمة مع فلاتر (معلقة / مكتملة / متأخرة) + إضافة سريعة
+  - **الوسوم:** الوسوم الحالية + اقتراحات ذكية + إضافة/حذف
+  - **الحقول المخصصة:** نموذج محرر inline
+- [ ] Health Score card مفصّلة مع breakdown العوامل الخمسة
+
+---
+
+#### [ ] #123 — S7.3: Tag Management — إدارة الوسوم
+**التقدير:** 2 ساعة
+
+- [ ] صفحة `/clients/tags` — شبكة وسوم مع color picker + icon picker
+- [ ] معاينة فورية للوسم (كيف سيبدو على البطاقة)
+- [ ] مؤشر عدد العملاء لكل وسم + رابط سريع للعملاء المرتبطين
+- [ ] حماية system tags: تعطيل حذف + تعطيل تغيير اللون (اللون محدد من النظام)
+- [ ] Drag-and-drop لترتيب الوسوم (display_order) بـ Alpine.js + Sortable.js
+
+---
+
+#### [ ] #124 — S7.4: Follow-ups Dashboard — لوحة المتابعات
+**التقدير:** 3 ساعات
+
+- [ ] 3 أعمدة: اليوم / هذا الأسبوع / متأخرة (مرتبة بالأولوية)
+- [ ] كل بطاقة: اسم العميل (رابط) + عنوان المتابعة + أيام المتبقية + أزرار (إكمال / تأجيل / إلغاء)
+- [ ] Widget في الـ Dashboard الرئيسي: أعداد مختصرة (X اليوم / Y هذا الأسبوع / Z متأخرة)
+- [ ] إضافة متابعة سريعة: نموذج modal بـ Alpine.js بدون مغادرة الصفحة
+- [ ] فلتر بالعميل أو التاريخ أو الأولوية
+
+---
+
+#### [ ] #125 — S7.5: Segments UI + Health Score Panel
+**التقدير:** 3 ساعات
+
+**Segments UI:**
+- [ ] Segment Builder — واجهة بصرية drag-and-drop لبناء الفلاتر
+- [ ] Preview real-time (عدد العملاء المطابقين قبل الحفظ)
+- [ ] الشرائح المثبتة في الشريط الجانبي تحت قسم العملاء
+
+**Health Score Panel:**
+- [ ] توزيع العملاء على 4 فئات (Excellent/Good/Fair/Poor) — Bar chart أو Donut
+- [ ] قائمة أسوأ 10 عملاء (Poor) مع سبب انخفاض الدرجة
+- [ ] قائمة أفضل 10 عملاء (VIP candidates) للترقية التلقائية
+
+---
+
+### 🚪 Sprint 8 — بوابة العميل (Client Portal) `#126–#128`
+
+> **المتطلبات:** إكمال Sprint 3 | **الأمان:** حرج — راجع C-04 في V2
+
+#### [x] #126 — S8.1: Portal Authentication — المصادقة بالرمز
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 4 ساعات
+
+**C-04 Fix — حماية Brute Force (من V2):**
+```php
+// app/Modules/CRM/Controllers/ClientPortalController.php
+public function authenticate(Request $request): RedirectResponse
+{
+    $hash = hash('sha256', $request->input('token'));
+    $token = ClientPortalToken::where('token', $hash)
+        ->where('expires_at', '>', now())
+        ->first();
+    
+    if (!$token) {
+        usleep(random_int(50000, 150000));  // ← artificial delay لمنع timing attacks
+        RateLimiter::hit("portal:{$request->ip()}", 60 * 60);  // rate limit بـ IP
+        return back()->withErrors(['token' => 'الرمز غير صحيح أو منتهي الصلاحية']);
+    }
+    
+    // تسجيل دخول + تحديث last_used_at
+    session(['client_portal_token' => $token->id]);
+    return redirect()->route('portal.dashboard');
+}
+```
+
+- [x] صفحة طلب الرابط (`/portal/access`) — المستخدم يُدخل بريده أو رقمه
+- [x] المستخدم (صاحب الحساب) يُنشئ رمزاً من ملف العميل ويُرسله
+- [x] Middleware `EnsurePortalAuthenticated` — يتحقق من الجلسة + صلاحية الرمز
+- [x] Rate limiting: max 5 محاولات/ساعة بـ IP + `RateLimiter` facade
+- [x] **خزّن hash فقط — لا تخزن الـ token plaintext أبداً** (C-04 fix)
+- [x] الرمز يُعرض مرة واحدة عند الإنشاء ثم يختفي (مثل SSH key)
+
+---
+
+#### [x] #127 — S8.2: Portal Dashboard — لوحة العميل
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 3 ساعات
+
+- [x] Layout منفصل `portal.blade.php` — تصميم بسيط باسم الشركة وشعارها (White-label)
+- [x] Dashboard: ملخص المعاملات + إجمالي المستحق + آخر فاتورة
+- [x] صفحة الفواتير: قائمة مع الحالة + نسبة السداد
+- [x] صفحة الملف الشخصي: بيانات العميل للعرض فقط
+- [x] Permission gates: كل قسم محمي بـ `hasPermission(PortalPermission)` check
+- [x] عرض اسم العمل (Business name من إعدادات المستخدم) في Header
+
+---
+
+#### [x] #128 — S8.3: Portal Token Management — إدارة رموز البوابة
+**الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+**التقدير:** 2 ساعة
+
+- [x] UI في ملف العميل: قائمة الرموز النشطة + إنشاء رمز جديد + إلغاء رمز
+- [x] عند الإنشاء: اختيار الصلاحيات (checkboxes) + مدة الصلاحية
+- [x] عرض الرمز مرة واحدة بعد الإنشاء (plaintext — يختفي بعد الإغلاق)
+- [x] نسخ الرمز/الرابط للحافظة بزر واحد
+- [x] عرض تاريخ آخر استخدام + IP الأخير (للمراجعة الأمنية)
+
+---
+
+### ✅ Sprint 0 — الإعداد والتهيئة `#89`
+
+#### [x] #89 — S0: تهيئة Module CRM + Config
+**الأولوية:** 🔴 يُنجز أولاً | **الحالة:** ✅ مكتمل | **التاريخ:** مايو 2026
+
+**المُنجز:**
+- [x] إنشاء هيكل المجلدات (16 مجلد):
+  ```
+  app/Modules/CRM/
+  ├── Actions/      ├── Builders/     ├── Controllers/
+  ├── DTOs/         ├── Enums/        ├── Events/
+  ├── Exports/      ├── Imports/      ├── Jobs/
+  ├── Listeners/    ├── Models/       ├── Policies/
+  ├── Requests/     ├── Resources/    └── Services/
+  ```
+- [x] `config/crm.php` — 171 سطر: حدود الخطط الثلاث + system tags + health score weights + import config + portal security + cache TTLs + queue names
+- [x] `app/Providers/CRMServiceProvider.php` — تسجيل Policies + Routes (crm + portal)
+- [x] `routes/crm.php` — 115 سطر: كل مسارات CRM (CRUD + Tags + FollowUps + Segments + Import + Export + CustomFields + PortalTokens)
+- [x] `routes/portal.php` — بوابة العميل المستقلة مع `portal.auth` middleware
+- [x] `app/Http/Middleware/EnsurePortalAuthenticated.php` — C-04 Fix: hash-based validation + rate limiting + `last_used_at` lazy update
+- [x] `bootstrap/providers.php` — تسجيل `CRMServiceProvider`
+- [x] `bootstrap/app.php` — إضافة `portal.auth` alias للـ middleware
+
+**ملاحظة تقنية:** استُخدم key-based cache invalidation بدلاً من Redis Cache Tags لضمان التوافق مع shared hosting (database/file cache driver).
+
+---
+
 ## 📋 جدول التتبع السريع
 
 | # | المهمة | الحالة |
@@ -559,10 +1298,65 @@ php artisan optimize:clear && php artisan optimize
 | 16.12 | إصلاح وميض Onboarding Modal (x-cloak) | ✅ |
 | — | ربط مزود الدفع | ⬜ مستقبلي |
 | — | REST API | ⬜ مستقبلي |
+| **Phase 17 — CRM Module** | | |
+| #89 | S0: تهيئة Module + Config | ✅ |
+| #90 | S1.1: Migrations V2 Schema (12 جدول) | ✅ |
+| #91 | S1.2: Enums (8 Enums) | ✅ |
+| #92 | S1.3: Models + Casts + Scopes (12 Model) | ✅ |
+| #93 | S1.4: System Tags Seeder (8 وسوم) | ✅ |
+| #94 | S1.5: ClientPolicy (12 صلاحية) | ✅ |
+| #95 | S1.6: Form Requests (7 Requests) | ✅ |
+| #96 | S1.7: DTOs (7 DTOs) | ✅ |
+| #97 | S1.8: ClientQueryBuilder | ✅ |
+| #98 | S2.1: Client CRUD Actions (4 Actions) | ✅ |
+| #99 | S2.2: Tag Actions (Assign/Remove/Bulk) | ✅ |
+| #100 | S2.3: LogClientActivityAction | ✅ |
+| #101 | S2.4: Events (6) + Listeners (3) afterCommit | ✅ |
+| #102 | S2.5: ClientService + CRMServiceProvider Events | ✅ |
+| #103 | S2.6: FollowUpService + ClientTagService | ✅ |
+| #104 | S3.1: ClientController (11 methods) + ClientTagController (7 methods) | ✅ |
+| #105 | S3.2: TagController — موجود في ClientTagController | ✅ |
+| #106 | S3.3: SegmentController + SavedSegmentService | ✅ |
+| #107 | S3.4: API Resources (6 Resources) | ⬜ |
+| #108 | S3.5: FollowUpController (5 methods) | ✅ |
+| #109 | S3.6: CustomFieldController + ClientCustomFieldService | ✅ |
+| #110 | S4.1: ClientsImport (ToCollection + WithChunkReading + Idempotency + upsert) | ✅ |
+| #111 | S4.2: ClientsExport (Excel RTL + styled + CSV fallback) | ✅ |
+| #112 | S4.3: ImportController (template + store + dispatch Job + history + show) | ✅ |
+| #113 | S4.4: ExportController (CSV + xlsx + scheduleExport stub) | ✅ |
+| #114 | S5.1: ClientHealthScoreService (Recency Bias) + SmartTagSuggestionService (6 rules) | ✅ |
+| #115 | S5.2: RecalculateHealthScoresCommand (--apply-tags, --user, --chunk) | ✅ |
+| #116 | S5.3: ClientSegmentEngine (11 operators, 12 fields) + RefreshSegmentCountsCommand | ✅ |
+| #117 | S5.4: AggregatesReconciliationCommand (--dry-run, chunk processing) | ✅ |
+| #118 | S6.1: AutomationRuleEngine + Migration + AutomationRule Model | ✅ |
+| #119 | S6.2: 5 AutomationActions + BaseAutomationAction + AutomationNotification + ExecuteAutomationAction Job | ✅ |
+| #120 | S6.3: AutomationConditionEvaluator (nested AND/OR, per-cycle cache) | ✅ |
+| #121 | S7.1: Client List View — index + create + edit + show (4 views) | ✅ |
+| #122 | S7.2: Client Profile View — 3 tabs (activity + followups + info) | ✅ |
+| #123 | S7.3: Tag Management UI (صفحة كاملة + Sortable.js) | ✅ |
+| #124 | S7.4: Follow-ups Dashboard (3 أعمدة + Modal إضافة سريعة) | ✅ |
+| #125 | S7.5: Segments UI + Health Score Panel | ✅ |
+| #126 | S8.1: Portal Auth + Token Security — ClientPortalController + Middleware + C-04 Fix | ✅ |
+| #127 | S8.2: Portal Dashboard + Views (layout, auth, access, dashboard, invoices, profile) | ✅ |
+| #128 | S8.3: Portal Token Management UI — crm/portal-tokens/index.blade.php | ✅ |
 
 ---
 
-## 🔜 المهام المتبقية
+## 🔜 المهام المتبقية والأولويات
+
+### 🔴 Phase 17 CRM — التسلسل التنفيذي
+
+```
+الأسبوع 1: #89 (S0) → #90-#97 (Sprint 1 Foundation)
+الأسبوع 2: #98-#103 (Sprint 2 Services)
+الأسبوع 3: #104-#109 (Sprint 3 API)
+الأسبوع 4: #110-#113 (Sprint 4 Import/Export) + #114-#117 (Sprint 5 Intelligence)
+الأسبوع 5: #118-#120 (Sprint 6 Automation)
+الأسبوع 6: #121-#125 (Sprint 7 Frontend)
+الأسبوع 7: #126-#128 (Sprint 8 Portal)
+```
+
+### 🟠 تحسينات مؤجلة (Phase 16)
 
 | المهمة | الأولوية | الوصف |
 |--------|----------|-------|
@@ -573,4 +1367,118 @@ php artisan optimize:clear && php artisan optimize
 
 ---
 
-*وثيقة حية — آخر تحديث: مايو 2026*
+## 📚 المراجع التقنية
+
+| الملف | الوصف |
+|-------|-------|
+| `docs/CLIENTS-CRM-SPEC-V2.md` | المرجع الهندسي الأساسي للـ CRM — معمارية من مستوى CTO (2164 سطر) |
+| `docs/CLIENTS-CRM-SPEC.md` | المواصفات التفصيلية V1 — الـ What والـ Why (1687 سطر) |
+| `docs/TASKS.md` | هذا الملف — خطة التنفيذ والتتبع |
+| `docs/DEPLOY.md` | دليل النشر على cPanel Shared Hosting |
+
+### ⚠️ نقاط حرجة يجب مراعاتها (من V2 Architecture Review)
+
+| الكود | الخطأ | الحل |
+|-------|-------|------|
+| C-01 | Activity logging داخل Transaction | `$afterCommit = true` على جميع Listeners |
+| C-02 | Race condition في aggregates | `DB::raw("total_paid + X")` لا subquery |
+| C-03 | ENUM columns تسبب downtime | `VARCHAR + CHECK constraint` |
+| C-04 | Portal token مكشوف | خزّن `hash('sha256', $token)` فقط |
+| C-05 | Offset pagination بطيء | `cursorPaginate()` لقوائم العملاء |
+| C-06 | Cache بدون Tags | `Cache::tags(["client:{$id}"])` مع Redis |
+
+---
+
+---
+
+### ✅ #145 — Navigation + فحص نهائي للـ Views + إكمال DTOs/Requests
+**الحالة:** `completed` | **التاريخ:** مايو 2026
+
+**المُنجز:**
+
+**1. UpdateClientRequest — إضافة 5 حقول جديدة:**
+- [x] `position` — string, nullable, max:100
+- [x] `website` — url, nullable, max:255
+- [x] `address` — string, nullable, max:255
+- [x] `city` — string, nullable, max:100
+- [x] `country` — string, nullable, max:2
+- الملف: `app/Modules/CRM/Requests/UpdateClientRequest.php`
+
+**2. UpdateClientDTO — إضافة 5 خصائص جديدة:**
+- [x] إضافة: `?string $position`, `?string $website`, `?string $address`, `?string $city`, `?string $country`
+- [x] تحديث `fromRequest()` لمعالجة الحقول الجديدة مع `$request->has()` + `$request->filled()` pattern
+- [x] تحديث `toChangedArray()` لتضمين الحقول الجديدة إذا تغيّرت
+- الملف: `app/Modules/CRM/DTOs/UpdateClientDTO.php`
+
+**3. Navigation — إضافة روابط CRM وباقي الأقسام:**
+- [x] `resources/views/layouts/navigation.blade.php`
+- [x] روابط Desktop: لوحة التحكم | **العملاء** (clients.index) | المشاريع | المعاملات | التقارير
+- [x] روابط Mobile (responsive): نفس الروابط بـ `<x-responsive-nav-link>`
+- [x] Active state صحيح: `request()->routeIs('clients.*')` للـ CRM
+
+**4. تحقق من Actions (CreateClientAction + UpdateClientAction):**
+- [x] `CreateClientAction` يستخدم `$dto->toArray()` — يمرر الحقول الجديدة تلقائياً ✅
+- [x] `UpdateClientAction` يستخدم `$dto->toChangedArray()` — يُحدِّث فقط ما تغيّر ✅
+
+---
+
+---
+
+### ✅ #146 — S7.3: Tag Management UI
+**الحالة:** `completed` | **التاريخ:** مايو 2026
+
+**المُنجز:**
+
+**1. `ClientTagController` — تحديثات:**
+- [x] `index()` → يعيد Blade view عند طلب عادي، JSON عند AJAX (`wantsJson()`)
+- [x] `withCount('clients')` لعرض عدد العملاء لكل وسم
+- [x] إضافة `reorder()` method — PATCH بـ `order: [ids]` — يُحدِّث `priority` ويُصفّر الـ Cache
+
+**2. `routes/crm.php`:**
+- [x] إضافة `Route::patch('/reorder', ...)` باسم `clients.tags.reorder`
+
+**3. `resources/views/crm/tags/index.blade.php`** (صفحة كاملة):
+- [x] **نموذج إنشاء وسم** — `<input type="color">` + اسم + أيقونة Emoji + معاينة فورية في الوقت الحقيقي
+- [x] **قائمة الوسوم المخصصة** — قابلة للتعديل inline + حذف مع تأكيد Modal
+- [x] **Sortable.js** — Drag-and-drop بـ `.drag-handle` + حفظ تلقائي للترتيب via PATCH
+- [x] **وسوم النظام** — عرض للقراءة فقط (لا تعديل/حذف)
+- [x] **Toast notifications** — نجاح/خطأ لكل عملية
+- [x] **Alpine.js components**: `tagManager()` (page-level) + `tagRow()` (per-row)
+- [x] Optimistic UI: التعديلات تظهر فوراً قبل رد السيرفر
+
+---
+
+---
+
+### ✅ #147 — S7.4: Follow-ups Dashboard
+**الحالة:** `completed` | **التاريخ:** مايو 2026
+
+**المُنجز:**
+
+**1. `ClientFollowUpController` — تحديثات:**
+- [x] `index()` → Blade view (3 queries مفصولة: overdue / today / thisWeek) أو JSON عند AJAX
+- [x] `storeGeneral()` — `POST /clients/follow-ups/quick` — إنشاء متابعة من اللوحة العامة مع `client_id` في الـ body
+
+**2. `routes/crm.php`:**
+- [x] إضافة `Route::post('/quick', ...)` باسم `clients.follow-ups.quick-store`
+
+**3. `resources/views/crm/follow-ups/index.blade.php`:**
+- [x] شريط إحصاءات علوي: 3 بطاقات (متأخرة / اليوم / الأسبوع) بألوان مختلفة
+- [x] Layout ثلاثي الأعمدة (responsive: 1 عمود → 3 أعمدة)
+- [x] Empty state ذكي لكل عمود (رسائل مختلفة)
+- [x] Modal إضافة سريعة (Alpine.js) بدون reload — AJAX إلى `follow-ups.quick-store`
+- [x] Toast notifications
+
+**4. `resources/views/components/crm-follow-up-card.blade.php`:**
+- [x] شريط لوني جانبي حسب العمود (أحمر / برتقالي / أزرق)
+- [x] أيقونة النوع (📞📧🤝✅📌) + أولوية ملونة + حساب الأيام المتبقية/المنقضية
+- [x] زر "إتمام" + زر "إلغاء" (كلاهما AJAX مباشر)
+- [x] زر "تأجيل" يفتح Modal الإضافة السريعة
+- [x] حالة `done` بعد الإتمام/الإلغاء (Optimistic UI)
+
+**5. `navigation.blade.php`:**
+- [x] إضافة رابط "المتابعات" (Desktop + Mobile)
+
+---
+
+*وثيقة حية — آخر تحديث: مايو 2026 | Phase 17 CRM مضافة*

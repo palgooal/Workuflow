@@ -126,7 +126,7 @@
 
             {{-- H1 — compact for above-fold CTAs --}}
             <h1
-                class="mx-auto mb-4 max-w-4xl text-4xl font-black leading-[1.12] text-[#0F172A] sm:text-5xl md:text-[3.4rem] lg:text-[4rem]">
+                class="mx-auto mb-4 max-w-4xl text-4xl font-black leading-[1.12] text-[#0F172A] sm:text-5xl md:text-[3.4rem] lg:text-[2rem]">
                 منصتك لإدارة
                 <span class="relative inline-block text-[#3730A3]">
                     المال والعمل
@@ -629,23 +629,23 @@
             <div
                 class="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-0 md:divide-x md:divide-x-reverse md:divide-slate-100">
                 <div class="text-center md:px-6">
-                    <div class="text-2xl font-black text-[#0F172A]">+٥,٠٠٠</div>
+                    <div class="text-2xl font-black text-[#0F172A]">+5,000</div>
                     <div class="text-[#475569] text-sm mt-1">مستخدم نشط</div>
                 </div>
                 <div class="text-center md:px-6">
-                    <div class="text-2xl font-black text-[#0F172A]">+٢٠٠K</div>
+                    <div class="text-2xl font-black text-[#0F172A]">+200K</div>
                     <div class="text-[#475569] text-sm mt-1">فاتورة أُنشئت</div>
                 </div>
                 <div class="text-center md:px-6">
-                    <div class="text-2xl font-black text-[#0F172A]">+٥٠M</div>
+                    <div class="text-2xl font-black text-[#0F172A]">+50M</div>
                     <div class="text-[#475569] text-sm mt-1">ريال معالج</div>
                 </div>
                 <div class="text-center md:px-6">
-                    <div class="text-2xl font-black text-[#0F172A]">+١٥K</div>
+                    <div class="text-2xl font-black text-[#0F172A]">+15K</div>
                     <div class="text-[#475569] text-sm mt-1">مشروع مكتمل</div>
                 </div>
                 <div class="text-center md:px-6">
-                    <div class="text-2xl font-black text-brand">٤.٩ ★</div>
+                    <div class="text-2xl font-black text-brand">4.9 ★</div>
                     <div class="text-[#475569] text-sm mt-1">تقييم المستخدمين</div>
                 </div>
             </div>
