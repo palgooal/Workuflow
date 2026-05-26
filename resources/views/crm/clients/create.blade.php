@@ -139,7 +139,7 @@
                 الوسوم
             </h2>
             <div class="flex flex-wrap gap-2">
-                @foreach($tags->where('type', 'custom') as $tag)
+                @foreach($tags as $tag)
                 <label class="inline-flex items-center gap-2 cursor-pointer select-none">
                     <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}"
                            {{ in_array($tag->id, old('tag_ids', [])) ? 'checked' : '' }}

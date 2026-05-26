@@ -401,8 +401,22 @@
                                     </svg>
                                 </a>
                                 <?php endif; ?>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($client->is_archived): ?>
+                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('restore', $client)): ?>
+                                <form method="POST" action="<?php echo e(route('clients.restore', $client->public_id)); ?>">
+                                    <?php echo csrf_field(); ?>
+                                    <button type="submit"
+                                            class="p-1.5 text-teal-500 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition"
+                                            title="إلغاء الأرشفة">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                                <?php endif; ?>
+                                <?php else: ?>
                                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('archive', $client)): ?>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$client->is_archived): ?>
                                 <form method="POST" action="<?php echo e(route('clients.archive', $client->public_id)); ?>"
                                       onsubmit="return confirm('هل تريد أرشفة هذا العميل؟')">
                                     <?php echo csrf_field(); ?>
@@ -415,8 +429,8 @@
                                         </svg>
                                     </button>
                                 </form>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 <?php endif; ?>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
                         </td>
 

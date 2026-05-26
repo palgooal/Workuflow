@@ -93,7 +93,7 @@
             <h2 class="text-sm font-semibold text-gray-700">الوسوم</h2>
             <div class="flex flex-wrap gap-2">
                 @php $currentTagIds = old('tag_ids', $client->tags->pluck('id')->toArray()) @endphp
-                @foreach($tags->where('type', 'custom') as $tag)
+                @foreach($tags as $tag)
                 <label class="inline-flex items-center gap-2 cursor-pointer select-none">
                     <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}"
                            {{ in_array($tag->id, $currentTagIds) ? 'checked' : '' }}

@@ -4,6 +4,7 @@ namespace App\Modules\CRM\Exports;
 
 use App\Modules\CRM\Builders\ClientQueryBuilder;
 use App\Modules\CRM\DTOs\ClientFiltersDTO;
+use App\Modules\CRM\Enums\ClientSource;
 use App\Modules\CRM\Enums\ClientStatus;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Query\Builder;
@@ -169,14 +170,10 @@ class ClientsExport implements
 
     private function localizeSource(mixed $source): string
     {
-        $map = [
-            'direct'       => 'مباشر',
-            'social_media' => 'وسائل التواصل',
-            'referral'     => 'إحالة',
-            'website'      => 'الموقع الإلكتروني',
-            'import'       => 'استيراد',
-            'other'        => 'أخرى',
-        ];
-        return $map[$source] ?? (string)$source;
+        if ($source instanceof ClientSource) {
+            return $source->label();
+        }
+        $s = ClientSource::tryFrom((string)$source);
+        return $s ? $s->label() : (string)$source;
     }
 }

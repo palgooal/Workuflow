@@ -127,7 +127,9 @@ class ClientController extends Controller
 
         $this->clientService->archive($client, $request->user()->id);
 
-        return back()->with('success', 'تمت أرشفة العميل.');
+        return redirect()
+            ->route('clients.show', $client->public_id)
+            ->with('success', 'تمت أرشفة العميل. يمكنك استعادته في أي وقت.');
     }
 
     public function restore(Request $request, string $publicId): RedirectResponse
