@@ -48,11 +48,6 @@
                         if (str_starts_with($waNumber, '0')) {
                             $waNumber = '970' . substr($waNumber, 1);
                         }
-                        // معظم أرقام الجوال الفلسطينية +970 مسجّلة على واتساب
-                        // تحت كود +972 (البنية التحتية الإسرائيلية) — 059X
-                        if (str_starts_with($waNumber, '970') && str_starts_with(substr($waNumber, 3), '5')) {
-                            $waNumber = '972' . substr($waNumber, 3);
-                        }
                     @endphp
                     <a href="https://wa.me/{{ $waNumber }}" target="_blank" rel="noopener"
                        title="تواصل عبر واتساب"
