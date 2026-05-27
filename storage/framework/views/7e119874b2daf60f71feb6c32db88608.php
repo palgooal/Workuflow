@@ -153,8 +153,8 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         <div class="flex items-center justify-between">
             
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('delete', $client)): ?>
-            <button type="submit" form="delete-form"
-                    onclick="return confirm('هل أنت متأكد من حذف هذا العميل نهائياً؟')"
+            <button type="button"
+                    onclick="if(confirm('هل أنت متأكد من حذف هذا العميل نهائياً؟\nلا يمكن التراجع عن هذه العملية.')) { document.getElementById('delete-form').submit(); }"
                     class="px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 border border-red-200
                            rounded-xl transition">
                 حذف العميل

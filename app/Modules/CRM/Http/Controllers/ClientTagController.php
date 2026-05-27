@@ -80,22 +80,44 @@ class ClientTagController extends Controller
         ]);
     }
 
-    public function assign(Request $request, Client $client, ClientTag $tag): JsonResponse
+    public function assign(Request $request, string $client, ClientTag $tag): JsonResponse
     {
-        $this->authorize('update', $client);
+        $clientModel = Client::where('public_id', $client)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
-        $this->tagService->assign($client, $tag, $request->user()->id);
+        $this->authorize('update', $clientModel);
 
-        return response()->json(['message' => "تم تعيين الوسم {$tag->name}."]);
+        $this->tagService->assign($clientModel, $tag, $request->user()->id);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => "تم تعيين الوسم {$tag->name}."]);
+        }
+
+        return response()->json([
+            'message'  => "تم تعيين الوسم {$tag->name}.",
+            'redirect' => route('clients.show', $client),
+        ]);
     }
 
-    public function remove(Request $request, Client $client, ClientTag $tag): JsonResponse
+    public function remove(Request $request, string $client, ClientTag $tag): JsonResponse
     {
-        $this->authorize('update', $client);
+        $clientModel = Client::where('public_id', $client)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
-        $this->tagService->remove($client, $tag, $request->user()->id);
+        $this->authorize('update', $clientModel);
 
-        return response()->json(['message' => "تمت إزالة الوسم {$tag->name}."]);
+        $this->tagService->remove($clientModel, $tag, $request->user()->id);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => "تمت إزالة الوسم {$tag->name}."]);
+        }
+
+        return response()->json([
+            'message'  => "تمت إزالة الوسم {$tag->name}.",
+            'redirect' => route('clients.show', $client),
+        ]);
     }
 
     public function suggest(Request $request, string $publicId): JsonResponse

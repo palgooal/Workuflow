@@ -74,7 +74,12 @@ class ClientController extends Controller
 
         $tagSuggestions = $this->tagService->suggest($client);
 
-        return view('crm.clients.show', compact('client', 'tagSuggestions'));
+        $projects = \App\Models\Project::where('client_id', $client->id)
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('crm.clients.show', compact('client', 'tagSuggestions', 'projects'));
     }
 
     // ==================== Edit / Update ====================
@@ -156,7 +161,8 @@ class ClientController extends Controller
         $this->authorize('view', $client);
 
         $activities = $client->activities()
-            ->with('user:id,name')
+            ->with('actor:id,name')
+            ->orderByDesc('occurred_at')
             ->limit(50)
             ->get()
             ->map(fn ($a) => [
@@ -166,7 +172,7 @@ class ClientController extends Controller
                 'icon'        => $a->type->icon(),
                 'color'       => $a->type->color(),
                 'description' => $a->description,
-                'actor'       => $a->user?->name ?? 'النظام',
+                'actor'       => $a->actor?->name ?? 'النظام',
                 'occurred_at' => $a->occurred_at->toIso8601String(),
                 'occurred_ago'=> $a->occurred_at->diffForHumans(),
             ]);

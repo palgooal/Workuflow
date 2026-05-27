@@ -115,9 +115,9 @@ Route::middleware(['auth', 'active.account'])->group(function () {
         Route::get('/{client}/stats',     [ClientController::class, 'stats'])->name('stats');
 
         // وسوم عميل محدد
-        Route::post('/{client}/tags/assign',  [ClientTagController::class, 'assign'])->name('tags.assign');
-        Route::post('/{client}/tags/remove',  [ClientTagController::class, 'remove'])->name('tags.remove');
-        Route::get('/{client}/tags/suggest',  [ClientTagController::class, 'suggest'])->name('tags.suggest');
+        Route::post('/{client}/tags/{tag}/assign', [ClientTagController::class, 'assign'])->name('tags.assign');
+        Route::post('/{client}/tags/{tag}/remove', [ClientTagController::class, 'remove'])->name('tags.remove');
+        Route::get('/{client}/tags/suggest',       [ClientTagController::class, 'suggest'])->name('tags.suggest');
 
         // متابعات عميل محدد
         Route::prefix('/{client}/follow-ups')->name('client-follow-ups.')->group(function () {

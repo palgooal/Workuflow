@@ -75,7 +75,16 @@
                 <div x-show="open" @click.away="open = false" x-cloak
                      class="absolute left-0 mt-1 w-56 bg-white border border-gray-100 rounded-xl shadow-lg z-10 p-2">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $tagSuggestions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $suggestion): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <form method="POST" action="<?php echo e(route('clients.tags.assign', [$client->public_id, $suggestion->id])); ?>">
+                    <form method="POST" action="<?php echo e(route('clients.tags.assign', [$client->public_id, $suggestion->id])); ?>"
+                          @submit.prevent="
+                            fetch($el.action, {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>', 'Accept': 'application/json' },
+                            })
+                            .then(r => r.json())
+                            .then(d => { open = false; window.location.reload(); })
+                            .catch(() => window.location.reload())
+                          ">
                         <?php echo csrf_field(); ?>
                         <button type="submit"
                                 class="w-full text-right flex items-center gap-2 px-3 py-2 text-sm text-gray-700
@@ -179,6 +188,7 @@
             <?php
                 $tabs = [
                     'activity'   => ['label' => 'النشاط', 'icon' => '📋'],
+                    'projects'   => ['label' => 'المشاريع', 'icon' => '📁', 'badge' => $projects->count()],
                     'followups'  => ['label' => 'المتابعات', 'icon' => '⏰'],
                     'info'       => ['label' => 'المعلومات', 'icon' => '📝'],
                 ];
@@ -192,6 +202,9 @@
                 <span><?php echo e($tab['icon']); ?></span>
                 <?php echo e($tab['label']); ?>
 
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($tab['badge']) && $tab['badge'] > 0): ?>
+                <span class="inline-flex items-center justify-center w-4 h-4 text-xs bg-indigo-100 text-indigo-700 rounded-full"><?php echo e($tab['badge']); ?></span>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </button>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
@@ -213,6 +226,92 @@
                         جاري التحميل…
                     </div>
                 </div>
+            </div>
+        </div>
+
+        
+        <div x-show="tab === 'projects'" class="pt-4">
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        المشاريع (<?php echo e($projects->count()); ?>)
+                    </h3>
+                    <a href="<?php echo e(route('projects.create')); ?>"
+                       class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        مشروع جديد
+                    </a>
+                </div>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($projects->isEmpty()): ?>
+                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                    <svg class="w-10 h-10 mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                    </svg>
+                    <p class="text-sm">لا توجد مشاريع مرتبطة بهذا العميل</p>
+                    <a href="<?php echo e(route('projects.create')); ?>"
+                       class="mt-3 text-xs text-indigo-600 hover:underline">إضافة مشروع</a>
+                </div>
+                <?php else: ?>
+                <div class="space-y-3">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $projects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $project): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
+                        $profit = $project->netProfit();
+                    ?>
+                    <a href="<?php echo e(route('projects.show', $project)); ?>"
+                       class="flex items-center justify-between p-3 rounded-xl border border-gray-100
+                              hover:border-indigo-200 hover:bg-indigo-50/30 transition group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            
+                            <span class="w-3 h-3 rounded-full flex-shrink-0"
+                                  style="background-color: <?php echo e($project->color ?? '#6366f1'); ?>"></span>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate group-hover:text-indigo-700">
+                                    <?php echo e($project->name); ?>
+
+                                </p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->type): ?>
+                                    <span class="text-xs text-gray-400">
+                                        <?php echo e($project->type->label() ?? $project->type->value); ?>
+
+                                    </span>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    <span class="text-xs <?php echo e($project->is_active ? 'text-teal-600' : 'text-gray-400'); ?>">
+                                        <?php echo e($project->is_active ? '● نشط' : '○ منتهي'); ?>
+
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 flex-shrink-0 text-left">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($project->contract_value): ?>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400">قيمة العقد</p>
+                                <p class="text-sm font-semibold text-gray-700">
+                                    <?php echo e(number_format($project->contract_value, 0)); ?> ₪
+                                </p>
+                            </div>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($profit != 0): ?>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400">الربح</p>
+                                <p class="text-sm font-semibold <?php echo e($profit >= 0 ? 'text-teal-600' : 'text-red-500'); ?>">
+                                    <?php echo e(number_format(abs($profit), 0)); ?> ₪
+                                </p>
+                            </div>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </div>
+                    </a>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
         </div>
 
