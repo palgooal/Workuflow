@@ -79,7 +79,13 @@ class ClientController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('crm.clients.show', compact('client', 'tagSuggestions', 'projects'));
+        $clientInvoices = \App\Models\Invoice::where('client_id', $client->id)
+            ->where('user_id', $request->user()->id)
+            ->with('project')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('crm.clients.show', compact('client', 'tagSuggestions', 'projects', 'clientInvoices'));
     }
 
     // ==================== Edit / Update ====================

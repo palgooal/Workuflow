@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
@@ -33,6 +34,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('projects', [ProjectController::class, 'store'])
         ->middleware('subscription:projects')
         ->name('projects.store');
+
+    // ==================== الفواتير ====================
+    Route::prefix('invoices')->name('invoices.')->group(function () {
+        Route::get('/',                    [InvoiceController::class, 'index'])->name('index');
+        Route::get('/create',              [InvoiceController::class, 'create'])->name('create');
+        Route::post('/',                   [InvoiceController::class, 'store'])->name('store');
+        Route::get('/{invoice}',           [InvoiceController::class, 'show'])->name('show');
+        Route::get('/{invoice}/edit',      [InvoiceController::class, 'edit'])->name('edit');
+        Route::put('/{invoice}',           [InvoiceController::class, 'update'])->name('update');
+        Route::delete('/{invoice}',        [InvoiceController::class, 'destroy'])->name('destroy');
+        Route::post('/{invoice}/mark-sent', [InvoiceController::class, 'markSent'])->name('mark-sent');
+        Route::post('/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('mark-paid');
+        Route::post('/{invoice}/cancel',    [InvoiceController::class, 'cancel'])->name('cancel');
+    });
 
     // Clients — تم نقله إلى CRM Module (routes/crm.php via CRMServiceProvider)
     // Route::resource('clients', ...) — replaced by full CRM module

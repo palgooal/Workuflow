@@ -48,11 +48,6 @@
                         if (str_starts_with($waNumber, '0')) {
                             $waNumber = '970' . substr($waNumber, 1);
                         }
-                        // معظم أرقام الجوال الفلسطينية +970 مسجّلة على واتساب
-                        // تحت كود +972 (البنية التحتية الإسرائيلية) — 059X
-                        if (str_starts_with($waNumber, '970') && str_starts_with(substr($waNumber, 3), '5')) {
-                            $waNumber = '972' . substr($waNumber, 3);
-                        }
                     ?>
                     <a href="https://wa.me/<?php echo e($waNumber); ?>" target="_blank" rel="noopener"
                        title="تواصل عبر واتساب"
@@ -207,10 +202,11 @@
         <div class="flex gap-1 border-b border-gray-200 overflow-x-auto">
             <?php
                 $tabs = [
-                    'activity'   => ['label' => 'النشاط', 'icon' => '📋'],
+                    'activity'   => ['label' => 'النشاط',   'icon' => '📋'],
                     'projects'   => ['label' => 'المشاريع', 'icon' => '📁', 'badge' => $projects->count()],
-                    'followups'  => ['label' => 'المتابعات', 'icon' => '⏰'],
-                    'info'       => ['label' => 'المعلومات', 'icon' => '📝'],
+                    'invoices'   => ['label' => 'الفواتير', 'icon' => '🧾', 'badge' => $clientInvoices->count()],
+                    'followups'  => ['label' => 'المتابعات','icon' => '⏰'],
+                    'info'       => ['label' => 'المعلومات','icon' => '📝'],
                 ];
             ?>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $tabs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $tab): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -324,6 +320,76 @@
                                 </p>
                             </div>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </div>
+                    </a>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            </div>
+        </div>
+
+        
+        <div x-show="tab === 'invoices'" class="pt-4">
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        الفواتير (<?php echo e($clientInvoices->count()); ?>)
+                    </h3>
+                    <a href="<?php echo e(route('invoices.create', ['client_id' => $client->id])); ?>"
+                       class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        إنشاء فاتورة
+                    </a>
+                </div>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($clientInvoices->isEmpty()): ?>
+                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                    <svg class="w-10 h-10 mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p class="text-sm">لا توجد فواتير لهذا العميل</p>
+                    <a href="<?php echo e(route('invoices.create', ['client_id' => $client->id])); ?>"
+                       class="mt-3 text-xs text-indigo-600 hover:underline">إنشاء أول فاتورة</a>
+                </div>
+                <?php else: ?>
+                <div class="space-y-2">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $clientInvoices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $inv): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <a href="<?php echo e(route('invoices.show', $inv->ulid)); ?>"
+                       class="flex items-center justify-between p-3 rounded-xl border border-gray-100
+                              hover:border-indigo-200 hover:bg-indigo-50/30 transition group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-sm font-medium text-gray-900 group-hover:text-indigo-700">
+                                        <?php echo e($inv->number); ?>
+
+                                    </p>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium <?php echo e($inv->status->badgeClass()); ?>">
+                                        <?php echo e($inv->status->icon()); ?> <?php echo e($inv->status->label()); ?>
+
+                                    </span>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($inv->isOverdue()): ?>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">⚠️ متأخرة</span>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    <?php echo e($inv->issue_date->format('Y/m/d')); ?>
+
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($inv->project): ?> — <?php echo e($inv->project->name); ?> <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 flex-shrink-0">
+                            <p class="text-sm font-semibold text-gray-800">
+                                <?php echo e(number_format($inv->total, 0)); ?> <?php echo e($inv->currency); ?>
+
+                            </p>
                             <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
