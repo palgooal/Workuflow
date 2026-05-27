@@ -1483,3 +1483,35 @@ public function authenticate(Request $request): RedirectResponse
 ---
 
 *وثيقة حية — آخر تحديث: مايو 2026 | Phase 17 CRM مضافة*
+
+---
+
+## 🧾 Phase 18 — نظام الفواتير (Invoices) ✅
+
+> التوثيق التفصيلي في: `docs/INVOICES.md`
+
+### ✅ 18.1 — قاعدة البيانات والنماذج
+- [x] Migration: جدول `invoices` + `invoice_items`
+- [x] إصلاح FK: `project_id` من `unsignedBigInteger` إلى `char(26)` لتوافق `projects.id` (ULID)
+- [x] Model `Invoice`: SoftDeletes، ULID auto-generate، ترقيم تلقائي INV-XXXX، recalculate()، isOverdue()
+- [x] Model `InvoiceItem`: casts للأرقام العشرية
+- [x] Enum `InvoiceStatus`: draft | sent | paid | overdue | cancelled مع label() / badgeClass() / icon()
+
+### ✅ 18.2 — Controller والـ Routes
+- [x] `InvoiceController`: CRUD كامل (index, create, store, show, edit, update, destroy)
+- [x] إجراءات الحالة: markSent، markPaid، cancel
+- [x] Route model binding عبر `ulid` لا `id`
+- [x] مجموعة routes محمية بـ auth+verified
+
+### ✅ 18.3 — الواجهات
+- [x] `invoices/index.blade.php`: قائمة + إحصائيات سريعة + جدول احترافي + pagination
+- [x] `invoices/create.blade.php`: فورم ديناميكي Alpine.js — بنود + حساب فوري
+- [x] `invoices/edit.blade.php`: نفس create مع بيانات محملة مسبقاً
+- [x] `invoices/show.blade.php`: ورقة فاتورة + شريط إجراءات + طباعة PDF
+
+### ✅ 18.4 — التكامل
+- [x] تبويب "🧾 الفواتير" في ملف العميل (CRM clients/show) مع badge العدد
+- [x] رابط "الفواتير" في Navigation الرئيسية
+- [x] ربط "إنشاء فاتورة" من ملف العميل يمرر client_id تلقائياً
+
+*آخر تحديث: 27 مايو 2026*
