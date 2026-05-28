@@ -27,6 +27,9 @@
                     <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
                         {{ __('الفواتير') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('quotes.index')" :active="request()->routeIs('quotes.*')">
+                        {{ __('عروض الأسعار') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('clients.follow-ups.index')" :active="request()->routeIs('clients.follow-ups.*')">
                         {{ __('المتابعات') }}
                     </x-nav-link>
@@ -105,6 +108,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
                 {{ __('الفواتير') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('quotes.index')" :active="request()->routeIs('quotes.*')">
+                {{ __('عروض الأسعار') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('clients.follow-ups.index')" :active="request()->routeIs('clients.follow-ups.*')">
                 {{ __('المتابعات') }}

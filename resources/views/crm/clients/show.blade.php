@@ -200,6 +200,7 @@
                     'activity'   => ['label' => 'النشاط',   'icon' => '📋'],
                     'projects'   => ['label' => 'المشاريع', 'icon' => '📁', 'badge' => $projects->count()],
                     'invoices'   => ['label' => 'الفواتير', 'icon' => '🧾', 'badge' => $clientInvoices->count()],
+                    'quotes'     => ['label' => 'عروض الأسعار', 'icon' => '📋', 'badge' => $clientQuotes->count()],
                     'followups'  => ['label' => 'المتابعات','icon' => '⏰'],
                     'info'       => ['label' => 'المعلومات','icon' => '📝'],
                 ];
@@ -380,6 +381,54 @@
                             <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- ==================== تبويب عروض الأسعار ==================== --}}
+        <div x-show="tab === 'quotes'" class="pt-4">
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        عروض الأسعار ({{ $clientQuotes->count() }})
+                    </h3>
+                    <a href="{{ route('quotes.create', ['client_id' => $client->id]) }}"
+                       class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        إنشاء عرض سعر
+                    </a>
+                </div>
+
+                @if($clientQuotes->isEmpty())
+                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                    <div class="text-4xl mb-2">📋</div>
+                    <p class="text-sm">لا توجد عروض أسعار بعد</p>
+                </div>
+                @else
+                <div class="space-y-2">
+                    @foreach($clientQuotes as $q)
+                    <a href="{{ route('quotes.show', $q->ulid) }}"
+                       class="flex items-center justify-between p-3 rounded-xl border border-gray-100
+                              hover:border-indigo-200 hover:bg-indigo-50/30 transition group">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-semibold text-indigo-600">{{ $q->number }}</span>
+                            @if($q->title)
+                                <span class="text-xs text-gray-500 truncate max-w-40">{{ $q->title }}</span>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-medium {{ $q->status->badgeClass() }} px-2 py-0.5 rounded-full">
+                                {{ $q->status->icon() }} {{ $q->status->label() }}
+                            </span>
+                            <span class="text-xs font-semibold text-gray-700">
+                                {{ number_format($q->total, 2) }} {{ $q->currency }}
+                            </span>
                         </div>
                     </a>
                     @endforeach

@@ -293,6 +293,57 @@
     </div>
     @endif
 
+    {{-- Quotes --}}
+    <div class="bg-white rounded-2xl border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 flex items-center gap-2">
+                <span>📋</span> عروض الأسعار
+                @if($projectQuotes->count() > 0)
+                    <span class="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full font-medium">
+                        {{ $projectQuotes->count() }}
+                    </span>
+                @endif
+            </h2>
+            <a href="{{ route('quotes.create') }}?project_id={{ $project->id }}&client_id={{ $project->client_id }}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-indigo-600
+                      border border-indigo-200 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition">
+                + إنشاء عرض
+            </a>
+        </div>
+
+        @if($projectQuotes->isEmpty())
+            <div class="py-10 text-center text-gray-400 text-sm">
+                لا توجد عروض أسعار مرتبطة بهذا المشروع
+            </div>
+        @else
+            <div class="divide-y divide-gray-50">
+                @foreach($projectQuotes as $q)
+                @php
+                    $isExp = $q->isExpired();
+                @endphp
+                <a href="{{ route('quotes.show', $q->ulid) }}"
+                   class="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-900">{{ $q->number }}</span>
+                            @if($q->title)
+                                <span class="text-xs text-gray-400 truncate">— {{ $q->title }}</span>
+                            @endif
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5">{{ $q->issue_date->format('d/m/Y') }}</p>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-full font-medium {{ $isExp ? 'bg-orange-100 text-orange-700' : $q->status->badgeClass() }}">
+                        {{ $q->status->icon() }} {{ $isExp ? 'منتهي' : $q->status->label() }}
+                    </span>
+                    <span class="text-sm font-semibold text-gray-700 shrink-0">
+                        {{ number_format($q->total, 2) }} {{ $q->currency }}
+                    </span>
+                </a>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     {{-- Recent Transactions --}}
     <div class="bg-white rounded-2xl border border-gray-100">
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">

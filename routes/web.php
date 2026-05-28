@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
@@ -34,6 +35,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('projects', [ProjectController::class, 'store'])
         ->middleware('subscription:projects')
         ->name('projects.store');
+
+    // ==================== عروض الأسعار ====================
+    Route::prefix('quotes')->name('quotes.')->group(function () {
+        Route::get('/',                          [QuoteController::class, 'index'])->name('index');
+        Route::get('/create',                    [QuoteController::class, 'create'])->name('create');
+        Route::post('/',                         [QuoteController::class, 'store'])->name('store');
+        Route::get('/{ulid}',                    [QuoteController::class, 'show'])->name('show');
+        Route::get('/{ulid}/edit',               [QuoteController::class, 'edit'])->name('edit');
+        Route::put('/{ulid}',                    [QuoteController::class, 'update'])->name('update');
+        Route::delete('/{ulid}',                 [QuoteController::class, 'destroy'])->name('destroy');
+        Route::post('/{ulid}/mark-sent',         [QuoteController::class, 'markSent'])->name('mark-sent');
+        Route::post('/{ulid}/convert',           [QuoteController::class, 'convertToInvoice'])->name('convert');
+    });
 
     // ==================== الفواتير ====================
     Route::prefix('invoices')->name('invoices.')->group(function () {
@@ -131,6 +145,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ══════════════════════════════════════════════════════
+// بوابة العميل لعروض الأسعار — بدون Auth (رابط عام مُؤمَّن بـ token)
+// ══════════════════════════════════════════════════════
+Route::prefix('q')->name('quotes.')->group(function () {
+    Route::get('/{token}',         [QuoteController::class, 'portal'])->name('portal');
+    Route::post('/{token}/accept', [QuoteController::class, 'accept'])->name('accept');
+    Route::post('/{token}/reject', [QuoteController::class, 'reject'])->name('reject');
 });
 
 // Stripe Webhook — بدون Auth (Stripe يتحقق بـ signature)

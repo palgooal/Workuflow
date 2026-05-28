@@ -205,6 +205,7 @@
                     'activity'   => ['label' => 'النشاط',   'icon' => '📋'],
                     'projects'   => ['label' => 'المشاريع', 'icon' => '📁', 'badge' => $projects->count()],
                     'invoices'   => ['label' => 'الفواتير', 'icon' => '🧾', 'badge' => $clientInvoices->count()],
+                    'quotes'     => ['label' => 'عروض الأسعار', 'icon' => '📋', 'badge' => $clientQuotes->count()],
                     'followups'  => ['label' => 'المتابعات','icon' => '⏰'],
                     'info'       => ['label' => 'المعلومات','icon' => '📝'],
                 ];
@@ -393,6 +394,56 @@
                             <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
+                        </div>
+                    </a>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            </div>
+        </div>
+
+        
+        <div x-show="tab === 'quotes'" class="pt-4">
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-700">
+                        عروض الأسعار (<?php echo e($clientQuotes->count()); ?>)
+                    </h3>
+                    <a href="<?php echo e(route('quotes.create', ['client_id' => $client->id])); ?>"
+                       class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        إنشاء عرض سعر
+                    </a>
+                </div>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($clientQuotes->isEmpty()): ?>
+                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                    <div class="text-4xl mb-2">📋</div>
+                    <p class="text-sm">لا توجد عروض أسعار بعد</p>
+                </div>
+                <?php else: ?>
+                <div class="space-y-2">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $clientQuotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $q): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <a href="<?php echo e(route('quotes.show', $q->ulid)); ?>"
+                       class="flex items-center justify-between p-3 rounded-xl border border-gray-100
+                              hover:border-indigo-200 hover:bg-indigo-50/30 transition group">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-semibold text-indigo-600"><?php echo e($q->number); ?></span>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($q->title): ?>
+                                <span class="text-xs text-gray-500 truncate max-w-40"><?php echo e($q->title); ?></span>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-medium <?php echo e($q->status->badgeClass()); ?> px-2 py-0.5 rounded-full">
+                                <?php echo e($q->status->icon()); ?> <?php echo e($q->status->label()); ?>
+
+                            </span>
+                            <span class="text-xs font-semibold text-gray-700">
+                                <?php echo e(number_format($q->total, 2)); ?> <?php echo e($q->currency); ?>
+
+                            </span>
                         </div>
                     </a>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>

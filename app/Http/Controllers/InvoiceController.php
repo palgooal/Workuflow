@@ -6,7 +6,9 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Project;
+use App\Models\Transaction;
 use App\Support\Enums\InvoiceStatus;
+use App\Support\Enums\TransactionType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -200,9 +202,46 @@ class InvoiceController extends Controller
 
     public function markPaid(Request $request, string $ulid): RedirectResponse
     {
-        $invoice = Invoice::where('ulid', $ulid)->where('user_id', $request->user()->id)->firstOrFail();
-        $invoice->update(['status' => InvoiceStatus::Paid, 'paid_at' => now()]);
-        return back()->with('success', '✅ تم تسجيل الدفع بنجاح.');
+        $invoice = Invoice::where('ulid', $ulid)
+            ->where('user_id', $request->user()->id)
+            ->with('client')
+            ->firstOrFail();
+
+        // تجنب تسجيل معاملة مكررة إذا كانت مدفوعة مسبقاً
+        if ($invoice->status === InvoiceStatus::Paid) {
+            return back()->with('info', 'الفاتورة مسجّلة كمدفوعة مسبقاً.');
+        }
+
+        $paidAt = now();
+
+        $invoice->update([
+            'status'  => InvoiceStatus::Paid,
+            'paid_at' => $paidAt,
+        ]);
+
+        // ── تسجيل معاملة دخل تلقائياً ──────────────────────────────
+        // لا نُرسل project_id عندما يكون null تفادياً لـ "Column cannot be null"
+        // (إرسال null صراحةً يتعارض مع قيد DB، أما حذف العمود يتركه للـ DEFAULT)
+        $txData = [
+            'user_id'          => $invoice->user_id,
+            'type'             => TransactionType::Income,
+            'amount'           => $invoice->total,
+            'currency'         => $invoice->currency,
+            'description'      => 'فاتورة ' . $invoice->number
+                                  . ($invoice->title ? ' — ' . $invoice->title : ''),
+            'payee'            => $invoice->client->name,
+            'transaction_date' => $paidAt->toDateString(),
+            'reference'        => $invoice->number,
+            'notes'            => 'تم الإنشاء تلقائياً عند تسجيل دفع الفاتورة.',
+        ];
+
+        if ($invoice->project_id) {
+            $txData['project_id'] = $invoice->project_id;
+        }
+
+        Transaction::create($txData);
+
+        return back()->with('success', '✅ تم تسجيل الدفع وإضافة معاملة الدخل بنجاح.');
     }
 
     public function cancel(Request $request, string $ulid): RedirectResponse

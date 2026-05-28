@@ -11,8 +11,11 @@ use App\Modules\Projects\Actions\UpdateProjectAction;
 use App\Modules\Projects\DTOs\ProjectData;
 use App\Modules\Projects\Services\ProjectFinancialService;
 use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Service;
 use App\Models\TeamMember;
+use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\ProjectType;
 use App\Support\Enums\TransactionType;
 use App\Models\Transaction;
@@ -47,7 +50,7 @@ class ProjectController extends Controller
 
         $currencies  = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
         $colors      = $this->defaultColors();
-        $clients     = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
+        $clients     = Client::where('user_id', auth()->id())->where('is_archived', false)->orderBy('name')->get();
         $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
         $teamMembers = TeamMember::where('user_id', auth()->id())->active()->orderBy('name')->get();
 
@@ -85,6 +88,11 @@ class ProjectController extends Controller
             $project->services()->sync($syncData);
         }
 
+        // ── إنشاء فاتورة مسودة تلقائياً عند ربط المشروع بعميل ──
+        if (! empty($validated['client_id'])) {
+            $this->createDraftInvoice($project, $validated);
+        }
+
         return redirect()
             ->route('projects.show', $project)
             ->with('success', 'تم إنشاء المشروع "' . $project->name . '" بنجاح.');
@@ -104,7 +112,12 @@ class ProjectController extends Controller
             ->limit(10)
             ->get();
 
-        return view('projects.show', compact('project', 'summary', 'recentTransactions'));
+        $projectQuotes = \App\Models\Quote::where('project_id', $project->id)
+            ->where('user_id', $project->user_id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('projects.show', compact('project', 'summary', 'recentTransactions', 'projectQuotes'));
     }
 
     public function edit(Project $project): View
@@ -114,7 +127,7 @@ class ProjectController extends Controller
         $project->load(['client', 'services']);
         $currencies  = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
         $colors      = $this->defaultColors();
-        $clients     = Client::where('user_id', auth()->id())->active()->orderBy('name')->get();
+        $clients     = Client::where('user_id', auth()->id())->where('is_archived', false)->orderBy('name')->get();
         $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
         $teamMembers = TeamMember::where('user_id', auth()->id())->active()->orderBy('name')->get();
 
@@ -196,6 +209,71 @@ class ProjectController extends Controller
         $project->services()->updateExistingPivot($serviceId, ['team_cost_paid' => true]);
 
         return back()->with('success', 'تم تسجيل الدفعة كمصروف على المشروع.');
+    }
+
+    /**
+     * إنشاء فاتورة مسودة مرتبطة بالمشروع والعميل.
+     * تُضاف بنود تلقائية من خدمات المشروع (إن وُجدت)،
+     * أو بند واحد من قيمة العقد.
+     */
+    private function createDraftInvoice(Project $project, array $validated): void
+    {
+        $invoice = Invoice::create([
+            'user_id'    => auth()->id(),
+            'client_id'  => $project->client_id,
+            'project_id' => $project->id,
+            'title'      => $project->name,
+            'currency'   => $project->currency,
+            'status'     => InvoiceStatus::Draft,
+            'issue_date' => now()->toDateString(),
+            'due_date'   => now()->addDays(30)->toDateString(),
+            'subtotal'   => 0,
+            'tax_rate'   => 0,
+            'tax_amount' => 0,
+            'discount'   => 0,
+            'total'      => 0,
+        ]);
+
+        // فقط خدمات الدخل تُضاف للفاتورة — خدمات expense هي تكاليف تشغيلية لا تُفاتَر للعميل
+        $services = array_filter(
+            $validated['services'] ?? [],
+            fn ($svc) => ($svc['type'] ?? 'income') === 'income'
+        );
+
+        if (! empty($services)) {
+            // بند لكل خدمة دخل مضافة للمشروع
+            $serviceModels = Service::whereIn('id', array_column($services, 'service_id'))
+                ->pluck('name_ar', 'id');
+
+            foreach (array_values($services) as $index => $svc) {
+                $amount = (float) ($svc['amount'] ?? 0);
+                if ($amount <= 0) {
+                    continue;
+                }
+                InvoiceItem::create([
+                    'invoice_id'  => $invoice->id,
+                    'description' => $serviceModels[$svc['service_id']] ?? 'خدمة',
+                    'quantity'    => 1,
+                    'unit_price'  => $amount,
+                    'total'       => $amount,
+                    'sort_order'  => $index,
+                ]);
+            }
+        } elseif (! empty($project->contract_value) && $project->contract_value > 0) {
+            // بند واحد من قيمة العقد إن لم توجد خدمات
+            InvoiceItem::create([
+                'invoice_id'  => $invoice->id,
+                'description' => 'خدمات مشروع ' . $project->name,
+                'quantity'    => 1,
+                'unit_price'  => $project->contract_value,
+                'total'       => $project->contract_value,
+                'sort_order'  => 0,
+            ]);
+        }
+
+        // إعادة حساب المجاميع بناءً على البنود المُضافة
+        $invoice->load('items');
+        $invoice->recalculate();
     }
 
     private function defaultColors(): array

@@ -13,12 +13,13 @@
     <meta property="og:type" content="website">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
         rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="font-alexandria bg-[#FAFAF9] text-[#0F172A] antialiased">
+<body class="font-cairo bg-[#FAFAF9] text-[#0F172A] antialiased">
 
 
     {{-- ═══════════════════════════════════════════
@@ -61,7 +62,7 @@
                     <a href="{{ route('dashboard') }}"
                         class="bg-brand text-white font-semibold text-sm px-5 py-2.5 rounded-xl no-underline
                           hover:bg-brand/90 hover:-translate-y-px transition-all duration-200
-                          shadow-[0_4px_14px_rgba(55,48,163,.3)]">
+                          shadow-[0_4px_14px_rgba(50,14,142,.24)]">
                         لوحة التحكم ←
                     </a>
                 @else
@@ -73,7 +74,7 @@
                     <a href="{{ route('register') }}"
                         class="bg-brand text-white font-semibold text-sm px-5 py-2.5 rounded-xl no-underline
                           hover:bg-brand/90 hover:-translate-y-px transition-all duration-200
-                          shadow-[0_4px_14px_rgba(55,48,163,.3)]">
+                          shadow-[0_4px_14px_rgba(50,14,142,.24)]">
                         ابدأ مجاناً
                     </a>
                 @endauth
@@ -87,147 +88,143 @@
      § 2 — HERO
 ════════════════════════════════════════════ --}}
 
-    <section class="relative isolate overflow-hidden px-4 pt-10 pb-0 sm:px-6 lg:pt-14">
+    <section class="relative isolate overflow-hidden px-4 pt-14 lg:pt-20 pb-0 sm:px-6">
 
         {{-- Refined brand atmosphere --}}
         <div
-            class="absolute inset-0 bg-[linear-gradient(180deg,#F8FAFC_0%,#F4F7FF_42%,#FAFAF9_100%)] pointer-events-none">
+            class="absolute inset-0 bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_48%,#F8FAFC_100%)] pointer-events-none">
         </div>
         {{-- Grid --}}
         <div
-            class="absolute inset-0 bg-[linear-gradient(rgba(55,48,163,.025)_1px,transparent_1px),linear-gradient(90deg,rgba(55,48,163,.025)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_78%)] pointer-events-none">
+            class="absolute inset-0 bg-[linear-gradient(rgba(50,14,142,.012)_1px,transparent_1px),linear-gradient(90deg,rgba(50,14,142,.012)_1px,transparent_1px)] bg-[size:96px_96px] [mask-image:linear-gradient(to_bottom,black,transparent_78%)] pointer-events-none">
         </div>
         {{-- Brand glow layers --}}
         <div
-            class="absolute -top-24 right-1/2 h-[320px] w-[320px] translate-x-1/2 rounded-full bg-[#3730A3]/10 blur-3xl pointer-events-none">
+            class="absolute -top-24 right-1/2 h-[260px] w-[260px] translate-x-1/2 rounded-full bg-brand/[0.035] blur-2xl pointer-events-none">
         </div>
         <div
-            class="absolute top-32 left-[-6rem] hidden h-64 w-64 rounded-full bg-[#2DCEA8]/10 blur-3xl pointer-events-none lg:block">
-        </div>
-        <div
-            class="absolute top-32 right-[-6rem] hidden h-48 w-48 rounded-full bg-[#3730A3]/[0.08] blur-3xl pointer-events-none lg:block">
-        </div>
-        {{-- Teal accent line top --}}
-        <div
-            class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#2DCEA8]/30 to-transparent pointer-events-none">
+            class="absolute top-32 left-[-6rem] hidden h-52 w-52 rounded-full bg-accent/[0.03] blur-2xl pointer-events-none lg:block">
         </div>
 
-        <div class="relative mx-auto max-w-7xl text-center">
+        {{-- Teal accent line top --}}
+        <div
+            class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/25 to-transparent pointer-events-none">
+        </div>
+
+        <div class="relative mx-auto max-w-[74rem] text-center">
 
             {{-- Badge --}}
             <div
-                class="mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-[#3730A3]/[0.14] bg-white/85 px-3.5 py-2 text-[0.72rem] font-semibold text-[#3730A3] shadow-[0_8px_24px_rgba(15,23,42,.06)] backdrop-blur-xl sm:px-4">
+                class="mb-4 inline-flex max-w-full items-center gap-2 rounded-2xl border border-brand/[0.09] bg-white/85 px-3.5 py-2 text-[0.72rem] font-semibold text-brand shadow-[0_4px_14px_rgba(15,23,42,.035)] backdrop-blur-xl sm:px-4">
                 <span class="relative flex h-2 w-2 flex-shrink-0">
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#2DCEA8]/50"></span>
-                    <span class="relative inline-flex h-2 w-2 rounded-full bg-[#2DCEA8]"></span>
+                    <span class="relative inline-flex h-2 w-2 rounded-2xl bg-accent shadow-[0_0_0_3px_rgba(20,198,152,.09)]"></span>
                 </span>
                 <span class="truncate">✨ مجاني حتى 50 معاملة في الشهر · لا بطاقة ائتمان مطلوبة</span>
             </div>
 
             {{-- H1 — compact for above-fold CTAs --}}
             <h1
-                class="mx-auto mb-4 max-w-4xl text-4xl font-black leading-[1.12] text-[#0F172A] sm:text-5xl md:text-[3.4rem] lg:text-[2rem]">
+                class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.05] tracking-[-0.03em] text-text sm:text-5xl md:text-6xl lg:text-7xl">
                 منصتك لإدارة
-                <span class="relative inline-block text-[#3730A3]">
+                <span class="relative inline-block text-brand">
                     المال والعمل
-                    <span class="absolute -bottom-1 right-0 h-1 w-full rounded-full bg-[#2DCEA8]/40"></span>
+                    <span class="absolute -bottom-1.5 right-0 h-1 w-full rounded-full bg-gradient-to-l from-accent/0 via-accent/45 to-accent/0"></span>
                 </span>
                 من مكان واحد
             </h1>
 
             {{-- Subheadline — punchy & short --}}
-            <p class="mx-auto mb-7 max-w-2xl text-base leading-8 text-[#475569] sm:text-lg">
-                دراهم تساعد المستقلين وأصحاب الخدمات على تنظيم العملاء، المشاريع، الفواتير، والإيرادات بسهولة ووضوح.
-                تابع أعمالك، اعرف أرباحك، ونظّم كل تفاصيل شغلك من لوحة تحكم واحدة — بدون تعقيد.
-
+            <p class="mx-auto mb-6 max-w-2xl text-base leading-8 text-muted sm:text-lg">
+                نظّم العملاء، المشاريع، الفواتير، والإيرادات من لوحة تحكم واحدة
+                مصممة للمستقلين وأصحاب الأعمال — بدون تعقيد.
             </p>
 
             {{-- CTA Buttons --}}
             <div class="mb-4 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
                 @auth
                     <a href="{{ route('dashboard') }}"
-                        class="inline-flex items-center justify-center rounded-xl bg-[#3730A3] px-8 py-3.5 text-base font-bold text-white no-underline
-                          shadow-[0_18px_45px_rgba(55,48,163,.28),inset_0_1px_0_rgba(255,255,255,.18)]
-                          transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#3730A3]/95 hover:shadow-[0_22px_55px_rgba(55,48,163,.34)]">
+                        class="inline-flex items-center justify-center rounded-2xl bg-brand px-8 py-4 text-base font-bold text-white no-underline
+                          shadow-[0_8px_20px_rgba(50,14,142,.16)]
+                          transition-all duration-200 hover:-translate-y-px hover:bg-brand/95 hover:shadow-[0_10px_24px_rgba(50,14,142,.19)]">
                         اذهب للوحة التحكم ←
                     </a>
                 @else
                     <a href="{{ route('register') }}"
-                        class="inline-flex items-center justify-center rounded-xl bg-[#3730A3] px-8 py-3.5 text-base font-bold text-white no-underline
-                          shadow-[0_18px_45px_rgba(55,48,163,.28),inset_0_1px_0_rgba(255,255,255,.18)]
-                          transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#3730A3]/95 hover:shadow-[0_22px_55px_rgba(55,48,163,.34)]">
+                        class="inline-flex items-center justify-center rounded-2xl bg-brand px-8 py-4 text-base font-bold text-white no-underline
+                          shadow-[0_8px_20px_rgba(50,14,142,.16)]
+                          transition-all duration-200 hover:-translate-y-px hover:bg-brand/95 hover:shadow-[0_10px_24px_rgba(50,14,142,.19)]">
                         ابدأ مجاناً الآن ←
                     </a>
                     <a href="#features"
-                        class="inline-flex items-center justify-center rounded-xl border border-slate-200/80 bg-white/85 px-7 py-3.5 text-base font-bold text-[#334155] no-underline
-                          shadow-[0_10px_30px_rgba(15,23,42,.06),inset_0_1px_0_rgba(255,255,255,.85)] backdrop-blur-xl
-                          transition-all duration-200 hover:-translate-y-0.5 hover:border-[#3730A3]/25 hover:bg-white hover:text-[#3730A3]">
+                        class="inline-flex items-center justify-center rounded-2xl border border-brand/15 bg-white/80 px-7 py-4 text-base font-bold text-brand no-underline
+                          shadow-[0_4px_14px_rgba(15,23,42,.03)] backdrop-blur-xl
+                          transition-all duration-200 hover:-translate-y-px hover:border-brand/25 hover:bg-white hover:text-brand">
                         استكشف المميزات
                     </a>
                 @endauth
             </div>
 
             {{-- Trust micro text --}}
-            <p class="mb-8 text-sm text-[#64748B] sm:mb-10">
-                انضم إلى <strong class="font-bold text-[#3730A3]">+5000</strong> مستقل وصاحب عمل يثقون في دراهم
+            <p class="mb-6 text-sm text-[#64748B] sm:mb-8">
+                انضم إلى <strong class="font-bold text-brand">+5000</strong> مستقل وصاحب عمل يثقون في دراهم
             </p>
 
             {{-- Product dashboard --}}
-            <div class="relative mx-auto max-w-6xl">
+            <div class="relative mx-auto max-w-[68rem]">
 
                 {{-- Layered depth --}}
                 <div
-                    class="absolute -inset-x-6 top-10 h-40 rounded-[2rem] bg-[#3730A3]/[0.08] blur-3xl pointer-events-none">
+                    class="absolute -inset-x-6 top-10 h-32 rounded-[2rem] bg-brand/[0.028] blur-2xl pointer-events-none">
                 </div>
                 <div
-                    class="absolute -inset-x-3 bottom-0 h-28 rounded-[2rem] bg-[#2DCEA8]/[0.08] blur-3xl pointer-events-none">
+                    class="absolute -inset-x-3 bottom-0 h-24 rounded-[2rem] bg-accent/[0.028] blur-2xl pointer-events-none">
                 </div>
 
                 <div
-                    class="relative rounded-[1.35rem] border border-white/70 bg-white/55 p-2 shadow-[0_35px_90px_rgba(15,23,42,.18)] backdrop-blur-xl">
+                    class="relative rounded-[1.75rem] border border-white/70 bg-white/60 p-2 shadow-[0_14px_34px_rgba(15,23,42,.075)] backdrop-blur-xl">
                     <div
-                        class="overflow-hidden rounded-2xl border border-[#1E293B]/10 bg-[#07111F] shadow-[inset_0_1px_0_rgba(255,255,255,.08)]">
+                        class="overflow-hidden rounded-[1.35rem] border border-text/10 bg-text shadow-[inset_0_1px_0_rgba(255,255,255,.05)]">
 
                         {{-- Browser chrome --}}
                         <div
-                            class="flex items-center gap-3 border-b border-white/[0.07] bg-[#0B1220] px-3 py-3 sm:px-5">
+                            class="flex items-center gap-3 border-b border-white/[0.05] bg-text/95 px-3 py-3 sm:px-5">
                             <div class="flex flex-shrink-0 items-center gap-1.5">
-                                <span class="h-2.5 w-2.5 rounded-full bg-slate-600"></span>
-                                <span class="h-2.5 w-2.5 rounded-full bg-[#3730A3]"></span>
-                                <span class="h-2.5 w-2.5 rounded-full bg-[#2DCEA8]"></span>
+                                <span class="h-2.5 w-2.5 rounded-full bg-white/20"></span>
+                                <span class="h-2.5 w-2.5 rounded-full bg-brand/80"></span>
+                                <span class="h-2.5 w-2.5 rounded-full bg-accent/80"></span>
                             </div>
                             <div
-                                class="mx-1 flex h-7 min-w-0 flex-1 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.04] px-3">
+                                class="mx-1 flex h-7 min-w-0 flex-1 items-center justify-center rounded-xl border border-white/[0.055] bg-white/[0.04] px-3">
                                 <span
-                                    class="truncate text-[0.68rem] font-medium text-slate-400">darahum.com/dashboard</span>
+                                    class="truncate text-[0.68rem] font-medium text-slate-300/85">darahum.com/dashboard</span>
                             </div>
                             <div class="hidden flex-shrink-0 items-center gap-2 sm:flex">
-                                <span class="h-7 w-7 rounded-lg border border-white/[0.06] bg-white/[0.04]"></span>
-                                <span class="h-7 w-7 rounded-lg border border-white/[0.06] bg-white/[0.04]"></span>
+                                <span class="h-7 w-7 rounded-xl border border-white/[0.045] bg-white/[0.03]"></span>
+                                <span class="h-7 w-7 rounded-xl border border-white/[0.045] bg-white/[0.03]"></span>
                             </div>
                         </div>
 
                         {{-- Dashboard body --}}
-                        <div class="flex h-[440px] sm:h-[480px] lg:h-[470px]">
+                        <div class="flex h-[400px] sm:h-[430px] lg:h-[440px]">
 
                             {{-- Sidebar --}}
                             <aside
-                                class="hidden w-56 flex-shrink-0 border-l border-white/[0.07] bg-[#0A1424] p-4 md:flex md:flex-col">
+                                class="hidden w-56 flex-shrink-0 border-l border-white/[0.045] bg-text/95 p-4 md:flex md:flex-col">
                                 <div class="mb-6 flex items-center gap-2 px-1 py-1">
                                     <div
-                                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#2DCEA8] to-[#3730A3] shadow-[0_10px_22px_rgba(45,206,168,.18)]">
+                                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-brand shadow-[0_6px_14px_rgba(20,198,152,.1)]">
                                         <span class="text-sm font-black text-white">د</span>
                                     </div>
                                     <div class="text-right leading-none">
                                         <div class="text-sm font-black text-white">دراهم</div>
-                                        <div class="mt-1 text-[0.58rem] font-medium text-[#2DCEA8]">مال وأعمال</div>
+                                        <div class="mt-1 text-[0.58rem] font-medium text-accent">مال وأعمال</div>
                                     </div>
                                 </div>
 
-                                <div class="flex-1 space-y-1">
+                                <div class="flex-1 space-y-1.5">
                                     <div
-                                        class="flex items-center gap-2.5 rounded-xl border border-[#2DCEA8]/[0.15] bg-[#3730A3]/[0.22] px-3 py-2.5 text-xs font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.08)]">
-                                        <svg class="h-3.5 w-3.5 flex-shrink-0 text-[#2DCEA8]" fill="currentColor"
+                                        class="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.055] px-3 py-2.5 text-xs font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.045)]">
+                                        <svg class="h-3.5 w-3.5 flex-shrink-0 text-accent" fill="currentColor"
                                             viewBox="0 0 20 20">
                                             <path
                                                 d="M2 10a8 8 0 1116 0A8 8 0 012 10zm8-3a1 1 0 100 2 1 1 0 000-2zm-1 4a1 1 0 112 0v2a1 1 0 11-2 0v-2z" />
@@ -235,7 +232,7 @@
                                         لوحة التحكم
                                     </div>
                                     <div
-                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.04] hover:text-slate-200">
+                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.035] hover:text-slate-200">
                                         <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor"
                                             stroke-width="2" viewBox="0 0 24 24">
                                             <path
@@ -244,7 +241,7 @@
                                         المشاريع
                                     </div>
                                     <div
-                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.04] hover:text-slate-200">
+                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.035] hover:text-slate-200">
                                         <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor"
                                             stroke-width="2" viewBox="0 0 24 24">
                                             <path
@@ -253,7 +250,7 @@
                                         العملاء
                                     </div>
                                     <div
-                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.04] hover:text-slate-200">
+                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.035] hover:text-slate-200">
                                         <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor"
                                             stroke-width="2" viewBox="0 0 24 24">
                                             <path
@@ -261,50 +258,32 @@
                                         </svg>
                                         الفواتير
                                     </div>
-                                    <div
-                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.04] hover:text-slate-200">
-                                        <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor"
-                                            stroke-width="2" viewBox="0 0 24 24">
-                                            <path
-                                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        المعاملات
-                                    </div>
-                                    <div
-                                        class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-400 transition-colors duration-200 hover:bg-white/[0.04] hover:text-slate-200">
-                                        <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor"
-                                            stroke-width="2" viewBox="0 0 24 24">
-                                            <path
-                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                        </svg>
-                                        التقارير
-                                    </div>
                                 </div>
 
-                                <div class="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.04] p-3">
+                                <div class="mt-4 rounded-xl border border-white/[0.055] bg-white/[0.035] p-3">
                                     <div class="mb-3 flex items-center justify-between">
-                                        <span class="text-[0.62rem] font-medium text-slate-400">استخدام الخطة</span>
-                                        <span class="text-[0.62rem] font-bold text-[#2DCEA8]">Pro</span>
+                                        <span class="text-[0.62rem] font-medium text-slate-400/90">استخدام الخطة</span>
+                                        <span class="text-[0.62rem] font-bold text-accent">Pro</span>
                                     </div>
                                     <div class="h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-                                        <div class="h-full w-[72%] rounded-full bg-[#2DCEA8]"></div>
+                                        <div class="h-full w-[72%] rounded-full bg-accent"></div>
                                     </div>
                                 </div>
 
-                                <div class="mt-3 flex items-center gap-2 border-t border-white/[0.07] pt-3">
+                                <div class="mt-3 flex items-center gap-2 border-t border-white/[0.055] pt-3">
                                     <div
-                                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#2DCEA8]/25 bg-[#2DCEA8]/10">
-                                        <span class="text-xs font-bold text-[#2DCEA8]">م</span>
+                                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10">
+                                        <span class="text-xs font-bold text-accent">م</span>
                                     </div>
                                     <div class="min-w-0 text-right">
                                         <div class="truncate text-[0.72rem] font-semibold text-white">محمد العمري</div>
-                                        <div class="truncate text-[0.6rem] text-slate-500">خطة Pro</div>
+                                        <div class="truncate text-[0.6rem] text-slate-500/90">خطة Pro</div>
                                     </div>
                                 </div>
                             </aside>
 
                             {{-- Main Content --}}
-                            <div class="min-w-0 flex-1 overflow-hidden bg-[#08111F] p-3 sm:p-4 lg:p-5">
+                            <div class="min-w-0 flex-1 overflow-hidden bg-text/90 p-3 sm:p-4 lg:p-5">
                                 <div class="flex h-full min-h-0 flex-col gap-3 lg:gap-4">
 
                                     {{-- Page Header --}}
@@ -312,7 +291,7 @@
                                         <div class="min-w-0 text-right">
                                             <h3 class="truncate text-sm font-bold text-white sm:text-base">مرحباً، محمد
                                             </h3>
-                                            <p class="mt-1 text-[0.68rem] font-medium text-slate-500">مايو ٢٠٢٦ · الربع
+                                            <p class="mt-1 text-[0.68rem] font-medium text-slate-500/90">مايو ٢٠٢٦ · الربع
                                                 الثاني</p>
                                         </div>
                                         <div class="flex flex-shrink-0 items-center gap-2">
@@ -321,9 +300,9 @@
                                                 آخر ٣٠ يوم
                                             </div>
                                             <div
-                                                class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.04]">
+                                                class="relative flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.035]">
                                                 <span
-                                                    class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#2DCEA8]"></span>
+                                                    class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent"></span>
                                                 <svg class="h-3.5 w-3.5 text-slate-300" fill="none"
                                                     stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                     <path
@@ -331,7 +310,7 @@
                                                 </svg>
                                             </div>
                                             <div
-                                                class="rounded-lg bg-[#3730A3] px-3 py-2 text-[0.68rem] font-bold text-white shadow-[0_10px_26px_rgba(55,48,163,.28)]">
+                                                class="rounded-lg bg-brand px-3 py-2 text-[0.68rem] font-bold text-white shadow-[0_6px_16px_rgba(50,14,142,.18)]">
                                                 + معاملة
                                             </div>
                                         </div>
@@ -340,20 +319,20 @@
                                     {{-- Stats Grid --}}
                                     <div class="grid flex-shrink-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:gap-3">
                                         <div
-                                            class="rounded-xl border border-[#2DCEA8]/20 bg-white/[0.065] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.06)]">
-                                            <div class="mb-2 flex items-center justify-between gap-2">
+                                            class="rounded-xl border border-white/[0.065] bg-white/[0.048] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,.035)]">
+                                            <div class="mb-3 flex items-center justify-between gap-2">
                                                 <span
-                                                    class="text-[0.62rem] font-semibold text-[#2DCEA8]">الإيرادات</span>
+                                                    class="text-[0.62rem] font-semibold text-slate-300">الإيرادات</span>
                                                 <span
-                                                    class="rounded-full bg-[#2DCEA8]/10 px-1.5 py-0.5 text-[0.55rem] font-bold text-[#2DCEA8]">↑
+                                                    class="rounded-full bg-accent/10 px-1.5 py-0.5 text-[0.55rem] font-bold text-accent">↑
                                                     ١٢٪</span>
                                             </div>
                                             <div class="text-lg font-black text-white">٤٥,٢٠٠</div>
-                                            <div class="mt-0.5 text-[0.56rem] text-slate-500">ريال سعودي</div>
+                                            <div class="mt-1 text-[0.56rem] text-slate-500/90">ريال سعودي</div>
                                         </div>
                                         <div
-                                            class="rounded-xl border border-white/[0.07] bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.045)]">
-                                            <div class="mb-2 flex items-center justify-between gap-2">
+                                            class="rounded-xl border border-white/[0.055] bg-white/[0.038] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
+                                            <div class="mb-3 flex items-center justify-between gap-2">
                                                 <span
                                                     class="text-[0.62rem] font-semibold text-slate-400">المصروفات</span>
                                                 <span
@@ -361,31 +340,31 @@
                                                     ٣٪</span>
                                             </div>
                                             <div class="text-lg font-black text-white">١٢,٨٠٠</div>
-                                            <div class="mt-0.5 text-[0.56rem] text-slate-500">ريال سعودي</div>
+                                            <div class="mt-1 text-[0.56rem] text-slate-500/90">ريال سعودي</div>
                                         </div>
                                         <div
-                                            class="rounded-xl border border-white/[0.07] bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.045)]">
-                                            <div class="mb-2 flex items-center justify-between gap-2">
+                                            class="rounded-xl border border-white/[0.055] bg-white/[0.038] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
+                                            <div class="mb-3 flex items-center justify-between gap-2">
                                                 <span class="text-[0.62rem] font-semibold text-slate-400">صافي
                                                     الربح</span>
                                                 <span
-                                                    class="rounded-full bg-[#2DCEA8]/10 px-1.5 py-0.5 text-[0.55rem] font-bold text-[#2DCEA8]">↑
+                                                    class="rounded-full bg-accent/10 px-1.5 py-0.5 text-[0.55rem] font-bold text-accent">↑
                                                     ١٨٪</span>
                                             </div>
                                             <div class="text-lg font-black text-white">٣٢,٤٠٠</div>
-                                            <div class="mt-0.5 text-[0.56rem] text-slate-500">ريال سعودي</div>
+                                            <div class="mt-1 text-[0.56rem] text-slate-500/90">ريال سعودي</div>
                                         </div>
                                         <div
-                                            class="rounded-xl border border-white/[0.07] bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.045)]">
-                                            <div class="mb-2 flex items-center justify-between gap-2">
+                                            class="rounded-xl border border-white/[0.055] bg-white/[0.038] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
+                                            <div class="mb-3 flex items-center justify-between gap-2">
                                                 <span class="text-[0.62rem] font-semibold text-slate-400">غير
                                                     مدفوع</span>
                                                 <span
-                                                    class="rounded-full bg-[#3730A3]/25 px-1.5 py-0.5 text-[0.55rem] font-bold text-slate-200">٣
+                                                    class="rounded-full bg-brand/25 px-1.5 py-0.5 text-[0.55rem] font-bold text-slate-200">٣
                                                     فواتير</span>
                                             </div>
                                             <div class="text-lg font-black text-white">٨,٥٠٠</div>
-                                            <div class="mt-0.5 text-[0.56rem] text-slate-500">ريال سعودي</div>
+                                            <div class="mt-1 text-[0.56rem] text-slate-500/90">ريال سعودي</div>
                                         </div>
                                     </div>
 
@@ -394,18 +373,18 @@
 
                                         {{-- Bar Chart --}}
                                         <div
-                                            class="flex min-h-0 flex-col rounded-xl border border-white/[0.07] bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.045)] lg:col-span-3">
+                                            class="flex min-h-0 flex-col rounded-xl border border-white/[0.05] bg-white/[0.034] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.03)] lg:col-span-3">
                                             <div class="mb-4 flex flex-shrink-0 items-center justify-between gap-3">
                                                 <span class="text-xs font-bold text-white">الإيرادات مقابل
                                                     المصروفات</span>
                                                 <div class="hidden items-center gap-3 sm:flex">
                                                     <span
-                                                        class="flex items-center gap-1.5 text-[0.6rem] font-medium text-[#2DCEA8]">
+                                                        class="flex items-center gap-1.5 text-[0.6rem] font-medium text-accent">
                                                         <span
-                                                            class="inline-block h-2 w-2 rounded-full bg-[#2DCEA8]"></span>إيرادات
+                                                            class="inline-block h-2 w-2 rounded-full bg-accent"></span>إيرادات
                                                     </span>
                                                     <span
-                                                        class="flex items-center gap-1.5 text-[0.6rem] font-medium text-slate-500">
+                                                        class="flex items-center gap-1.5 text-[0.6rem] font-medium text-slate-500/90">
                                                         <span
                                                             class="inline-block h-2 w-2 rounded-full bg-slate-600"></span>مصروفات
                                                     </span>
@@ -418,35 +397,35 @@
                                                 <div class="absolute inset-x-0 top-2/3 h-px bg-white/[0.04]"></div>
                                                 <div class="relative flex flex-1 flex-col items-center gap-2">
                                                     <div class="flex h-28 w-full items-end gap-1">
-                                                        <div class="flex-1 rounded-t-md bg-[#2DCEA8]/[0.65] h-[60%]">
+                                                        <div class="flex-1 rounded-t-md bg-accent/[0.3] h-[60%]">
                                                         </div>
-                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.55] h-[35%]">
+                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.3] h-[35%]">
                                                         </div>
                                                     </div>
                                                     <span class="text-[0.55rem] text-slate-500">ديس</span>
                                                 </div>
                                                 <div class="relative flex flex-1 flex-col items-center gap-2">
                                                     <div class="flex h-28 w-full items-end gap-1">
-                                                        <div class="flex-1 rounded-t-md bg-[#2DCEA8]/[0.65] h-[45%]">
+                                                        <div class="flex-1 rounded-t-md bg-accent/[0.4] h-[45%]">
                                                         </div>
-                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.55] h-[25%]">
+                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.34] h-[25%]">
                                                         </div>
                                                     </div>
                                                     <span class="text-[0.55rem] text-slate-500">يناير</span>
                                                 </div>
                                                 <div class="relative flex flex-1 flex-col items-center gap-2">
                                                     <div class="flex h-28 w-full items-end gap-1">
-                                                        <div class="flex-1 rounded-t-md bg-[#2DCEA8]/75 h-[75%]"></div>
-                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.55] h-[40%]">
+                                                        <div class="flex-1 rounded-t-md bg-accent/[0.5] h-[75%]"></div>
+                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.38] h-[40%]">
                                                         </div>
                                                     </div>
                                                     <span class="text-[0.55rem] text-slate-500">فبراير</span>
                                                 </div>
                                                 <div class="relative flex flex-1 flex-col items-center gap-2">
                                                     <div class="flex h-28 w-full items-end gap-1">
-                                                        <div class="flex-1 rounded-t-md bg-[#2DCEA8]/[0.65] h-[50%]">
+                                                        <div class="flex-1 rounded-t-md bg-accent/[0.62] h-[50%]">
                                                         </div>
-                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.55] h-[28%]">
+                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.42] h-[28%]">
                                                         </div>
                                                     </div>
                                                     <span class="text-[0.55rem] text-slate-500">مارس</span>
@@ -454,9 +433,9 @@
                                                 <div class="relative flex flex-1 flex-col items-center gap-2">
                                                     <div class="flex h-28 w-full items-end gap-1">
                                                         <div
-                                                            class="flex-1 rounded-t-md bg-[#2DCEA8] h-[85%] shadow-[0_0_18px_rgba(45,206,168,.28)]">
+                                                            class="flex-1 rounded-t-md bg-accent/75 h-[85%]">
                                                         </div>
-                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.55] h-[45%]">
+                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.46] h-[45%]">
                                                         </div>
                                                     </div>
                                                     <span class="text-[0.55rem] text-slate-500">ابريل</span>
@@ -464,30 +443,30 @@
                                                 <div class="relative flex flex-1 flex-col items-center gap-2">
                                                     <div class="flex h-28 w-full items-end gap-1">
                                                         <div
-                                                            class="flex-1 rounded-t-md bg-[#3730A3] h-[70%] shadow-[0_0_18px_rgba(55,48,163,.24)]">
+                                                            class="flex-1 rounded-t-md bg-accent h-[70%] shadow-[0_0_8px_rgba(20,198,152,.08)]">
                                                         </div>
-                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.55] h-[35%]">
+                                                        <div class="flex-1 rounded-t-md bg-slate-600/[0.5] h-[35%]">
                                                         </div>
                                                     </div>
-                                                    <span class="text-[0.55rem] text-slate-500">مايو</span>
+                                                    <span class="text-[0.55rem] font-semibold text-slate-300">مايو</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {{-- Recent Transactions --}}
                                         <div
-                                            class="hidden min-h-0 flex-col rounded-xl border border-white/[0.07] bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.045)] lg:col-span-2 lg:flex">
+                                            class="hidden min-h-0 flex-col rounded-xl border border-white/[0.045] bg-white/[0.03] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.028)] lg:col-span-2 lg:flex">
                                             <div class="mb-3 flex flex-shrink-0 items-center justify-between">
-                                                <span class="text-xs font-bold text-white">آخر المعاملات</span>
-                                                <span class="text-[0.6rem] font-bold text-[#2DCEA8]">الكل</span>
+                                                <span class="text-xs font-bold text-slate-100">آخر المعاملات</span>
+                                                <span class="text-[0.6rem] font-semibold text-accent/90">الكل</span>
                                             </div>
                                             <div class="min-h-0 flex-1 space-y-2 overflow-hidden">
                                                 <div
-                                                    class="flex items-center justify-between rounded-lg border border-white/[0.05] bg-white/[0.035] px-2.5 py-2">
+                                                    class="flex items-center justify-between rounded-xl bg-white/[0.028] px-3 py-2">
                                                     <div class="flex min-w-0 items-center gap-2">
                                                         <div
-                                                            class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#2DCEA8]/10">
-                                                            <svg class="h-3.5 w-3.5 text-[#2DCEA8]" fill="none"
+                                                            class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-accent/[0.07]">
+                                                            <svg class="h-3.5 w-3.5 text-accent/90" fill="none"
                                                                 stroke="currentColor" stroke-width="2.5"
                                                                 viewBox="0 0 24 24">
                                                                 <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -497,14 +476,14 @@
                                                             <div
                                                                 class="truncate text-[0.68rem] font-semibold text-slate-200">
                                                                 أحمد السالم</div>
-                                                            <div class="truncate text-[0.56rem] text-slate-500">مشروع
+                                                            <div class="truncate text-[0.56rem] text-slate-500/90">مشروع
                                                                 تصميم</div>
                                                         </div>
                                                     </div>
                                                     <span
-                                                        class="text-[0.68rem] font-black text-[#2DCEA8]">+٣,٥٠٠</span>
+                                                        class="text-[0.68rem] font-bold text-accent">+٣,٥٠٠</span>
                                                 </div>
-                                                <div class="flex items-center justify-between rounded-lg px-2.5 py-2">
+                                                <div class="flex items-center justify-between rounded-xl px-3 py-2">
                                                     <div class="flex min-w-0 items-center gap-2">
                                                         <div
                                                             class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white/[0.06]">
@@ -518,17 +497,17 @@
                                                             <div
                                                                 class="truncate text-[0.68rem] font-semibold text-slate-200">
                                                                 فاتورة استضافة</div>
-                                                            <div class="truncate text-[0.56rem] text-slate-500">مصروف
+                                                            <div class="truncate text-[0.56rem] text-slate-500/90">مصروف
                                                                 شهري</div>
                                                         </div>
                                                     </div>
                                                     <span class="text-[0.68rem] font-bold text-slate-400">-٢٠٠</span>
                                                 </div>
-                                                <div class="flex items-center justify-between rounded-lg px-2.5 py-2">
+                                                <div class="flex items-center justify-between rounded-xl px-3 py-2">
                                                     <div class="flex min-w-0 items-center gap-2">
                                                         <div
-                                                            class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#2DCEA8]/10">
-                                                            <svg class="h-3.5 w-3.5 text-[#2DCEA8]" fill="none"
+                                                            class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-accent/[0.07]">
+                                                            <svg class="h-3.5 w-3.5 text-accent/90" fill="none"
                                                                 stroke="currentColor" stroke-width="2.5"
                                                                 viewBox="0 0 24 24">
                                                                 <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -538,67 +517,16 @@
                                                             <div
                                                                 class="truncate text-[0.68rem] font-semibold text-slate-200">
                                                                 محمد العلي</div>
-                                                            <div class="truncate text-[0.56rem] text-slate-500">تطوير
+                                                            <div class="truncate text-[0.56rem] text-slate-500/90">تطوير
                                                                 موقع</div>
                                                         </div>
                                                     </div>
                                                     <span
-                                                        class="text-[0.68rem] font-black text-[#2DCEA8]">+٨,٠٠٠</span>
-                                                </div>
-                                                <div class="flex items-center justify-between rounded-lg px-2.5 py-2">
-                                                    <div class="flex min-w-0 items-center gap-2">
-                                                        <div
-                                                            class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white/[0.06]">
-                                                            <svg class="h-3.5 w-3.5 text-slate-400" fill="none"
-                                                                stroke="currentColor" stroke-width="2.5"
-                                                                viewBox="0 0 24 24">
-                                                                <path d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                                                            </svg>
-                                                        </div>
-                                                        <div class="min-w-0 text-right">
-                                                            <div
-                                                                class="truncate text-[0.68rem] font-semibold text-slate-200">
-                                                                اشتراك Adobe</div>
-                                                            <div class="truncate text-[0.56rem] text-slate-500">برمجيات
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <span class="text-[0.68rem] font-bold text-slate-400">-٥٥٠</span>
+                                                        class="text-[0.68rem] font-bold text-accent">+٨,٠٠٠</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                    </div>
-
-                                    {{-- Activity strip --}}
-                                    <div class="hidden flex-shrink-0 grid-cols-3 gap-3 lg:grid">
-                                        <div
-                                            class="rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-right">
-                                            <div class="mb-1 flex items-center gap-2">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-[#2DCEA8]"></span>
-                                                <span class="text-[0.6rem] font-bold text-slate-300">تنبيه جديد</span>
-                                            </div>
-                                            <p class="truncate text-[0.58rem] text-slate-500">فاتورة مستحقة خلال ٣ أيام
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-right">
-                                            <div class="mb-1 flex items-center gap-2">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-[#3730A3]"></span>
-                                                <span class="text-[0.6rem] font-bold text-slate-300">نشاط اليوم</span>
-                                            </div>
-                                            <p class="truncate text-[0.58rem] text-slate-500">٥ معاملات تمت مزامنتها
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="rounded-xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-right">
-                                            <div class="mb-1 flex items-center gap-2">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-[#2DCEA8]"></span>
-                                                <span class="text-[0.6rem] font-bold text-slate-300">تدفق نقدي</span>
-                                            </div>
-                                            <p class="truncate text-[0.58rem] text-slate-500">النمو أعلى من الشهر
-                                                السابق</p>
-                                        </div>
                                     </div>
 
                                 </div>
@@ -610,7 +538,7 @@
 
                 {{-- Fade to blend with next section --}}
                 <div
-                    class="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#FAFAF9] to-transparent pointer-events-none">
+                    class="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-background to-transparent pointer-events-none">
                 </div>
             </div>
 
@@ -725,7 +653,7 @@
                 @foreach ($pains as $pain)
                     <div
                         class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm
-                        hover:border-brand/30 hover:shadow-[0_8px_24px_rgba(55,48,163,.08)]
+                        hover:border-brand/30 hover:shadow-[0_8px_24px_rgba(50,14,142,.08)]
                         transition-all duration-300 group">
                         <div
                             class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center mb-4
@@ -908,13 +836,13 @@
         class="py-24 px-6 bg-gradient-to-br from-[#1E1B4B] via-[#231F5C] to-[#1A2C4E] relative overflow-hidden">
 
         {{-- Background decoration --}}
-        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#2DCEA8]/40 to-transparent">
+        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent">
         </div>
         <div
-            class="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#2DCEA8]/30 to-transparent">
+            class="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent">
         </div>
         <div
-            class="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-[#2DCEA8]/5 blur-3xl pointer-events-none">
+            class="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-accent/5 blur-2xl pointer-events-none">
         </div>
 
         <div class="relative max-w-7xl mx-auto">
@@ -977,7 +905,7 @@
                 @foreach ($audiences as $aud)
                     <div
                         class="bg-white/5 rounded-2xl p-6 border border-white/10
-                        hover:bg-white/8 hover:border-brand/30 hover:shadow-[0_8px_32px_rgba(55,48,163,.1)]
+                        hover:bg-white/8 hover:border-brand/30 hover:shadow-[0_8px_32px_rgba(50,14,142,.1)]
                         transition-all duration-300 group">
                         <div class="text-3xl mb-4">{{ $aud['emoji'] }}</div>
                         <div class="mb-4">
@@ -1241,7 +1169,7 @@
                 {{-- Pro Plan — Featured --}}
                 <div
                     class="relative bg-[#1E1B4B] rounded-2xl p-8 border-2 border-brand
-                        shadow-[0_20px_60px_rgba(55,48,163,.2)] -mt-2">
+                        shadow-[0_20px_60px_rgba(50,14,142,.18)] -mt-2">
                     {{-- Badge --}}
                     <div
                         class="absolute -top-3.5 right-1/2 translate-x-1/2 bg-brand text-white text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-md">
@@ -1284,7 +1212,7 @@
                     <a href="{{ route('register') }}"
                         class="block text-center bg-brand text-white font-bold py-3.5 rounded-xl no-underline
                           hover:bg-brand/90 hover:-translate-y-px transition-all duration-200
-                          shadow-[0_4px_14px_rgba(55,48,163,.4)]">
+                          shadow-[0_4px_14px_rgba(50,14,142,.28)]">
                         ابدأ تجربة ١٤ يوم مجاناً
                     </a>
                 </div>
@@ -1350,19 +1278,19 @@
     {{-- ═══════════════════════════════════════════
      § 10 — FINAL CTA
 ════════════════════════════════════════════ --}}
-    <section class="py-28 px-6 bg-gradient-to-br from-[#3730A3] to-[#1E1B4B] relative overflow-hidden">
+    <section class="py-28 px-6 bg-gradient-to-br from-brand to-[#1E1B4B] relative overflow-hidden">
 
         {{-- Decorations --}}
-        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#2DCEA8]/50 to-transparent">
+        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent">
         </div>
         <div
-            class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(45,206,168,.12)_0%,transparent_60%)] pointer-events-none">
+            class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(20,198,152,.12)_0%,transparent_60%)] pointer-events-none">
         </div>
         <div
-            class="absolute top-1/2 -translate-y-1/2 -right-32 w-64 h-64 rounded-full bg-[#2DCEA8]/8 blur-3xl pointer-events-none">
+            class="absolute top-1/2 -translate-y-1/2 -right-32 w-64 h-64 rounded-full bg-accent/8 blur-2xl pointer-events-none">
         </div>
         <div
-            class="absolute top-1/2 -translate-y-1/2 -left-32 w-64 h-64 rounded-full bg-brand/10 blur-3xl pointer-events-none">
+            class="absolute top-1/2 -translate-y-1/2 -left-32 w-64 h-64 rounded-full bg-brand/10 blur-2xl pointer-events-none">
         </div>
 
         <div class="relative max-w-3xl mx-auto text-center">
@@ -1382,16 +1310,16 @@
                 @auth
                     <a href="{{ route('dashboard') }}"
                         class="bg-brand text-white font-bold text-lg px-12 py-4 rounded-xl no-underline
-                          shadow-[0_8px_28px_rgba(55,48,163,.4)]
-                          hover:bg-brand/90 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(55,48,163,.45)]
+                          shadow-[0_8px_28px_rgba(50,14,142,.28)]
+                          hover:bg-brand/90 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(50,14,142,.32)]
                           transition-all duration-200">
                         اذهب للوحة التحكم ←
                     </a>
                 @else
                     <a href="{{ route('register') }}"
                         class="bg-brand text-white font-bold text-lg px-12 py-4 rounded-xl no-underline
-                          shadow-[0_8px_28px_rgba(55,48,163,.4)]
-                          hover:bg-brand/90 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(55,48,163,.45)]
+                          shadow-[0_8px_28px_rgba(50,14,142,.28)]
+                          hover:bg-brand/90 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(50,14,142,.32)]
                           transition-all duration-200">
                         ابدأ مجاناً الآن ←
                     </a>

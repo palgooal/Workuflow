@@ -69,9 +69,11 @@ class Client extends Model
                 $client->public_id = Str::ulid()->toString();
             }
             if (empty($client->status)) {
-                $client->status = $client->is_active
-                    ? ClientStatus::Active
-                    : ClientStatus::Inactive;
+                // is_active قد يكون null عند الإنشاء الجديد (قبل الحفظ في DB)
+                // نفترض Active إلا إذا صُرِّح بـ false تحديداً
+                $client->status = ($client->is_active === false)
+                    ? ClientStatus::Inactive
+                    : ClientStatus::Active;
             }
         });
     }
