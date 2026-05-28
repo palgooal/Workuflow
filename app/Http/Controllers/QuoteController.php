@@ -256,11 +256,39 @@ class QuoteController extends Controller
 
         abort_if(! $quote->status->canConvert(), 422, 'يمكن تحويل العروض المقبولة فقط.');
 
+        $request->validate([
+            'create_project' => 'nullable|boolean',
+            'project_name'   => 'required_if:create_project,1|nullable|string|max:255',
+            'project_type'   => 'nullable|in:business,personal',
+        ]);
+
+        // إنشاء مشروع إذا طُلب وكان العرض بلا مشروع
+        $projectId = $quote->project_id;
+        $projectCreated = false;
+
+        if ($request->boolean('create_project') && ! $quote->project_id) {
+            $project = Project::create([
+                'user_id'        => $quote->user_id,
+                'client_id'      => $quote->client_id,
+                'name'           => $request->input('project_name', $quote->title ?? $quote->number),
+                'type'           => \App\Support\Enums\ProjectType::from($request->input('project_type', 'business')),
+                'currency'       => $quote->currency,
+                'contract_value' => $quote->total,
+                'is_active'      => true,
+                'color'          => '#6366f1',
+            ]);
+            $projectId = $project->id;
+            $projectCreated = true;
+
+            // ربط المشروع بالعرض أيضاً
+            $quote->update(['project_id' => $projectId]);
+        }
+
         // إنشاء الفاتورة من بيانات العرض
         $invoice = Invoice::create([
             'user_id'    => $quote->user_id,
             'client_id'  => $quote->client_id,
-            'project_id' => $quote->project_id,
+            'project_id' => $projectId,
             'title'      => $quote->title ?? $quote->number,
             'status'     => InvoiceStatus::Draft,
             'issue_date' => now()->toDateString(),
@@ -273,7 +301,7 @@ class QuoteController extends Controller
             'subtotal'   => 0,
             'tax_amount' => 0,
             'total'      => 0,
-            'reference'  => $quote->number,    // ربط الفاتورة بالعرض
+            'reference'  => $quote->number,
         ]);
 
         // نسخ البنود
@@ -297,9 +325,13 @@ class QuoteController extends Controller
             'converted_at' => now(),
         ]);
 
+        $message = $projectCreated
+            ? '🧾 تم تحويل العرض إلى فاتورة وإنشاء المشروع بنجاح.'
+            : '🧾 تم تحويل العرض إلى فاتورة بنجاح.';
+
         return redirect()
             ->route('invoices.show', $invoice)
-            ->with('success', '🧾 تم تحويل العرض إلى فاتورة بنجاح.');
+            ->with('success', $message);
     }
 
     // ==================== بوابة العميل ====================

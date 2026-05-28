@@ -81,15 +81,11 @@
 
             {{-- تحويل لفاتورة --}}
             @if($quote->status->canConvert())
-            <form method="POST" action="{{ route('quotes.convert', $quote->ulid) }}" class="inline">
-                @csrf
-                <button type="submit"
-                        onclick="return confirm('تحويل هذا العرض إلى فاتورة؟')"
-                        class="inline-flex items-center gap-2 px-3.5 py-2 text-sm text-white
-                               bg-teal-600 rounded-xl hover:bg-teal-700 transition">
-                    🧾 تحويل لفاتورة
-                </button>
-            </form>
+            <button type="button" @click="$dispatch('open-convert-modal')"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 text-sm text-white
+                           bg-teal-600 rounded-xl hover:bg-teal-700 transition">
+                🧾 تحويل لفاتورة
+            </button>
             @endif
 
         </div>
@@ -278,4 +274,110 @@
     @endif
 
 </div>
+
+{{-- Modal: تحويل لفاتورة + إنشاء مشروع --}}
+@if($quote->status->canConvert())
+<div x-data="{ open: false, createProject: false, projectName: '{{ addslashes($quote->title ?? $quote->number) }}', projectType: 'business' }"
+     @open-convert-modal.window="open = true"
+     x-show="open" x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="display:none">
+
+    {{-- Overlay --}}
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="open = false"></div>
+
+    {{-- Panel --}}
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5"
+         @click.stop>
+
+        <div class="flex items-start justify-between">
+            <div>
+                <h3 class="text-base font-bold text-gray-900">تحويل العرض إلى فاتورة</h3>
+                <p class="text-sm text-gray-500 mt-0.5">{{ $quote->number }} — {{ $quote->client->name }}</p>
+            </div>
+            <button @click="open = false" class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ route('quotes.convert', $quote->ulid) }}" class="space-y-4">
+            @csrf
+
+            {{-- ملخص التحويل --}}
+            <div class="bg-teal-50 border border-teal-200 rounded-xl p-4 space-y-1 text-sm">
+                <div class="flex justify-between text-gray-600">
+                    <span>الإجمالي</span>
+                    <span class="font-semibold text-gray-900">{{ number_format($quote->total, 2) }} {{ $quote->currency }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span>تاريخ الاستحقاق</span>
+                    <span>{{ now()->addDays(30)->format('d/m/Y') }}</span>
+                </div>
+                @if($quote->project_id)
+                <div class="flex justify-between text-gray-600">
+                    <span>المشروع الحالي</span>
+                    <span class="text-indigo-600">{{ $quote->project->name }}</span>
+                </div>
+                @endif
+            </div>
+
+            {{-- خيار إنشاء مشروع --}}
+            @if(! $quote->project_id)
+            <div class="border border-gray-200 rounded-xl overflow-hidden">
+                <label class="flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 transition">
+                    <input type="checkbox" name="create_project" value="1"
+                           x-model="createProject"
+                           class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <div>
+                        <p class="text-sm font-medium text-gray-800">إنشاء مشروع جديد من هذا العرض</p>
+                        <p class="text-xs text-gray-400 mt-0.5">يُربط المشروع بالفاتورة والعرض تلقائياً</p>
+                    </div>
+                </label>
+
+                <div x-show="createProject" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="border-t border-gray-100 p-4 space-y-3 bg-gray-50">
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">اسم المشروع</label>
+                        <input type="text" name="project_name" x-model="projectName"
+                               :required="createProject"
+                               class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">نوع المشروع</label>
+                        <select name="project_type" x-model="projectType"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="business">تجاري</option>
+                            <option value="personal">شخصي</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <div class="flex gap-3 pt-1">
+                <button type="button" @click="open = false"
+                        class="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200
+                               rounded-xl hover:bg-gray-50 transition">
+                    إلغاء
+                </button>
+                <button type="submit"
+                        class="flex-1 py-2.5 text-sm text-white bg-teal-600
+                               rounded-xl hover:bg-teal-700 transition font-medium">
+                    🧾 تأكيد التحويل
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 @endsection
