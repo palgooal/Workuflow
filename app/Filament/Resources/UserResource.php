@@ -308,6 +308,18 @@ class UserResource extends Resource
                             ->danger()
                             ->send();
                     }),
+
+                // ─── دخول كمستخدم (Impersonate) ──────────────────────
+                Tables\Actions\Action::make('loginAs')
+                    ->label('دخول كمستخدم')
+                    ->icon('heroicon-o-arrow-right-on-rectangle')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (User $record) => "دخول كـ {$record->name}")
+                    ->modalDescription(fn (User $record) => "ستدخل إلى لوحة تحكم {$record->name} ({$record->email}). للعودة إلى الأدمن استخدم زر «العودة» في الشريط العلوي.")
+                    ->modalSubmitActionLabel('نعم، ادخل كمستخدم')
+                    ->url(fn (User $record) => route('admin.impersonate', $record->id))
+                    ->openUrlInNewTab(false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

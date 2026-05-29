@@ -16,6 +16,30 @@
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">
 
+{{-- شريط الانتحال — يظهر فقط عند دخول الأدمن كمستخدم --}}
+@if(session('impersonator_id'))
+<div class="bg-amber-500 text-white text-sm px-4 py-2 flex items-center justify-between gap-4 print:hidden">
+    <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+        <span>أنت تتصفح كـ <strong>{{ Auth::user()->name }}</strong> — وضع المشاهدة كمستخدم</span>
+    </div>
+    <a href="{{ route('admin.impersonate.leave') }}"
+       class="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white
+              text-xs font-semibold px-3 py-1 rounded-lg transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+        </svg>
+        العودة للأدمن
+    </a>
+</div>
+@endif
+
 <div class="min-h-screen flex" x-data="{ sidebarOpen: false }">
 
     {{-- ===== Sidebar ===== --}}

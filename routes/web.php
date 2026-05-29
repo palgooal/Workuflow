@@ -161,4 +161,12 @@ Route::post('/stripe/webhook', [BillingController::class, 'webhook'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('stripe.webhook');
 
+// ─── Admin Impersonation ───────────────────────────────────────────────────
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/admin/impersonate/{userId}', [\App\Http\Controllers\Admin\ImpersonateController::class, 'impersonate'])
+        ->name('admin.impersonate');
+    Route::get('/admin/impersonate-leave', [\App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])
+        ->name('admin.impersonate.leave');
+});
+
 require __DIR__.'/auth.php';
