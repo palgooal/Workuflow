@@ -16,25 +16,23 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
         rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
 </head>
 
 <body class="font-cairo bg-[#FAFAF9] text-[#0F172A] antialiased">
 
 
-    {{-- ═══════════════════════════════════════════
-     § 1 — NAVBAR
-════════════════════════════════════════════ --}}
+    
     <nav class="sticky top-0 z-50 bg-[#FAFAF9]/90 backdrop-blur-xl border-b border-slate-200/60">
         <div class="max-w-7xl mx-auto px-6 h-[68px] flex items-center justify-between">
 
-            {{-- Logo --}}
+            
             <a href="#" class="flex items-center no-underline">
-                <img src="{{ asset('img/logo-darahum.png') }}" alt="دراهم — مال وأعمال"
+                <img src="<?php echo e(asset('img/logo-darahum.png')); ?>" alt="دراهم — مال وأعمال"
                     class="h-11 w-auto object-contain">
             </a>
 
-            {{-- Nav Links --}}
+            
             <ul class="hidden md:flex items-center gap-8 list-none m-0 p-0">
                 <li>
                     <a href="#features"
@@ -56,49 +54,47 @@
                 </li>
             </ul>
 
-            {{-- CTA Buttons --}}
+            
             <div class="flex items-center gap-3">
-                @auth
-                    <a href="{{ route('dashboard') }}"
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->guard()->check()): ?>
+                    <a href="<?php echo e(route('dashboard')); ?>"
                         class="bg-brand text-white font-semibold text-sm px-5 py-2.5 rounded-xl no-underline
                           hover:bg-brand/90 hover:-translate-y-px transition-all duration-200
                           shadow-[0_4px_14px_rgba(50,14,142,.24)]">
                         لوحة التحكم ←
                     </a>
-                @else
-                    <a href="{{ route('login') }}"
+                <?php else: ?>
+                    <a href="<?php echo e(route('login')); ?>"
                         class="hidden md:block text-[#475569] font-medium text-sm px-4 py-2 rounded-lg
                           hover:bg-slate-100 transition-colors no-underline">
                         دخول
                     </a>
-                    <a href="{{ route('register') }}"
+                    <a href="<?php echo e(route('register')); ?>"
                         class="bg-brand text-white font-semibold text-sm px-5 py-2.5 rounded-xl no-underline
                           hover:bg-brand/90 hover:-translate-y-px transition-all duration-200
                           shadow-[0_4px_14px_rgba(50,14,142,.24)]">
                         ابدأ مجاناً
                     </a>
-                @endauth
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
         </div>
     </nav>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 2 — HERO
-════════════════════════════════════════════ --}}
+    
 
     <section class="relative isolate overflow-hidden px-4 pt-14 lg:pt-20 pb-0 sm:px-6">
 
-        {{-- Refined brand atmosphere --}}
+        
         <div
             class="absolute inset-0 bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_48%,#F8FAFC_100%)] pointer-events-none">
         </div>
-        {{-- Grid --}}
+        
         <div
             class="absolute inset-0 bg-[linear-gradient(rgba(50,14,142,.012)_1px,transparent_1px),linear-gradient(90deg,rgba(50,14,142,.012)_1px,transparent_1px)] bg-[size:96px_96px] [mask-image:linear-gradient(to_bottom,black,transparent_78%)] pointer-events-none">
         </div>
-        {{-- Brand glow layers --}}
+        
         <div
             class="absolute -top-24 right-1/2 h-[260px] w-[260px] translate-x-1/2 rounded-full bg-brand/[0.035] blur-2xl pointer-events-none">
         </div>
@@ -106,14 +102,14 @@
             class="absolute top-32 left-[-6rem] hidden h-52 w-52 rounded-full bg-accent/[0.03] blur-2xl pointer-events-none lg:block">
         </div>
 
-        {{-- Teal accent line top --}}
+        
         <div
             class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/25 to-transparent pointer-events-none">
         </div>
 
         <div class="relative mx-auto max-w-[74rem] text-center">
 
-            {{-- Badge --}}
+            
             <div
                 class="mb-4 inline-flex max-w-full items-center gap-2 rounded-2xl border border-brand/[0.09] bg-white/85 px-3.5 py-2 text-[0.72rem] font-semibold text-brand shadow-[0_4px_14px_rgba(15,23,42,.035)] backdrop-blur-xl sm:px-4">
                 <span class="relative flex h-2 w-2 flex-shrink-0">
@@ -122,7 +118,7 @@
                 <span class="truncate">✨ مجاني حتى 50 معاملة في الشهر · لا بطاقة ائتمان مطلوبة</span>
             </div>
 
-            {{-- H1 — compact for above-fold CTAs --}}
+            
 <h1
 class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.035em] text-text sm:text-5xl md:text-[4.5rem] lg:text-[5.4rem]">
 
@@ -138,23 +134,23 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
 
 </h1>
 
-            {{-- Subheadline — punchy & short --}}
+            
             <p class="mx-auto mb-6 max-w-2xl text-base leading-8 text-muted sm:text-lg">
                 نظّم العملاء، المشاريع، الفواتير، والإيرادات من لوحة تحكم واحدة
                 مصممة للمستقلين وأصحاب الأعمال — بدون تعقيد.
             </p>
 
-            {{-- CTA Buttons --}}
+            
             <div class="mb-4 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-                @auth
-                    <a href="{{ route('dashboard') }}"
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->guard()->check()): ?>
+                    <a href="<?php echo e(route('dashboard')); ?>"
                         class="inline-flex items-center justify-center rounded-2xl bg-brand px-8 py-4 text-base font-bold text-white no-underline
                           shadow-[0_8px_20px_rgba(50,14,142,.16)]
                           transition-all duration-200 hover:-translate-y-px hover:bg-brand/95 hover:shadow-[0_10px_24px_rgba(50,14,142,.19)]">
                         اذهب للوحة التحكم ←
                     </a>
-                @else
-                    <a href="{{ route('register') }}"
+                <?php else: ?>
+                    <a href="<?php echo e(route('register')); ?>"
                         class="inline-flex items-center justify-center rounded-2xl bg-brand px-8 py-4 text-base font-bold text-white no-underline
                           shadow-[0_8px_20px_rgba(50,14,142,.16)]
                           transition-all duration-200 hover:-translate-y-px hover:bg-brand/95 hover:shadow-[0_10px_24px_rgba(50,14,142,.19)]">
@@ -166,18 +162,18 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                           transition-all duration-200 hover:-translate-y-px hover:border-brand/25 hover:bg-white hover:text-brand">
                         استكشف المميزات
                     </a>
-                @endauth
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
-            {{-- Trust micro text --}}
+            
             <p class="mb-6 text-sm text-[#64748B] sm:mb-8">
                 انضم إلى <strong class="font-bold text-brand">+5000</strong> مستقل وصاحب عمل يثقون في دراهم
             </p>
 
-            {{-- Product dashboard --}}
+            
             <div class="relative mx-auto max-w-[68rem]">
 
-                {{-- Layered depth --}}
+                
                 <div
                     class="absolute -inset-x-6 top-10 h-32 rounded-[2rem] bg-brand/[0.028] blur-2xl pointer-events-none">
                 </div>
@@ -190,7 +186,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                     <div
                         class="overflow-hidden rounded-[1.35rem] border border-text/[0.08] bg-text shadow-[inset_0_1px_0_rgba(255,255,255,.045)]">
 
-                        {{-- Browser chrome --}}
+                        
                         <div
                             class="flex items-center gap-3 border-b border-white/[0.045] bg-text/95 px-3 py-3 sm:px-5">
                             <div class="flex flex-shrink-0 items-center gap-1.5">
@@ -209,10 +205,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                             </div>
                         </div>
 
-                        {{-- Dashboard body --}}
+                        
                         <div class="flex h-[400px] sm:h-[430px] lg:h-[440px]">
 
-                            {{-- Sidebar --}}
+                            
                             <aside
                                 class="hidden w-56 flex-shrink-0 border-l border-white/[0.04] bg-text/[0.94] p-4 md:flex md:flex-col">
                                 <div class="mb-6 flex items-center gap-2 px-1 py-1">
@@ -287,11 +283,11 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                 </div>
                             </aside>
 
-                            {{-- Main Content --}}
+                            
                             <div class="min-w-0 flex-1 overflow-hidden bg-text/[0.88] p-3 sm:p-4 lg:p-5">
                                 <div class="flex h-full min-h-0 flex-col gap-3 lg:gap-4">
 
-                                    {{-- Page Header --}}
+                                    
                                     <div class="flex flex-shrink-0 items-start justify-between gap-3">
                                         <div class="min-w-0 text-right">
                                             <h3 class="truncate text-sm font-bold text-white sm:text-base">مرحباً، محمد
@@ -321,7 +317,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                         </div>
                                     </div>
 
-                                    {{-- Stats Grid --}}
+                                    
                                     <div class="grid flex-shrink-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:gap-3">
                                         <div
                                             class="rounded-xl border border-white/[0.058] bg-white/[0.044] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,.032)]">
@@ -373,10 +369,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                         </div>
                                     </div>
 
-                                    {{-- Chart + Activity --}}
+                                    
                                     <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-5">
 
-                                        {{-- Bar Chart --}}
+                                        
                                         <div
                                             class="flex min-h-0 flex-col rounded-xl border border-white/[0.045] bg-white/[0.032] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.028)] lg:col-span-3">
                                             <div class="mb-4 flex flex-shrink-0 items-center justify-between gap-3">
@@ -458,7 +454,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                             </div>
                                         </div>
 
-                                        {{-- Recent Transactions --}}
+                                        
                                         <div
                                             class="hidden min-h-0 flex-col rounded-xl border border-white/[0.04] bg-white/[0.028] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.025)] lg:col-span-2 lg:flex">
                                             <div class="mb-3 flex flex-shrink-0 items-center justify-between">
@@ -541,7 +537,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                     </div>
                 </div>
 
-                {{-- Fade to blend with next section --}}
+                
                 <div
                     class="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-background to-transparent pointer-events-none">
                 </div>
@@ -551,9 +547,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 3 — TRUST BAR
-════════════════════════════════════════════ --}}
+    
     <section class="bg-white border-y border-slate-100 py-10 px-6">
         <div class="max-w-5xl mx-auto">
             <p class="text-center text-[#94A3B8] text-xs font-medium uppercase tracking-widest mb-8">
@@ -586,13 +580,11 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 4 — PAIN POINTS
-════════════════════════════════════════════ --}}
+    
     <section class="py-24 px-6 bg-[#FAFAF9]">
         <div class="max-w-7xl mx-auto">
 
-            {{-- Section header --}}
+            
             <div class="max-w-2xl mx-auto text-center mb-16">
                 <div
                     class="inline-flex items-center gap-2 bg-red-50 text-red-600 text-xs font-semibold px-4 py-1.5 rounded-full mb-5 border border-red-100">
@@ -611,10 +603,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                 </p>
             </div>
 
-            {{-- Pain cards grid --}}
+            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
 
-                @php
+                <?php
                     $pains = [
                         [
                             'icon' =>
@@ -653,9 +645,9 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                             'desc' => 'وقت تقديم الزكاة والضريبة يتحول إلى كابوس لأن السجلات غير منظمة على مدار السنة.',
                         ],
                     ];
-                @endphp
+                ?>
 
-                @foreach ($pains as $pain)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $pains; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pain): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div
                         class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm
                         hover:border-brand/30 hover:shadow-[0_8px_24px_rgba(50,14,142,.08)]
@@ -665,26 +657,25 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                             group-hover:bg-brand/10 transition-colors duration-300">
                             <svg class="w-5 h-5 text-red-500 group-hover:text-brand transition-colors duration-300"
                                 fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                                {!! $pain['icon'] !!}
+                                <?php echo $pain['icon']; ?>
+
                             </svg>
                         </div>
-                        <h3 class="font-bold text-[#0F172A] text-base mb-2">{{ $pain['title'] }}</h3>
-                        <p class="text-[#475569] text-sm leading-relaxed">{{ $pain['desc'] }}</p>
+                        <h3 class="font-bold text-[#0F172A] text-base mb-2"><?php echo e($pain['title']); ?></h3>
+                        <p class="text-[#475569] text-sm leading-relaxed"><?php echo e($pain['desc']); ?></p>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             </div>
         </div>
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 5 — FEATURES
-════════════════════════════════════════════ --}}
+    
     <section id="features" class="py-24 px-6 bg-white">
         <div class="max-w-7xl mx-auto">
 
-            {{-- Section header --}}
+            
             <div class="max-w-2xl mx-auto text-center mb-16">
                 <div
                     class="inline-flex items-center gap-2 bg-brand/10 text-brand text-xs font-semibold px-4 py-1.5 rounded-full mb-5 border border-brand/20">
@@ -703,10 +694,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                 </p>
             </div>
 
-            {{-- Features grid --}}
+            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
 
-                @php
+                <?php
                     $features = [
                         [
                             'icon' =>
@@ -765,10 +756,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                             'color' => 'indigo',
                         ],
                     ];
-                @endphp
+                ?>
 
-                @foreach ($features as $f)
-                    @php
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $features; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $f): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
                         $colorMap = [
                             'brand' => [
                                 'bg' => 'bg-brand/10',
@@ -812,35 +803,34 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                             ],
                         ];
                         $c = $colorMap[$f['color']];
-                    @endphp
+                    ?>
                     <div
                         class="bg-[#FAFAF9] rounded-2xl p-6 border border-slate-100
                         hover:bg-white hover:border-slate-200 hover:shadow-[0_8px_24px_rgba(15,23,42,.06)]
                         hover:-translate-y-0.5 transition-all duration-300 group">
                         <div
-                            class="w-11 h-11 rounded-xl {{ $c['bg'] }} {{ $c['hover'] }} flex items-center justify-center mb-4 transition-colors duration-300">
-                            <svg class="w-5 h-5 {{ $c['icon'] }}" fill="none" stroke="currentColor"
+                            class="w-11 h-11 rounded-xl <?php echo e($c['bg']); ?> <?php echo e($c['hover']); ?> flex items-center justify-center mb-4 transition-colors duration-300">
+                            <svg class="w-5 h-5 <?php echo e($c['icon']); ?>" fill="none" stroke="currentColor"
                                 stroke-width="1.75" viewBox="0 0 24 24">
-                                {!! $f['icon'] !!}
+                                <?php echo $f['icon']; ?>
+
                             </svg>
                         </div>
-                        <h3 class="font-bold text-[#0F172A] text-base mb-2">{{ $f['title'] }}</h3>
-                        <p class="text-[#475569] text-sm leading-relaxed">{{ $f['desc'] }}</p>
+                        <h3 class="font-bold text-[#0F172A] text-base mb-2"><?php echo e($f['title']); ?></h3>
+                        <p class="text-[#475569] text-sm leading-relaxed"><?php echo e($f['desc']); ?></p>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             </div>
         </div>
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 6 — FOR WHO
-════════════════════════════════════════════ --}}
+    
     <section id="for-who"
         class="py-24 px-6 bg-gradient-to-br from-[#1E1B4B] via-[#231F5C] to-[#1A2C4E] relative overflow-hidden">
 
-        {{-- Background decoration --}}
+        
         <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent">
         </div>
         <div
@@ -852,7 +842,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
 
         <div class="relative max-w-7xl mx-auto">
 
-            {{-- Section header --}}
+            
             <div class="max-w-2xl mx-auto text-center mb-16">
                 <div
                     class="inline-flex items-center gap-2 bg-brand/10 text-brand text-xs font-semibold px-4 py-1.5 rounded-full mb-5 border border-brand/20">
@@ -870,10 +860,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                 </p>
             </div>
 
-            {{-- Audience cards --}}
+            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
 
-                @php
+                <?php
                     $audiences = [
                         [
                             'emoji' => '💻',
@@ -905,21 +895,21 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                             'points' => ['نظّم مصادر دخلك', 'تتبع العقود والرعايات', 'اعرف أين يذهب مالك'],
                         ],
                     ];
-                @endphp
+                ?>
 
-                @foreach ($audiences as $aud)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $audiences; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $aud): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div
                         class="bg-white/5 rounded-2xl p-6 border border-white/10
                         hover:bg-white/8 hover:border-brand/30 hover:shadow-[0_8px_32px_rgba(50,14,142,.1)]
                         transition-all duration-300 group">
-                        <div class="text-3xl mb-4">{{ $aud['emoji'] }}</div>
+                        <div class="text-3xl mb-4"><?php echo e($aud['emoji']); ?></div>
                         <div class="mb-4">
-                            <h3 class="font-bold text-white text-lg">{{ $aud['title'] }}</h3>
-                            <span class="text-brand text-xs font-medium">{{ $aud['subtitle'] }}</span>
+                            <h3 class="font-bold text-white text-lg"><?php echo e($aud['title']); ?></h3>
+                            <span class="text-brand text-xs font-medium"><?php echo e($aud['subtitle']); ?></span>
                         </div>
-                        <p class="text-slate-400 text-sm leading-relaxed mb-5">{{ $aud['desc'] }}</p>
+                        <p class="text-slate-400 text-sm leading-relaxed mb-5"><?php echo e($aud['desc']); ?></p>
                         <ul class="space-y-2">
-                            @foreach ($aud['points'] as $point)
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $aud['points']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $point): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <li class="flex items-center gap-2 text-slate-300 text-sm">
                                     <svg class="w-4 h-4 text-brand flex-shrink-0" fill="currentColor"
                                         viewBox="0 0 20 20">
@@ -927,25 +917,24 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                             clip-rule="evenodd" />
                                     </svg>
-                                    {{ $point }}
+                                    <?php echo e($point); ?>
+
                                 </li>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </ul>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             </div>
         </div>
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 7 — OUTCOMES / TRANSFORMATION
-════════════════════════════════════════════ --}}
+    
     <section class="py-24 px-6 bg-white">
         <div class="max-w-7xl mx-auto">
 
-            {{-- Section header --}}
+            
             <div class="max-w-2xl mx-auto text-center mb-16">
                 <div
                     class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-semibold px-4 py-1.5 rounded-full mb-5 border border-emerald-100">
@@ -964,10 +953,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                 </p>
             </div>
 
-            {{-- Outcomes grid --}}
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
 
-                @php
+                <?php
                     $outcomes = [
                         [
                             'before' => 'أدير فواتيري بالإكسل',
@@ -994,9 +983,9 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                 '<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>',
                         ],
                     ];
-                @endphp
+                ?>
 
-                @foreach ($outcomes as $out)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $outcomes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $out): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div
                         class="bg-[#FAFAF9] rounded-2xl p-6 border border-slate-100 hover:border-brand/20 hover:shadow-sm transition-all duration-300">
                         <div class="flex items-start gap-4">
@@ -1004,37 +993,36 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                 class="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor"
                                     stroke-width="1.75" viewBox="0 0 24 24">
-                                    {!! $out['icon'] !!}
+                                    <?php echo $out['icon']; ?>
+
                                 </svg>
                             </div>
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-3">
                                     <span
                                         class="bg-red-50 text-red-500 text-xs font-semibold px-2.5 py-1 rounded-lg border border-red-100">قبل</span>
-                                    <span class="text-[#475569] text-sm">{{ $out['before'] }}</span>
+                                    <span class="text-[#475569] text-sm"><?php echo e($out['before']); ?></span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span
                                         class="bg-emerald-50 text-emerald-600 text-xs font-semibold px-2.5 py-1 rounded-lg border border-emerald-100">بعد</span>
-                                    <span class="text-[#0F172A] text-sm font-semibold">{{ $out['after'] }}</span>
+                                    <span class="text-[#0F172A] text-sm font-semibold"><?php echo e($out['after']); ?></span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             </div>
         </div>
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 8 — TESTIMONIALS
-════════════════════════════════════════════ --}}
+    
     <section class="py-24 px-6 bg-[#FAFAF9]">
         <div class="max-w-7xl mx-auto">
 
-            {{-- Section header --}}
+            
             <div class="max-w-2xl mx-auto text-center mb-16">
                 <h2 class="text-3xl md:text-4xl font-black text-[#0F172A] leading-tight mb-4">
                     ماذا يقول <span class="text-brand">مستخدمونا</span>؟
@@ -1044,10 +1032,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                 </p>
             </div>
 
-            {{-- Testimonial cards --}}
+            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                @php
+                <?php
                     $testimonials = [
                         [
                             'name' => 'سالم المطيري',
@@ -1074,48 +1062,46 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                 'وكالتنا تدير ١٢ عميلاً بالتوازي. دراهم أعطتنا وضوحاً كاملاً على أداء كل مشروع. الربح الصافي أصبح واضحاً ولأول مرة نعرف أين نستثمر أكثر.',
                         ],
                     ];
-                @endphp
+                ?>
 
-                @foreach ($testimonials as $t)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $testimonials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div
                         class="bg-white rounded-2xl p-7 border border-slate-100 shadow-sm hover:shadow-md hover:border-brand/20 transition-all duration-300">
-                        {{-- Stars --}}
+                        
                         <div class="flex gap-1 mb-5">
-                            @for ($i = 0; $i < $t['rating']; $i++)
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php for($i = 0; $i < $t['rating']; $i++): ?>
                                 <svg class="w-4 h-4 text-brand" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
-                            @endfor
+                            <?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </div>
-                        {{-- Quote --}}
-                        <p class="text-[#0F172A] text-base leading-relaxed mb-6">"{{ $t['text'] }}"</p>
-                        {{-- Author --}}
+                        
+                        <p class="text-[#0F172A] text-base leading-relaxed mb-6">"<?php echo e($t['text']); ?>"</p>
+                        
                         <div class="flex items-center gap-3 pt-5 border-t border-slate-100">
                             <div
                                 class="w-10 h-10 rounded-full bg-brand/10 border-2 border-brand/20 flex items-center justify-center flex-shrink-0">
-                                <span class="text-brand font-bold text-sm">{{ $t['avatar'] }}</span>
+                                <span class="text-brand font-bold text-sm"><?php echo e($t['avatar']); ?></span>
                             </div>
                             <div>
-                                <div class="font-bold text-[#0F172A] text-sm">{{ $t['name'] }}</div>
-                                <div class="text-[#475569] text-xs mt-0.5">{{ $t['role'] }}</div>
+                                <div class="font-bold text-[#0F172A] text-sm"><?php echo e($t['name']); ?></div>
+                                <div class="text-[#475569] text-xs mt-0.5"><?php echo e($t['role']); ?></div>
                             </div>
                         </div>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             </div>
         </div>
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 9 — PRICING
-════════════════════════════════════════════ --}}
+    
     <section id="pricing" class="py-24 px-6 bg-white">
         <div class="max-w-7xl mx-auto">
 
-            {{-- Section header --}}
+            
             <div class="max-w-2xl mx-auto text-center mb-16">
                 <div
                     class="inline-flex items-center gap-2 bg-brand/10 text-brand text-xs font-semibold px-4 py-1.5 rounded-full mb-5 border border-brand/20">
@@ -1129,10 +1115,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                 </p>
             </div>
 
-            {{-- Pricing cards --}}
+            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
 
-                {{-- Free Plan --}}
+                
                 <div class="bg-[#FAFAF9] rounded-2xl p-8 border border-slate-200">
                     <div class="mb-6">
                         <h3 class="font-bold text-[#0F172A] text-lg mb-1">مجاني</h3>
@@ -1143,7 +1129,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                         <span class="text-[#475569] text-base"> ر.س/شهر</span>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        @php
+                        <?php
                             $freeFeatures = [
                                 'حتى ٥٠ معاملة/شهر',
                                 '٣ عملاء',
@@ -1151,8 +1137,8 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                 'الفواتير الأساسية',
                                 'التقارير البسيطة',
                             ];
-                        @endphp
-                        @foreach ($freeFeatures as $feat)
+                        ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $freeFeatures; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $feat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <li class="flex items-center gap-2.5 text-[#475569] text-sm">
                                 <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="currentColor"
                                     viewBox="0 0 20 20">
@@ -1160,22 +1146,23 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                         d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                         clip-rule="evenodd" />
                                 </svg>
-                                {{ $feat }}
+                                <?php echo e($feat); ?>
+
                             </li>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </ul>
-                    <a href="{{ route('register') }}"
+                    <a href="<?php echo e(route('register')); ?>"
                         class="block text-center border-2 border-slate-200 text-[#475569] font-semibold py-3 rounded-xl
                           no-underline hover:border-brand/50 hover:text-brand transition-all duration-200">
                         ابدأ مجاناً
                     </a>
                 </div>
 
-                {{-- Pro Plan — Featured --}}
+                
                 <div
                     class="relative bg-[#1E1B4B] rounded-2xl p-8 border-2 border-brand
                         shadow-[0_20px_60px_rgba(50,14,142,.18)] -mt-2">
-                    {{-- Badge --}}
+                    
                     <div
                         class="absolute -top-3.5 right-1/2 translate-x-1/2 bg-brand text-white text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-md">
                         الأكثر شيوعاً ⭐
@@ -1190,7 +1177,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                         <div class="text-brand text-xs mt-1 font-medium">وفّر ٢٠٪ مع الاشتراك السنوي</div>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        @php
+                        <?php
                             $proFeatures = [
                                 'معاملات غير محدودة',
                                 'عملاء غير محدودين',
@@ -1201,8 +1188,8 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                 'معاملات متكررة',
                                 'دعم أولوية',
                             ];
-                        @endphp
-                        @foreach ($proFeatures as $feat)
+                        ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $proFeatures; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $feat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <li class="flex items-center gap-2.5 text-slate-200 text-sm">
                                 <svg class="w-4 h-4 text-brand flex-shrink-0" fill="currentColor"
                                     viewBox="0 0 20 20">
@@ -1210,11 +1197,12 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                         d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                         clip-rule="evenodd" />
                                 </svg>
-                                {{ $feat }}
+                                <?php echo e($feat); ?>
+
                             </li>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </ul>
-                    <a href="{{ route('register') }}"
+                    <a href="<?php echo e(route('register')); ?>"
                         class="block text-center bg-brand text-white font-bold py-3.5 rounded-xl no-underline
                           hover:bg-brand/90 hover:-translate-y-px transition-all duration-200
                           shadow-[0_4px_14px_rgba(50,14,142,.28)]">
@@ -1222,7 +1210,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                     </a>
                 </div>
 
-                {{-- Business Plan --}}
+                
                 <div class="bg-[#FAFAF9] rounded-2xl p-8 border border-slate-200">
                     <div class="mb-6">
                         <h3 class="font-bold text-[#0F172A] text-lg mb-1">Business</h3>
@@ -1233,7 +1221,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                         <span class="text-[#475569] text-base"> ر.س/شهر</span>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        @php
+                        <?php
                             $bizFeatures = [
                                 'كل مميزات Pro',
                                 'حتى ١٠ أعضاء فريق',
@@ -1243,8 +1231,8 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                 'مدير حساب مخصص',
                                 'اتفاقية SLA',
                             ];
-                        @endphp
-                        @foreach ($bizFeatures as $feat)
+                        ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $bizFeatures; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $feat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <li class="flex items-center gap-2.5 text-[#475569] text-sm">
                                 <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="currentColor"
                                     viewBox="0 0 20 20">
@@ -1252,11 +1240,12 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                                         d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                         clip-rule="evenodd" />
                                 </svg>
-                                {{ $feat }}
+                                <?php echo e($feat); ?>
+
                             </li>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </ul>
-                    <a href="{{ route('register') }}"
+                    <a href="<?php echo e(route('register')); ?>"
                         class="block text-center border-2 border-slate-200 text-[#475569] font-semibold py-3 rounded-xl
                           no-underline hover:border-brand/50 hover:text-brand transition-all duration-200">
                         تواصل معنا
@@ -1265,7 +1254,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
 
             </div>
 
-            {{-- Money back guarantee --}}
+            
             <p class="text-center text-[#94A3B8] text-sm mt-10">
                 <svg class="w-4 h-4 inline-block text-emerald-500 ml-1.5 -mt-0.5" fill="currentColor"
                     viewBox="0 0 20 20">
@@ -1280,12 +1269,10 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 10 — FINAL CTA
-════════════════════════════════════════════ --}}
+    
     <section class="py-28 px-6 bg-gradient-to-br from-brand to-[#1E1B4B] relative overflow-hidden">
 
-        {{-- Decorations --}}
+        
         <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent">
         </div>
         <div
@@ -1312,28 +1299,28 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
             </p>
 
             <div class="flex items-center justify-center gap-4 flex-wrap">
-                @auth
-                    <a href="{{ route('dashboard') }}"
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->guard()->check()): ?>
+                    <a href="<?php echo e(route('dashboard')); ?>"
                         class="bg-brand text-white font-bold text-lg px-12 py-4 rounded-xl no-underline
                           shadow-[0_8px_28px_rgba(50,14,142,.28)]
                           hover:bg-brand/90 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(50,14,142,.32)]
                           transition-all duration-200">
                         اذهب للوحة التحكم ←
                     </a>
-                @else
-                    <a href="{{ route('register') }}"
+                <?php else: ?>
+                    <a href="<?php echo e(route('register')); ?>"
                         class="bg-brand text-white font-bold text-lg px-12 py-4 rounded-xl no-underline
                           shadow-[0_8px_28px_rgba(50,14,142,.28)]
                           hover:bg-brand/90 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(50,14,142,.32)]
                           transition-all duration-200">
                         ابدأ مجاناً الآن ←
                     </a>
-                    <a href="{{ route('login') }}"
+                    <a href="<?php echo e(route('login')); ?>"
                         class="border border-white/20 text-white font-semibold text-base px-8 py-4 rounded-xl
                           no-underline hover:border-white/40 hover:bg-white/5 transition-all duration-200">
                         لديّ حساب — دخول
                     </a>
-                @endauth
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
             <p class="text-slate-600 text-sm mt-8">
@@ -1344,19 +1331,17 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
     </section>
 
 
-    {{-- ═══════════════════════════════════════════
-     § 11 — FOOTER
-════════════════════════════════════════════ --}}
+    
     <footer class="bg-[#0F0D2A] text-slate-400 pt-16 pb-8 px-6">
         <div class="max-w-7xl mx-auto">
 
-            {{-- Footer grid --}}
+            
             <div class="grid grid-cols-1 md:grid-cols-5 gap-10 mb-12">
 
-                {{-- Brand column --}}
+                
                 <div class="md:col-span-2">
                     <div class="mb-5">
-                        <img src="{{ asset('img/logo-darahum.png') }}" alt="دراهم — مال وأعمال"
+                        <img src="<?php echo e(asset('img/logo-darahum.png')); ?>" alt="دراهم — مال وأعمال"
                             class="h-12 w-auto object-contain brightness-0 invert opacity-90">
                     </div>
                     <p class="text-slate-500 text-sm leading-relaxed max-w-xs mb-5">
@@ -1380,7 +1365,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                     </div>
                 </div>
 
-                {{-- Product links --}}
+                
                 <div>
                     <h4 class="text-white font-semibold text-sm mb-4">المنتج</h4>
                     <ul class="space-y-3 list-none m-0 p-0">
@@ -1399,7 +1384,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                     </ul>
                 </div>
 
-                {{-- Company links --}}
+                
                 <div>
                     <h4 class="text-white font-semibold text-sm mb-4">الشركة</h4>
                     <ul class="space-y-3 list-none m-0 p-0">
@@ -1418,7 +1403,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
                     </ul>
                 </div>
 
-                {{-- Legal --}}
+                
                 <div>
                     <h4 class="text-white font-semibold text-sm mb-4">قانوني</h4>
                     <ul class="space-y-3 list-none m-0 p-0">
@@ -1436,7 +1421,7 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
 
             </div>
 
-            {{-- Footer bottom --}}
+            
             <div
                 class="border-t border-white/[0.06] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
                 <p class="text-slate-600 text-sm">
@@ -1459,3 +1444,4 @@ class="mx-auto mb-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-[-0.03
 </body>
 
 </html>
+<?php /**PATH F:\laragon\www\Workuflow\resources\views/welcome.blade.php ENDPATH**/ ?>

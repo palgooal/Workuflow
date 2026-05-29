@@ -161,12 +161,32 @@ getRouteKeyName() → 'ulid'
 ### `convertToInvoice()` — منطق التحويل
 
 ```php
-// ينسخ: client_id, project_id, currency, notes, tax_rate, discount, total
-// ينسخ جميع البنود (QuoteItem → InvoiceItem)
-// يضبط: invoice.reference = quote.number
-// يضبط: quote.status = Converted، quote.converted_at = now()
-// يعيد التوجيه إلى صفحة الفاتورة الجديدة
+// 1. (اختياري) إنشاء مشروع جديد إذا طُلب ذلك:
+//    - project.name           = project_name من الطلب
+//    - project.contract_value = quote.total
+//    - يُربط المشروع بالعرض (quote.project_id = project.id)
+//
+// 2. إنشاء الفاتورة:
+//    - ينسخ: client_id, project_id, currency, notes, tax_rate, discount, total
+//    - ينسخ جميع البنود (QuoteItem → InvoiceItem)
+//    - يضبط: invoice.reference = quote.number
+//
+// 3. تحديث العرض:
+//    - quote.status       = Converted
+//    - quote.converted_at = now()
+//
+// 4. يعيد التوجيه إلى صفحة الفاتورة الجديدة
 ```
+
+### حقول الطلب الاختيارية
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `create_project` | boolean | إنشاء مشروع مرتبط |
+| `project_name` | string (max 255) | اسم المشروع (مطلوب إذا `create_project=1`) |
+| `project_type` | `business` \| `personal` | نوع المشروع (افتراضي: `business`) |
+
+> **ملاحظة:** خيار إنشاء المشروع يظهر فقط إذا كان العرض **غير مرتبط بمشروع مسبقاً**.
 
 ---
 
