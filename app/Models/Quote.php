@@ -101,8 +101,21 @@ class Quote extends Model
 
     public static function generateNumber(int $userId): string
     {
-        $last = self::where('user_id', $userId)->max('id') ?? 0;
-        return 'QUO-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
+        // نعدّ جميع عروض المستخدم بما فيها المحذوفة لضمان عدم التكرار
+        $count = self::withTrashed()->where('user_id', $userId)->count();
+        $next  = $count + 1;
+
+        // تجنّب تعارض نادر (race condition): ابحث عن رقم خالٍ
+        while (
+            self::withTrashed()
+                ->where('user_id', $userId)
+                ->where('number', 'QUO-' . str_pad($next, 4, '0', STR_PAD_LEFT))
+                ->exists()
+        ) {
+            $next++;
+        }
+
+        return 'QUO-' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 
     public function recalculate(): void
