@@ -90,8 +90,19 @@ class Invoice extends Model
 
     public static function generateNumber(int $userId): string
     {
-        $last = self::where('user_id', $userId)->max('id') ?? 0;
-        return 'INV-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
+        $count = self::withTrashed()->where('user_id', $userId)->count();
+        $next  = $count + 1;
+
+        while (
+            self::withTrashed()
+                ->where('user_id', $userId)
+                ->where('number', 'INV-' . str_pad($next, 4, '0', STR_PAD_LEFT))
+                ->exists()
+        ) {
+            $next++;
+        }
+
+        return 'INV-' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 
     public function recalculate(): void
