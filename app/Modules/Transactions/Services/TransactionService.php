@@ -67,16 +67,43 @@ class TransactionService
         if ($request->filled('date_to')) {
             $query->whereDate('transaction_date', '<=', $request->date_to);
         }
+        if ($request->filled('type') && in_array($request->type, ['income', 'expense'])) {
+            $query->where('type', $request->type);
+        }
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
 
-        $all      = $query->get();
-        $income   = $all->where('type', TransactionType::Income)->sum('amount');
-        $expenses = $all->where('type', TransactionType::Expense)->sum('amount');
+        $all = $query->get();
+
+        // تجميع حسب العملة
+        $currencies = $all->groupBy('currency');
+        $byCurrency = [];
+
+        foreach ($currencies as $cur => $txs) {
+            $income   = $txs->where('type', TransactionType::Income)->sum('amount');
+            $expenses = $txs->where('type', TransactionType::Expense)->sum('amount');
+            $byCurrency[$cur] = [
+                'income'   => $income,
+                'expenses' => $expenses,
+                'net'      => $income - $expenses,
+            ];
+        }
+
+        // للتوافق مع الكود القديم: مجاميع أول عملة (أو 0 إذا لا يوجد)
+        $firstCur  = array_key_first($byCurrency) ?? null;
+        $multiCurrency = count($byCurrency) > 1;
 
         return [
-            'income'   => $income,
-            'expenses' => $expenses,
-            'net'      => $income - $expenses,
-            'count'    => $all->count(),
+            // بيانات per-currency الجديدة
+            'by_currency'    => $byCurrency,
+            'multi_currency' => $multiCurrency,
+
+            // للتوافق مع الكود القديم (عملة واحدة)
+            'income'         => $firstCur ? $byCurrency[$firstCur]['income']   : 0,
+            'expenses'       => $firstCur ? $byCurrency[$firstCur]['expenses'] : 0,
+            'net'            => $firstCur ? $byCurrency[$firstCur]['net']      : 0,
+            'count'          => $all->count(),
         ];
     }
 }

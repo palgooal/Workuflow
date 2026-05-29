@@ -1,7 +1,7 @@
 # ✅ خطة المهام الكاملة — دراهم SaaS Financial Platform
 
 > وثيقة تتبع المهام — Laravel 12 / PHP 8.2  
-> آخر تحديث: 27 مايو 2026 — Phase 18 (نظام الفواتير) مكتمل ✅ + Sprint 6 (S6.1→S6.3) + Sprint 7 (S7.1→S7.5)
+> آخر تحديث: 29 مايو 2026 — Phase 19 (نظام عروض الأسعار) + Phase 20 (إصلاحات متعددة) مكتملان ✅
 
 ---
 
@@ -44,6 +44,8 @@ UX+      → تحسينات تجربة المستخدم                      ✅
 Phase 16 → تحسينات مايو 2026 (16.1→16.12)             ✅ مكتمل
 Phase 17 → نظام CRM المتقدم (8 Sprints / 38 مهمة)     🔄 قيد التطوير
 Phase 18 → نظام الفواتير (Invoices)                   ✅ مكتمل
+Phase 19 → نظام عروض الأسعار (Quotes)                ✅ مكتمل
+Phase 20 → إصلاحات وتحسينات مايو 2026               ✅ مكتمل
 ```
 
 ---
@@ -1514,4 +1516,75 @@ public function authenticate(Request $request): RedirectResponse
 - [x] رابط "الفواتير" في Navigation الرئيسية
 - [x] ربط "إنشاء فاتورة" من ملف العميل يمرر client_id تلقائياً
 
-*آخر تحديث: 27 مايو 2026*
+---
+
+## 📋 Phase 19 — نظام عروض الأسعار (Quotes) ✅
+
+> التوثيق التفصيلي في: `docs/QUOTES.md`
+
+### ✅ 19.1 — قاعدة البيانات والنماذج
+- [x] Migration: جدول `quotes` + `quote_items` (SoftDeletes، indexes مركّبة)
+- [x] إصلاح unique: `quotes.number` من عالمي → `(user_id, number)` per-user
+- [x] Model `Quote`: ULID auto-generate، token عشوائي 48 حرف، ترقيم QUO-XXXX per-user، recalculate()، isExpired()، portalUrl()
+- [x] Model `QuoteItem`: casts للأرقام العشرية، sort_order
+- [x] Enum `QuoteStatus` (7 حالات): draft|sent|viewed|accepted|rejected|expired|converted مع label()/badgeClass()/icon()/isEditable()/canBeSent()/canConvert()/isPending()
+
+### ✅ 19.2 — Controller والـ Routes
+- [x] `QuoteController`: CRUD كامل + markSent + convertToInvoice
+- [x] خيار إنشاء مشروع عند تحويل العرض لفاتورة (create_project, project_name, project_type)
+- [x] بوابة عميل عامة بدون Auth: portal / accept / reject
+- [x] `client_ip` مسجَّل عند القبول/الرفض كدليل أساسي
+- [x] انتقال تلقائي Sent→Viewed عند أول فتح للرابط
+
+### ✅ 19.3 — الواجهات
+- [x] `quotes/index.blade.php`: إحصائيات + قائمة مع badge الحالة
+- [x] `quotes/create.blade.php`: Alpine.js quoteForm() + كتالوج خدمات + حساب فوري (إصلاح ParseError: @php block بدل @json مع مصفوفة متداخلة)
+- [x] `quotes/edit.blade.php`: نفس create مع بيانات محملة
+- [x] `quotes/show.blade.php`: ورقة عرض + modal تحويل لفاتورة مع خيار إنشاء مشروع
+- [x] `quotes/portal.blade.php`: صفحة عامة بدون auth — عرض + قبول/رفض مع Alpine.js
+
+### ✅ 19.4 — التكامل
+- [x] رابط "عروض الأسعار" في Navigation الرئيسية (desktop + responsive)
+- [x] تبويب "📋 عروض الأسعار" في ملف العميل مع badge العدد + `$clientQuotes` في ClientController
+- [x] قسم "عروض الأسعار" في صفحة المشروع مع `$projectQuotes` في ProjectController
+- [x] إنشاء عرض من 3 مسارات: /quotes/create, ملف العميل, صفحة المشروع
+
+---
+
+## 🔧 Phase 20 — إصلاحات وتحسينات (مايو 2026) ✅
+
+### ✅ 20.1 — إصلاحات DB والـ Unique Keys
+- [x] Migration: إصلاح `quotes.number` unique عالمي → `(user_id, number)` لتوافق Multi-tenant
+- [x] Migration: إصلاح `invoices.number` unique عالمي → `(user_id, number)` per-user
+- [x] إصلاح `Quote::generateNumber()`: عدّ per-user مع withTrashed() + حلقة race-condition
+- [x] إصلاح `Invoice::generateNumber()`: نفس الإصلاح
+
+### ✅ 20.2 — دعم العملات المتعددة (Multi-Currency Display)
+- [x] `TransactionService::getSummary()`: تجميع الملخص حسب العملة → `by_currency` + `multi_currency`
+- [x] `ProjectFinancialService::getSummary()`: تجميع per-currency، قيمة العقد والميزانية بعملة المشروع فقط
+- [x] `ProjectFinancialService::getPortfolioSummary()`: per-currency عبر جميع المشاريع
+- [x] `transactions/index.blade.php`: جدول متعدد العملات أو بطاقات أحادية العملة
+- [x] `projects/index.blade.php`: portfolio summary per-currency
+- [x] `projects/show.blade.php`: KPIs per-currency مع عمود هامش الربح
+- [x] `crm/clients/show.blade.php`: KPI cards per-currency (إيراد + مدفوع + مستحق)
+
+### ✅ 20.3 — إحصائيات العميل الحية
+- [x] `ClientController::show()`: حساب total_revenue/total_paid/invoice_count مباشرة من الفواتير (لا اعتماد على قيم DB قديمة)
+- [x] `InvoiceController::markPaid()`: تحديث total_paid + total_revenue + last_payment_at للعميل عند كل دفع
+- [x] health_score: يُحسَب تلقائياً إذا كان null عند فتح ملف العميل
+
+### ✅ 20.4 — Admin Impersonation (دخول كمستخدم)
+- [x] `ImpersonateController`: impersonate() + leave() مع حماية super_admin
+- [x] Routes: GET /admin/impersonate/{userId} + GET /admin/impersonate-leave
+- [x] `UserResource` (Filament): زر "دخول كمستخدم" باللون البرتقالي مع modal تأكيد
+- [x] شريط أصفر في أعلى الـ Layout يظهر فقط أثناء الانتحال مع زر "العودة للأدمن"
+
+### ✅ 20.5 — إصلاحات متنوعة
+- [x] إصلاح `ParseError` في `quotes/create.blade.php`: نقل default items إلى `@php` block
+- [x] إصلاح `ClientController::show()` الفاشل: "File has not been read yet" → قراءة أولاً ثم التعديل
+- [x] إصلاح `transactions.project_id`: لم يكن nullable في DB رغم Migration — migration جديد بـ `->nullable()->change()`
+- [x] بانر تحذيري أصفر عند وجود عملات متعددة في كل الصفحات المالية
+
+---
+
+*آخر تحديث: 29 مايو 2026*

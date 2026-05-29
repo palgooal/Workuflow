@@ -22,22 +22,58 @@
     </div>
 
     {{-- Summary Cards --}}
+    @php $byCur = $summary['by_currency'] ?? []; $multi = $summary['multi_currency'] ?? false; @endphp
+
+    @if($multi)
+    {{-- عملات متعددة: جدول مدمج --}}
+    <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+        <div class="grid grid-cols-4 text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-2.5 border-b border-gray-50 bg-gray-50">
+            <div>العملة</div>
+            <div class="text-center">الدخل</div>
+            <div class="text-center">المصروفات</div>
+            <div class="text-center">الصافي</div>
+        </div>
+        @foreach($byCur as $cur => $vals)
+        <div class="grid grid-cols-4 items-center px-5 py-3 {{ !$loop->last ? 'border-b border-gray-50' : '' }}">
+            <div class="text-sm font-semibold text-gray-600">{{ $cur }}</div>
+            <div class="text-center font-bold text-green-700 text-sm">+{{ number_format($vals['income'], 2) }}</div>
+            <div class="text-center font-bold text-red-600 text-sm">-{{ number_format($vals['expenses'], 2) }}</div>
+            <div class="text-center font-bold text-sm {{ $vals['net'] >= 0 ? 'text-indigo-700' : 'text-red-600' }}">
+                {{ $vals['net'] >= 0 ? '+' : '' }}{{ number_format($vals['net'], 2) }}
+            </div>
+        </div>
+        @endforeach
+    </div>
+    <div class="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        المبالغ معروضة منفصلة لكل عملة — لا يتم دمجها تفادياً للخطأ في الحساب.
+    </div>
+
+    @else
+    {{-- عملة واحدة: البطاقات الأصلية --}}
+    @php $vals = array_values($byCur)[0] ?? ['income'=>0,'expenses'=>0,'net'=>0]; @endphp
     <div class="grid grid-cols-3 gap-4">
         <div class="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">إجمالي الدخل</p>
-            <p class="text-xl font-bold text-green-700">+{{ number_format($summary['income'], 2) }}</p>
+            <p class="text-xl font-bold text-green-700">+{{ number_format($vals['income'], 2) }}</p>
+            @if($byCur) <p class="text-xs text-gray-400 mt-0.5">{{ array_key_first($byCur) }}</p> @endif
         </div>
         <div class="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">إجمالي المصروفات</p>
-            <p class="text-xl font-bold text-red-700">-{{ number_format($summary['expenses'], 2) }}</p>
+            <p class="text-xl font-bold text-red-700">-{{ number_format($vals['expenses'], 2) }}</p>
+            @if($byCur) <p class="text-xs text-gray-400 mt-0.5">{{ array_key_first($byCur) }}</p> @endif
         </div>
-        <div class="{{ $summary['net'] >= 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-red-50 border-red-100' }} border rounded-2xl p-4 text-center">
+        <div class="{{ $vals['net'] >= 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-red-50 border-red-100' }} border rounded-2xl p-4 text-center">
             <p class="text-xs text-gray-500 mb-1">الصافي</p>
-            <p class="text-xl font-bold {{ $summary['net'] >= 0 ? 'text-indigo-700' : 'text-red-700' }}">
-                {{ $summary['net'] >= 0 ? '+' : '' }}{{ number_format($summary['net'], 2) }}
+            <p class="text-xl font-bold {{ $vals['net'] >= 0 ? 'text-indigo-700' : 'text-red-700' }}">
+                {{ $vals['net'] >= 0 ? '+' : '' }}{{ number_format($vals['net'], 2) }}
             </p>
+            @if($byCur) <p class="text-xs text-gray-400 mt-0.5">{{ array_key_first($byCur) }}</p> @endif
         </div>
     </div>
+    @endif
 
     {{-- Filters --}}
     <form method="GET" action="{{ route('transactions.index') }}"

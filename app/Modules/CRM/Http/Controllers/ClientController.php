@@ -90,7 +90,56 @@ class ClientController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('crm.clients.show', compact('client', 'tagSuggestions', 'projects', 'clientInvoices', 'clientQuotes'));
+        // ── حساب الإحصائيات المالية مجمّعة حسب العملة ───────────────
+        $activeInvoices = $clientInvoices->whereNotIn(
+            'status', [\App\Support\Enums\InvoiceStatus::Cancelled]
+        );
+
+        // إيراد لكل عملة: ['ILS' => 5000, 'USD' => 1200]
+        $revenueByCurrency = $activeInvoices
+            ->groupBy('currency')
+            ->map(fn ($g) => $g->sum('total'))
+            ->sortByDesc(fn ($v) => $v)
+            ->all();
+
+        // مدفوع لكل عملة
+        $paidByCurrency = $clientInvoices
+            ->where('status', \App\Support\Enums\InvoiceStatus::Paid)
+            ->groupBy('currency')
+            ->map(fn ($g) => $g->sum('total'))
+            ->all();
+
+        // مستحق لكل عملة (الإيراد − المدفوع لنفس العملة)
+        $outstandingByCurrency = [];
+        foreach ($revenueByCurrency as $cur => $rev) {
+            $paid = $paidByCurrency[$cur] ?? 0;
+            if ($rev - $paid > 0.009) {
+                $outstandingByCurrency[$cur] = $rev - $paid;
+            }
+        }
+
+        $invoiceCount = $activeInvoices->count();
+
+        // تحديث invoice_count في DB فقط (بدون total_revenue/total_paid المختلطة)
+        if ((int) $client->invoice_count !== $invoiceCount) {
+            $client->update(['invoice_count' => $invoiceCount]);
+        }
+
+        // حساب health_score إذا لم يُحسَب من قبل أو إذا تغيّرت البيانات
+        if ($client->health_score === null) {
+            try {
+                app(\App\Modules\CRM\Services\ClientHealthScoreService::class)->calculate($client);
+                $client->refresh();
+            } catch (\Throwable) {
+                // تجاهل الخطأ — الصفحة ستعمل بدون health_score
+            }
+        }
+
+        return view('crm.clients.show', compact(
+            'client', 'tagSuggestions', 'projects',
+            'clientInvoices', 'clientQuotes',
+            'revenueByCurrency', 'paidByCurrency', 'outstandingByCurrency'
+        ));
     }
 
     // ==================== Edit / Update ====================

@@ -241,6 +241,28 @@ class InvoiceController extends Controller
 
         Transaction::create($txData);
 
+        // ── تحديث إحصائيات العميل (total_paid + last_payment_at) ─────
+        if ($invoice->client_id) {
+            $client = \App\Models\Client::find($invoice->client_id);
+            if ($client) {
+                $paid = \App\Models\Invoice::where('client_id', $client->id)
+                    ->where('user_id', $invoice->user_id)
+                    ->where('status', InvoiceStatus::Paid)
+                    ->sum('total');
+
+                $revenue = \App\Models\Invoice::where('client_id', $client->id)
+                    ->where('user_id', $invoice->user_id)
+                    ->whereNotIn('status', [InvoiceStatus::Cancelled])
+                    ->sum('total');
+
+                $client->update([
+                    'total_paid'      => $paid,
+                    'total_revenue'   => $revenue,
+                    'last_payment_at' => $paidAt,
+                ]);
+            }
+        }
+
         return back()->with('success', '✅ تم تسجيل الدفع وإضافة معاملة الدخل بنجاح.');
     }
 

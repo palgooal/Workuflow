@@ -1,7 +1,8 @@
 # نظام عروض الأسعار — دراهم
 
 > تاريخ الإنشاء: 28 مايو 2026  
-> الإصدار: 1.0.0  
+> آخر تحديث: 29 مايو 2026  
+> الإصدار: 1.1.0  
 > المطوّر: دراهم — نظام إدارة مالي للمستقلين
 
 ---
@@ -352,6 +353,16 @@ Schema::create('quote_activities', function (Blueprint $table) {
 - **Token مستقل** عن ULID — البوابة تستخدم token والنظام الداخلي يستخدم ulid
 - **global scope BelongsToUser** — كل استعلام مقيَّد بـ `user_id` تلقائياً
 - **recalculate()** يُستدعى بعد كل create/update لضمان دقة الإجماليات
+
+---
+
+## إصلاحات موثَّقة
+
+| # | المشكلة | السبب | الإصلاح |
+|---|---------|-------|---------|
+| 1 | `ParseError: Unclosed '[' does not match ')'` في create.blade.php | Blade parser لا يعالج مصفوفات PHP متداخلة داخل `@json()` | نقل القيمة الافتراضية إلى `@php $defaultItems = ... @endphp` ثم `@json($defaultItems)` |
+| 2 | `Duplicate entry 'QUO-0001'` عند إنشاء عرض لمستخدم جديد | `quotes.number` كان unique عالمياً، و`generateNumber()` تعيد 0 لمستخدمين جدد | Migration جديد: unique `(user_id, number)` + إصلاح `generateNumber()` |
+| 3 | `Duplicate entry 'INV-0001'` عند تحويل عرض لفاتورة | نفس مشكلة `invoices.number` | نفس الإصلاح على `Invoice::generateNumber()` |
 
 ---
 

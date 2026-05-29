@@ -153,29 +153,58 @@
     </div>
 
     {{-- ==================== KPI Cards ==================== --}}
+    @php
+        $multiCurrency = count($revenueByCurrency) > 1;
+    @endphp
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+        {{-- إجمالي الإيراد --}}
         <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs text-gray-500">إجمالي الإيراد</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">
-                {{ number_format($client->total_revenue ?? 0, 0) }}
-                <span class="text-sm font-normal text-gray-500">₪</span>
-            </p>
+            <p class="text-xs text-gray-500 mb-1">إجمالي الإيراد</p>
+            @if(empty($revenueByCurrency))
+                <p class="text-2xl font-bold text-gray-300">—</p>
+            @else
+                @foreach($revenueByCurrency as $cur => $amount)
+                <p class="font-bold text-gray-900 {{ $multiCurrency ? 'text-lg' : 'text-2xl' }}">
+                    {{ number_format($amount, 0) }}
+                    <span class="text-sm font-normal text-gray-400">{{ $cur }}</span>
+                </p>
+                @endforeach
+            @endif
         </div>
+
+        {{-- إجمالي المدفوع --}}
         <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs text-gray-500">إجمالي المدفوع</p>
-            <p class="text-2xl font-bold text-teal-600 mt-1">
-                {{ number_format($client->total_paid ?? 0, 0) }}
-                <span class="text-sm font-normal text-gray-500">₪</span>
-            </p>
+            <p class="text-xs text-gray-500 mb-1">إجمالي المدفوع</p>
+            @if(empty($paidByCurrency))
+                <p class="text-2xl font-bold text-gray-300">—</p>
+            @else
+                @foreach($paidByCurrency as $cur => $amount)
+                <p class="font-bold text-teal-600 {{ $multiCurrency ? 'text-lg' : 'text-2xl' }}">
+                    {{ number_format($amount, 0) }}
+                    <span class="text-sm font-normal text-gray-400">{{ $cur }}</span>
+                </p>
+                @endforeach
+            @endif
         </div>
+
+        {{-- المستحق --}}
         <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs text-gray-500">المستحق</p>
-            @php $outstanding = ($client->total_revenue ?? 0) - ($client->total_paid ?? 0) @endphp
-            <p class="text-2xl font-bold mt-1 {{ $outstanding > 0 ? 'text-red-600' : 'text-gray-900' }}">
-                {{ number_format(abs($outstanding), 0) }}
-                <span class="text-sm font-normal text-gray-500">₪</span>
-            </p>
+            <p class="text-xs text-gray-500 mb-1">المستحق</p>
+            @if(empty($outstandingByCurrency))
+                <p class="text-2xl font-bold text-gray-300">✓</p>
+                <p class="text-xs text-teal-500 mt-0.5">لا يوجد مستحق</p>
+            @else
+                @foreach($outstandingByCurrency as $cur => $amount)
+                <p class="font-bold text-red-600 {{ count($outstandingByCurrency) > 1 ? 'text-lg' : 'text-2xl' }}">
+                    {{ number_format($amount, 0) }}
+                    <span class="text-sm font-normal text-gray-400">{{ $cur }}</span>
+                </p>
+                @endforeach
+            @endif
         </div>
+
+        {{-- نقاط الصحة --}}
         <div class="bg-white rounded-xl border border-gray-100 p-4">
             <p class="text-xs text-gray-500">نقاط الصحة</p>
             @if($client->health_score !== null)
@@ -183,12 +212,25 @@
                 $score = $client->health_score;
                 $color = $score >= 75 ? 'text-teal-600' : ($score >= 50 ? 'text-amber-600' : 'text-red-500');
             @endphp
-            <p class="text-2xl font-bold {{ $color }} mt-1">{{ $score }}<span class="text-sm font-normal text-gray-500">/100</span></p>
+            <p class="text-2xl font-bold {{ $color }} mt-1">
+                {{ $score }}<span class="text-sm font-normal text-gray-500">/100</span>
+            </p>
             @else
             <p class="text-2xl font-bold text-gray-300 mt-1">—</p>
             @endif
         </div>
     </div>
+
+    {{-- تنبيه عند وجود عملات متعددة --}}
+    @if($multiCurrency)
+    <div class="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>هذا العميل لديه فواتير بعملات متعددة — المبالغ معروضة منفصلة لكل عملة بدون تحويل.</span>
+    </div>
+    @endif
 
     {{-- ==================== التبويبات ==================== --}}
     <div x-data="{ tab: '{{ request()->get('tab', 'activity') }}' }">

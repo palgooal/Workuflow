@@ -61,10 +61,54 @@
     </div>
 
     {{-- Financial Summary Cards --}}
+    @php
+        $byCur = $summary['by_currency'] ?? [];
+        $multi = $summary['multi_currency'] ?? false;
+        $projCur = $summary['project_currency'] ?? $project->currency ?? 'ILS';
+    @endphp
+
+    @if($multi)
+    {{-- عملات متعددة: جدول --}}
+    <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+        <div class="grid grid-cols-5 text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 py-2.5 border-b border-gray-50 bg-gray-50">
+            <div>العملة</div>
+            <div class="text-center">الدخل</div>
+            <div class="text-center">المصروفات</div>
+            <div class="text-center">الصافي</div>
+            <div class="text-center">الهامش</div>
+        </div>
+        @foreach($byCur as $cur => $vals)
+        <div class="grid grid-cols-5 items-center px-5 py-3 {{ !$loop->last ? 'border-b border-gray-50' : '' }}">
+            <div class="flex items-center gap-1.5">
+                <span class="text-sm font-semibold text-gray-700">{{ $cur }}</span>
+                @if($cur === $projCur)
+                <span class="text-xs bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-medium">أساسي</span>
+                @endif
+            </div>
+            <div class="text-center font-bold text-green-700 text-sm">+{{ number_format($vals['income'], 2) }}</div>
+            <div class="text-center font-bold text-red-600 text-sm">-{{ number_format($vals['expenses'], 2) }}</div>
+            <div class="text-center font-bold text-sm {{ $vals['net'] >= 0 ? 'text-indigo-700' : 'text-red-600' }}">
+                {{ $vals['net'] >= 0 ? '+' : '' }}{{ number_format($vals['net'], 2) }}
+            </div>
+            <div class="text-center text-sm font-semibold {{ $vals['margin'] >= 30 ? 'text-teal-600' : ($vals['margin'] >= 0 ? 'text-amber-600' : 'text-red-500') }}">
+                {{ $vals['margin'] }}%
+            </div>
+        </div>
+        @endforeach
+    </div>
+    <div class="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        معاملات بعملات متعددة — مقارنة قيمة العقد والميزانية تعتمد على عملة المشروع ({{ $projCur }}) فقط.
+    </div>
+
+    @else
+    {{-- عملة واحدة: البطاقات الأصلية --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <x-stats-card
             title="إجمالي الدخل"
-            :value="number_format($summary['income'], 2)"
+            :value="number_format($summary['income'], 2) . ' ' . $projCur"
             color="green"
             tooltip="مجموع كل المبالغ المسجّلة كمعاملات «دخل» في هذا المشروع حتى اليوم."
         >
@@ -77,9 +121,9 @@
 
         <x-stats-card
             title="إجمالي المصروفات"
-            :value="number_format($summary['expenses'], 2)"
+            :value="number_format($summary['expenses'], 2) . ' ' . $projCur"
             color="red"
-            tooltip="مجموع كل المبالغ المسجّلة كمعاملات «مصروف» في هذا المشروع — تكاليف التنفيذ والأدوات والمساعدين."
+            tooltip="مجموع كل المبالغ المسجّلة كمعاملات «مصروف» في هذا المشروع."
         >
             <x-slot name="icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,10 +134,10 @@
 
         <x-stats-card
             title="صافي الربح"
-            :value="number_format(abs($summary['net_profit']), 2)"
+            :value="number_format(abs($summary['net_profit']), 2) . ' ' . $projCur"
             :color="$summary['net_profit'] >= 0 ? 'green' : 'red'"
             :prefix="$summary['net_profit'] >= 0 ? '+' : '-'"
-            tooltip="إجمالي الدخل ناقص إجمالي المصروفات. هذا ما تبقّى في جيبك فعلياً من هذا المشروع."
+            tooltip="إجمالي الدخل ناقص إجمالي المصروفات."
         >
             <x-slot name="icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +151,7 @@
             title="هامش الربح"
             :value="$summary['margin'] . '%'"
             :color="$summary['margin'] >= 30 ? 'green' : ($summary['margin'] >= 0 ? 'yellow' : 'red')"
-            tooltip="نسبة صافي الربح من إجمالي الدخل. 30% فأكثر = ممتاز، أقل من 0% = المشروع خاسر."
+            tooltip="نسبة صافي الربح من إجمالي الدخل. 30% فأكثر = ممتاز."
         >
             <x-slot name="icon">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,6 +163,7 @@
             </x-slot>
         </x-stats-card>
     </div>
+    @endif
 
     {{-- Contract Value & Expense Budget Progress --}}
     @if($summary['contract_value'] || $summary['expense_budget'])

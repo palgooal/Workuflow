@@ -355,6 +355,25 @@ if ($invoice->project_id) {
 }
 ```
 
+### 4 — `Duplicate entry 'INV-0001'` لمستخدمين متعددين
+
+**التاريخ:** 29 مايو 2026  
+**المشكلة:** `invoices.number` كان unique عالمياً، و`generateNumber()` تعيد `INV-0001` لكل مستخدم جديد ليس لديه فواتير.  
+**الإصلاح:** مايجريشن جديد + إصلاح الدالة:
+```
+database/migrations/2026_05_29_000002_fix_invoices_number_unique_per_user.php
+```
+- يحوّل unique من `(number)` إلى `(user_id, number)`
+- `generateNumber()` تعدّ فواتير المستخدم فقط (`withTrashed()`) مع حلقة لتجنب race condition
+
+### 5 — إحصائيات العميل (total_revenue/total_paid) تظهر صفر
+
+**التاريخ:** 29 مايو 2026  
+**المشكلة:** القيم مخزّنة في `clients` table لكن لا شيء كان يُحدّثها.  
+**الإصلاح:**
+- `ClientController::show()` يحسبها حية من الفواتير ويحفظها في DB عند التغيير
+- `InvoiceController::markPaid()` يُحدّث `total_paid + total_revenue + last_payment_at` للعميل فور كل دفع
+
 ---
 
 ## 🚀 تحسينات مستقبلية مقترحة
