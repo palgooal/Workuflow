@@ -1,386 +1,290 @@
-# 🧾 نظام الفواتير — Invoice System
+# موديول الفواتير (Invoices)
 
-> دراهم SaaS — Laravel 12 / PHP 8.2  
-> آخر تحديث: 28 مايو 2026 — Phase 18 ✅ مكتمل
-
----
-
-## 📋 نظرة عامة
-
-نظام فواتير متكامل مضمّن داخل منصة **دراهم** يتيح للمستقلين وأصحاب الأعمال إنشاء فواتير احترافية مرتبطة بالعملاء والمشاريع، مع دعم بنود متعددة، ضريبة القيمة المضافة، الخصومات، وتصدير PDF مباشرة من المتصفح.
+> آخر تحديث: 29 مايو 2026 | الإصدار: 1.2.0
 
 ---
 
-## 🗂️ هيكل الملفات
+## Overview
+
+موديول Invoices يُتيح للمستقل إنشاء فواتير احترافية وإرسالها للعملاء، وتتبع حالة الدفع، والتكامل التلقائي مع معاملات الدخل. يدعم الإنشاء التلقائي من المشاريع ومن عروض الأسعار.
+
+---
+
+## Business Requirements
+
+| المتطلب | الحل |
+|---------|------|
+| إنشاء فاتورة احترافية | ورقة فاتورة مُنسَّقة مع بنود وإجماليات |
+| تتبع حالة الفاتورة | دورة حياة بـ 5 حالات |
+| تسجيل الدفع تلقائياً كمعاملة دخل | `markPaid()` ينشئ Transaction |
+| إنشاء فاتورة تلقائياً من المشروع | `ProjectController::store()` |
+| تحويل عرض سعر لفاتورة | `QuoteController::convertToInvoice()` |
+| طباعة / تصدير PDF | CSS @media print |
+| ربط فاتورة بعميل | `client_id` FK |
+| ربط فاتورة بمشروع | `project_id` FK (nullable) |
+
+---
+
+## Database Structure
+
+### Tables
+
+#### invoices
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | bigint PK | | | |
+| ulid | char(26) | | | مفتاح المسار — unique |
+| user_id | FK → users | | | |
+| client_id | FK → clients | | | |
+| project_id | char(26) | ✓ | NULL | FK → projects.id (ULID) |
+| number | varchar(50) | | | INV-XXXX — unique per (user_id, number) |
+| title | varchar(255) | ✓ | NULL | |
+| status | varchar(20) | | 'draft' | InvoiceStatus enum |
+| issue_date | date | | | |
+| due_date | date | ✓ | NULL | تاريخ الاستحقاق |
+| paid_at | timestamp | ✓ | NULL | وقت تسجيل الدفع |
+| currency | varchar(3) | | 'ILS' | |
+| subtotal | decimal(12,2) | | 0 | |
+| tax_rate | decimal(5,2) | | 0 | |
+| tax_amount | decimal(12,2) | | 0 | |
+| discount | decimal(12,2) | | 0 | |
+| total | decimal(12,2) | | 0 | |
+| notes | text | ✓ | NULL | |
+| terms | text | ✓ | NULL | |
+| reference | varchar(100) | ✓ | NULL | رقم العرض عند التحويل |
+| deleted_at | timestamp | ✓ | NULL | SoftDeletes |
+| created_at / updated_at | timestamps | | | |
+
+**Indexes:**
+- `invoices_user_number_unique` — UNIQUE (`user_id`, `number`)
+- `invoices_user_status_idx` — (`user_id`, `status`)
+- `invoices_user_client_idx` — (`user_id`, `client_id`)
+
+#### invoice_items
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| id | bigint PK | | |
+| invoice_id | FK → invoices | | cascadeOnDelete |
+| description | varchar(500) | | وصف البند |
+| quantity | decimal(10,2) | | |
+| unit_price | decimal(12,2) | | |
+| total | decimal(12,2) | | quantity × unit_price |
+| sort_order | smallint | | ترتيب العرض |
+| created_at / updated_at | timestamps | | |
+
+---
+
+## Enums
+
+### InvoiceStatus
+
+**الموقع:** `app/Support/Enums/InvoiceStatus.php`
+
+| Value | Label | Icon | Description |
+|-------|-------|------|-------------|
+| `draft` | مسودة | 📝 | قابلة للتعديل |
+| `sent` | مُرسَلة | 📤 | أُرسل للعميل |
+| `paid` | مدفوعة | ✅ | سُدِّدت |
+| `overdue` | متأخرة | ⚠️ | تجاوزت due_date |
+| `cancelled` | ملغاة | ❌ | |
+
+**دورة الحياة:**
 
 ```
-app/
-├── Models/
-│   ├── Invoice.php               # النموذج الرئيسي + SoftDeletes
-│   └── InvoiceItem.php           # بنود الفاتورة
-├── Support/Enums/
-│   └── InvoiceStatus.php         # Enum: draft | sent | paid | overdue | cancelled
-├── Http/Controllers/
-│   └── InvoiceController.php     # CRUD كامل + إجراءات الحالة
-
-database/migrations/
-└── 2026_05_27_100000_create_invoices_table.php   # جدولا invoices + invoice_items
-
-resources/views/invoices/
-├── index.blade.php               # قائمة الفواتير
-├── create.blade.php              # فورم الإنشاء (Alpine.js)
-├── edit.blade.php                # فورم التعديل (Alpine.js)
-└── show.blade.php                # عرض الفاتورة + طباعة PDF
-
-routes/web.php                    # مجموعة routes invoices.*
+Draft → Sent → Paid
+             ↓ (عند تجاوز due_date تلقائياً)
+           Overdue → Paid
+Draft/Sent/Overdue → Cancelled
 ```
 
 ---
 
-## 🗄️ قاعدة البيانات
+## Models
 
-### جدول `invoices`
+### Invoice
 
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| `id` | `bigIncrements` | المفتاح الرئيسي |
-| `ulid` | `varchar(26)` unique | معرّف خارجي آمن — يُستخدم في الـ URL |
-| `user_id` | `FK → users.id` | المستخدم المالك |
-| `client_id` | `FK → clients.id` | العميل المرتبط |
-| `project_id` | `char(26) nullable → projects.id` | المشروع (اختياري) — char لتوافق ULID |
-| `number` | `varchar(50)` unique | رقم الفاتورة (INV-0001، INV-0002…) |
-| `status` | `varchar(20)` default `draft` | الحالة (يُخزَّن كـ string، يُقرأ كـ Enum) |
-| `title` | `varchar(255)` nullable | عنوان وصفي اختياري |
-| `issue_date` | `date` | تاريخ الإصدار |
-| `due_date` | `date` nullable | تاريخ الاستحقاق |
-| `subtotal` | `decimal(12,2)` | المجموع قبل الضريبة |
-| `tax_rate` | `decimal(5,2)` | نسبة الضريبة % |
-| `tax_amount` | `decimal(12,2)` | قيمة الضريبة المحسوبة |
-| `discount` | `decimal(12,2)` | خصم بالقيمة (ليس نسبة) |
-| `total` | `decimal(12,2)` | الإجمالي النهائي |
-| `currency` | `varchar(3)` default `ILS` | رمز العملة (ILS / USD / EUR / JOD) |
-| `notes` | `text` nullable | ملاحظات للعميل |
-| `terms` | `text` nullable | الشروط والأحكام |
-| `sent_at` | `timestamp` nullable | وقت تغيير الحالة إلى مُرسَلة |
-| `paid_at` | `timestamp` nullable | وقت تسجيل الدفع |
-| `deleted_at` | `timestamp` nullable | SoftDelete |
+**الموقع:** `app/Models/Invoice.php`
 
-> **ملاحظة FK:** `project_id` يجب أن يكون `char(26)` لأن `projects.id` هو `ulid` وليس `bigInteger`.
-
-### جدول `invoice_items`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| `id` | `bigIncrements` | |
-| `invoice_id` | `FK → invoices.id` cascadeDelete | |
-| `description` | `varchar(255)` | وصف الخدمة أو المنتج |
-| `quantity` | `decimal(10,2)` | الكمية |
-| `unit_price` | `decimal(12,2)` | سعر الوحدة |
-| `total` | `decimal(12,2)` | quantity × unit_price |
-| `sort_order` | `smallInteger` | ترتيب العرض |
-
----
-
-## 🔢 ترقيم الفواتير
-
-يتم التوليد تلقائياً في `Invoice::boot()` عند الإنشاء:
+#### Relationships
 
 ```php
-// INV-0001, INV-0002, ... — per user
-$last = self::where('user_id', $userId)->max('id') ?? 0;
-return 'INV-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
+user()    → belongsTo(User::class)
+client()  → belongsTo(Client::class)
+project() → belongsTo(Project::class)      // nullable
+items()   → hasMany(InvoiceItem::class)
 ```
 
-كل مستخدم له تسلسل مستقل لضمان خصوصية البيانات في بيئة Multi-tenant.
-
----
-
-## 📊 InvoiceStatus Enum
-
-**الملف:** `app/Support/Enums/InvoiceStatus.php`
-
-| القيمة | التسمية | الأيقونة | الـ Badge Class |
-|--------|---------|---------|----------------|
-| `draft` | مسودة | 📝 | `bg-gray-100 text-gray-600` |
-| `sent` | مُرسَلة | 📤 | `bg-blue-100 text-blue-700` |
-| `paid` | مدفوعة | ✅ | `bg-teal-100 text-teal-700` |
-| `overdue` | متأخرة | ⚠️ | `bg-red-100 text-red-700` |
-| `cancelled` | ملغاة | ❌ | `bg-gray-100 text-gray-400` |
-
-**دورة الحياة المسموح بها:**
-
-```
-draft ──► sent ──► paid
-  └──────────────► cancelled
-```
-
----
-
-## 🔧 Invoice Model — الميزات الأساسية
+#### Boot — Auto-Generation
 
 ```php
-// توليد ULID + رقم الفاتورة تلقائياً عند الإنشاء
 static::creating(function (self $invoice) {
     $invoice->ulid   = Str::ulid()->toString();
     $invoice->number = self::generateNumber($invoice->user_id);
 });
-
-// إعادة حساب الإجماليات بعد تعديل البنود
-$invoice->recalculate();
-// يحسب: subtotal → tax_amount → total (مع خصم)
-
-// التحقق من التأخر
-$invoice->isOverdue();
-// true إذا: due_date مضت + الحالة ليست paid/cancelled
-
-// Route model binding عبر ULID (لا عبر id)
-getRouteKeyName() → 'ulid'
 ```
 
----
-
-## 🛣️ Routes
+#### Key Methods
 
 ```php
-Route::prefix('invoices')->name('invoices.')->group(function () {
-    GET    /invoices              → index       (قائمة كل الفواتير)
-    GET    /invoices/create       → create      (فورم إنشاء)
-    POST   /invoices              → store       (حفظ فاتورة جديدة)
-    GET    /invoices/{ulid}       → show        (عرض فاتورة)
-    GET    /invoices/{ulid}/edit  → edit        (فورم تعديل)
-    PUT    /invoices/{ulid}       → update      (حفظ التعديلات)
-    DELETE /invoices/{ulid}       → destroy     (حذف ناعم)
-    POST   /invoices/{ulid}/mark-sent  → markSent   (→ sent)
-    POST   /invoices/{ulid}/mark-paid  → markPaid   (→ paid)
-    POST   /invoices/{ulid}/cancel     → cancel     (→ cancelled)
-});
+// إعادة حساب الإجماليات وحفظها
+recalculate(): void
+    subtotal  = sum(items.quantity × items.unit_price)
+    taxAmount = round(subtotal × taxRate / 100, 2)
+    total     = max(0, subtotal + taxAmount - discount)
+
+// هل الفاتورة متأخرة؟
+isOverdue(): bool
+    due_date < today AND status NOT IN [paid, cancelled]
+
+// توليد رقم فريد per-user
+generateNumber(int $userId): string
+    // عدّ withTrashed() + حلقة race-condition
+    return 'INV-' . str_pad($next, 4, '0', STR_PAD_LEFT)
+
+// Route Key
+getRouteKeyName(): string → 'ulid'
 ```
 
-جميع الروutes محمية بـ `middleware(['auth', 'verified'])`.
-
----
-
-## 🎛️ InvoiceController — الإجراءات
-
-### إنشاء فاتورة (`store`)
-
-```
-1. التحقق من صحة البيانات (client_id, items[], currency, ...)
-2. التحقق من ملكية العميل (client.user_id = auth.id)
-3. إنشاء سجل Invoice (status = draft تلقائياً)
-4. إنشاء InvoiceItems لكل بند
-5. استدعاء recalculate() لحساب الإجماليات
-6. Redirect إلى صفحة العرض مع رسالة نجاح
-```
-
-### تحديث فاتورة (`update`)
-
-```
-1. التحقق من الملكية عبر ulid
-2. التحقق من البيانات
-3. تحديث حقول الفاتورة
-4. حذف البنود القديمة وإعادة إنشائها
-5. recalculate()
-```
-
-> **ملاحظة أمان:** التعديل مسموح فقط على فواتير بحالة `draft`. الزر يختفي في الواجهة لغير المسودات.
-
-### إجراءات الحالة
+### InvoiceItem
 
 ```php
-markSent($ulid)   → status = sent,      sent_at = now()
-markPaid($ulid)   → status = paid,      paid_at = now()
-cancel($ulid)     → status = cancelled
-destroy($ulid)    → SoftDelete → redirect clients.show
+invoice() → belongsTo(Invoice::class)
+```
+
+**Casts:** `quantity`, `unit_price`, `total` → decimal:2
+
+---
+
+## Controllers
+
+### InvoiceController
+
+**الموقع:** `app/Http/Controllers/InvoiceController.php`
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | /invoices | قائمة مع إحصائيات |
+| GET | /invoices/create | نموذج الإنشاء |
+| POST | /invoices | حفظ فاتورة جديدة |
+| GET | /invoices/{ulid} | عرض تفصيلي |
+| GET | /invoices/{ulid}/edit | نموذج التعديل |
+| PUT | /invoices/{ulid} | حفظ التعديلات |
+| DELETE | /invoices/{ulid} | حذف ناعم |
+| POST | /invoices/{ulid}/mark-sent | → Sent |
+| POST | /invoices/{ulid}/mark-paid | → Paid + Transaction |
+| POST | /invoices/{ulid}/cancel | → Cancelled |
+
+#### markPaid() — المنطق الكامل
+
+```
+invoice.status = Paid
+invoice.paid_at = now()
+  ↓
+إنشاء Transaction:
+  type     = Income
+  amount   = invoice.total
+  payee    = client.name
+  reference = invoice.number
+  [project_id إذا وُجد]
+  ↓
+تحديث Client:
+  total_paid      += amount
+  total_revenue   = sum(non-cancelled invoices)
+  last_payment_at = now()
 ```
 
 ---
 
-## 🖥️ الواجهات
+## الإنشاء التلقائي من المشروع
 
-### قائمة الفواتير — `invoices/index`
+عند إنشاء مشروع جديد مرتبط بعميل، تُنشأ فاتورة مسودة تلقائياً:
 
-- إحصائيات سريعة: إجمالي / مسودة+مُرسَلة / مدفوعة / متأخرة
-- جدول بالأعمدة: رقم الفاتورة، العميل، المشروع، الحالة، تاريخ الإصدار، الاستحقاق، الإجمالي
-- Badge حمراء للفواتير المتأخرة
-- Pagination (20 لكل صفحة)
-
-### فورم الإنشاء والتعديل — Alpine.js
-
-```javascript
-invoiceForm() {
-    items: [{ description, quantity, unit_price }],
-    taxRate, discount,
-    // Live calculation:
-    recalc() {
-        subtotal  = Σ(quantity × unit_price)
-        taxAmount = subtotal × (taxRate / 100)
-        total     = max(0, subtotal + taxAmount - discount)
-    }
+```php
+// ProjectController::store()
+if (! empty($validated['client_id'])) {
+    $this->createDraftInvoice($project, $validated);
 }
+
+// private createDraftInvoice()
+// تصفية: فقط الخدمات من نوع 'income' تصبح بنوداً في الفاتورة
+$services = array_filter(
+    $validated['services'] ?? [],
+    fn ($svc) => ($svc['type'] ?? 'income') === 'income'
+);
 ```
 
-- إضافة / حذف بنود ديناميكياً
-- عرض الإجماليات يتحدث فوراً مع كل تغيير
+**لماذا income فقط؟** خدمات type=expense هي تكاليف تشغيلية (أدوات، مساعدون) — لا تُفوتَّر للعميل.
 
-### صفحة العرض — `invoices/show`
+---
 
-- ورقة فاتورة احترافية مع: رأس، بيانات العميل، جدول البنود، الإجماليات، ملاحظات
-- طباعة مباشرة / تصدير PDF عبر `window.print()`
-- شريط إجراءات: تحديد كمُرسَلة، تسجيل الدفع، طباعة، تعديل، إلغاء
-- ختم "مدفوعة" شفاف يظهر على الفاتورة عند الدفع
+## Frontend
 
-### CSS الطباعة
+### Views
 
-```css
-@media print {
-    nav, header, .print\:hidden { display: none !important; }
-    body { background: white; }
-}
+| View | Purpose | Alpine.js |
+|------|---------|-----------|
+| `invoices/index.blade.php` | قائمة + إحصائيات + pagination | — |
+| `invoices/create.blade.php` | نموذج إنشاء ديناميكي | `invoiceForm()` |
+| `invoices/edit.blade.php` | نموذج تعديل مع بيانات محملة | `invoiceForm()` |
+| `invoices/show.blade.php` | ورقة فاتورة + أزرار إجراءات | — |
+
+---
+
+## User Flow
+
+```
+المستقل
+  │
+  ├─ إنشاء يدوي: /invoices/create
+  ├─ إنشاء تلقائي: عند إنشاء مشروع جديد
+  └─ تحويل من عرض: QuoteController::convertToInvoice()
+       │
+       ▼
+  مسودة (Draft)
+       │
+       ▼ markSent()
+  مُرسَلة (Sent)
+       │
+       ▼ markPaid()
+  مدفوعة (Paid)
+  + Transaction دخل تلقائياً
+  + تحديث إحصائيات العميل
 ```
 
 ---
 
-## 🔗 التكامل مع ملف العميل
+## Security Considerations
 
-تظهر فواتير العميل في تبويب **🧾 الفواتير** داخل `crm/clients/show`:
-
-```php
-// CRM ClientController::show()
-$clientInvoices = Invoice::where('client_id', $client->id)
-    ->where('user_id', $request->user()->id)
-    ->with('project')
-    ->orderByDesc('created_at')
-    ->get();
-```
-
-- Badge بعدد الفواتير على رأس التبويب
-- بطاقة لكل فاتورة: رقم، حالة، تاريخ، مشروع، إجمالي
-- زر "إنشاء فاتورة" يمرر `client_id` تلقائياً
+| الاعتبار | التطبيق |
+|---------|---------|
+| **Ownership** | `BelongsToUser` Global Scope |
+| **SoftDeletes** | وثائق مالية محمية من الحذف النهائي |
+| **Project FK** | `char(26)` لتوافق ULID — لا unsignedBigInteger |
+| **Null project_id** | لا يُرسَل صراحةً — يُستخدم `if ($invoice->project_id)` |
 
 ---
 
-## 🔗 التكامل مع المشاريع
+## Known Bugs Fixed
 
-### الربط اليدوي (عند إنشاء الفاتورة)
-
-عند اختيار مشروع يدوياً في فورم الفاتورة:
-- يظهر اسم المشروع في ورقة الفاتورة
-- يُعرض في قائمة الفواتير
-- يُستخدم للتقارير المستقبلية
-
-### الإنشاء التلقائي عند إنشاء مشروع جديد ⚡
-
-**الملف:** `ProjectController::store()` → استدعاء `createDraftInvoice()`
-
-عند إنشاء مشروع مرتبط بعميل، تُنشأ فاتورة مسودة تلقائياً:
-
-```
-1. تاريخ الإصدار = اليوم
-2. تاريخ الاستحقاق = اليوم + 30 يوم
-3. العملة = عملة المشروع
-4. العنوان = اسم المشروع
-5. البنود:
-   - إن وُجدت خدمات → بند لكل خدمة (الاسم + المبلغ)
-   - إن لم توجد خدمات + يوجد contract_value → بند واحد بقيمة العقد
-   - إن لم يوجد شيء → فاتورة فارغة (يعبؤها المستخدم لاحقاً)
-6. تُحسب الإجماليات تلقائياً (recalculate())
-```
-
-الفاتورة تبقى **مسودة** حتى يراجعها المستخدم ويرسلها للعميل.
-
-> **قيد تقني:** `project_id` من نوع `char(26)` في جدول `invoices` لأن `projects.id` هو `ulid` وليس `bigInteger`. هذا الاستثناء موثَّق لتجنب أخطاء المايجريشن مستقبلاً.
+| # | الخطأ | السبب | الإصلاح |
+|---|-------|-------|---------|
+| 1 | `SQLSTATE 3780` FK مجتمع | `project_id` كان `unsignedBigInteger` | تغيير إلى `char(26)` |
+| 2 | `SQLSTATE 1364` NOT NULL | `transactions.project_id` schema drift | Migration: `->nullable()->change()` |
+| 3 | `SQLSTATE 1048` null يلغي DEFAULT | `null` صريح في INSERT | حذف المفتاح من المصفوفة |
+| 4 | `Duplicate entry 'INV-0001'` | unique عالمي | composite unique `(user_id, number)` |
+| 5 | إحصائيات العميل = 0 | قيم DB لم تُحدَّث | حساب حي + تحديث عند كل دفع |
 
 ---
 
-## 🔒 الأمان والعزل
+## Future Enhancements
 
-- كل استعلام يشترط `user_id = auth()->id()` — لا يمكن لمستخدم رؤية فواتير مستخدم آخر
-- التحقق من ملكية العميل قبل إنشاء الفاتورة
-- حذف ناعم (SoftDeletes) — الفواتير المحذوفة قابلة للاسترداد من DB
-- Route model binding عبر `ulid` لا `id` — يمنع تخمين الأرقام التسلسلية
-
----
-
-## 📌 القرارات التقنية
-
-| القرار | السبب |
-|--------|-------|
-| ULID كمعرّف خارجي | أمان (لا يمكن تخمين الأرقام)، مناسب للـ URL |
-| SoftDeletes | الفواتير وثائق مالية لا تُحذف نهائياً |
-| `char(26)` لـ project_id | توافق مع `projects.id` الذي هو ULID |
-| recalculate() في PHP | ضمان دقة الأرقام بعد كل تعديل |
-| Alpine.js للحساب | استجابة فورية بدون طلبات للسيرفر |
-| `window.print()` للـ PDF | بدون مكتبات خارجية — المتصفح يتولى الأمر |
-| إنشاء تلقائي للفاتورة مع المشروع | تقليل الخطوات على المستخدم — الفاتورة جاهزة مباشرةً |
-| `$txData` بدون `project_id` عند null | إرسال null صراحةً يُلغي DEFAULT في MySQL — الحذف يتركها للـ DB |
-
----
-
-## 🐛 إصلاحات موثَّقة
-
-### 1 — `SQLSTATE 3780`: نوع FK غير متوافق
-
-**التاريخ:** مايو 2026  
-**المشكلة:** Migration أنشأت `invoices.project_id` كـ `unsignedBigInteger` بينما `projects.id` هو `char(26)` (ULID).  
-**الإصلاح:** تغيير نوع العمود في المايجريشن:
-```php
-// BEFORE
-$table->unsignedBigInteger('project_id')->nullable();
-// AFTER
-$table->char('project_id', 26)->nullable();
-```
-
-### 2 — `SQLSTATE 1364`: `project_id doesn't have a default value`
-
-**التاريخ:** 28 مايو 2026  
-**المشكلة:** عمود `transactions.project_id` في قاعدة البيانات الفعلية كان `NOT NULL` بدون قيمة افتراضية (schema drift)، رغم أن المايجريشن الأصلية تحدد `->nullable()`.  
-**الإصلاح:** مايجريشن تصحيح:
-```
-database/migrations/2026_05_28_000001_make_transactions_project_id_nullable.php
-```
-```php
-$table->char('project_id', 26)->nullable()->change();
-```
-
-### 3 — `project_id = null` يُسبب `SQLSTATE 1048`
-
-**التاريخ:** مايو 2026  
-**المشكلة:** إرسال `null` صراحةً في INSERT يُلغي `DEFAULT NULL` في MySQL.  
-**الإصلاح:** حذف المفتاح من المصفوفة عند عدم وجود مشروع:
-```php
-// في InvoiceController::markPaid()
-if ($invoice->project_id) {
-    $txData['project_id'] = $invoice->project_id;
-}
-```
-
-### 4 — `Duplicate entry 'INV-0001'` لمستخدمين متعددين
-
-**التاريخ:** 29 مايو 2026  
-**المشكلة:** `invoices.number` كان unique عالمياً، و`generateNumber()` تعيد `INV-0001` لكل مستخدم جديد ليس لديه فواتير.  
-**الإصلاح:** مايجريشن جديد + إصلاح الدالة:
-```
-database/migrations/2026_05_29_000002_fix_invoices_number_unique_per_user.php
-```
-- يحوّل unique من `(number)` إلى `(user_id, number)`
-- `generateNumber()` تعدّ فواتير المستخدم فقط (`withTrashed()`) مع حلقة لتجنب race condition
-
-### 5 — إحصائيات العميل (total_revenue/total_paid) تظهر صفر
-
-**التاريخ:** 29 مايو 2026  
-**المشكلة:** القيم مخزّنة في `clients` table لكن لا شيء كان يُحدّثها.  
-**الإصلاح:**
-- `ClientController::show()` يحسبها حية من الفواتير ويحفظها في DB عند التغيير
-- `InvoiceController::markPaid()` يُحدّث `total_paid + total_revenue + last_payment_at` للعميل فور كل دفع
-
----
-
-## 🚀 تحسينات مستقبلية مقترحة
-
-- [ ] إرسال الفاتورة عبر البريد الإلكتروني مباشرة للعميل
-- [ ] قوالب فواتير قابلة للتخصيص (شعار + ألوان)
-- [ ] تصدير PDF بجودة أعلى باستخدام `barryvdh/laravel-dompdf`
-- [ ] تذكيرات تلقائية للفواتير المتأخرة
-- [ ] دعم العملات المتعددة في فاتورة واحدة
-- [ ] بوابة العميل لعرض وتحميل فواتيره
+| الميزة | الأولوية |
+|--------|---------|
+| إرسال الفاتورة بالبريد الإلكتروني | عالية |
+| قوالب فواتير قابلة للتخصيص (شعار + ألوان) | متوسطة |
+| تصدير PDF عالي الجودة (dompdf) | متوسطة |
+| تذكيرات تلقائية للفواتير المتأخرة | متوسطة |
+| بوابة عميل لعرض وتحميل الفواتير | منخفضة |
+| دفع إلكتروني مباشر من الفاتورة | مستقبلية |

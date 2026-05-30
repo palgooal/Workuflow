@@ -1,20 +1,21 @@
-# 💰 دراهم — وثيقة المعمارية التقنية
+# دراهم — وثيقة المعمارية التقنية
 
 > Laravel 12 / PHP 8.2 — SaaS Financial Platform  
-> آخر تحديث: مايو 2026
+> آخر تحديث: 29 مايو 2026 | الإصدار: 2.5.0
 
 ---
 
-## 📋 نظرة عامة
+## نظرة عامة
 
 **دراهم** منصة SaaS مالية مبنية على Laravel 12 تستهدف المستقلين وأصحاب الأعمال الصغيرة.  
-تعمل بنظام **Multi-tenant** حيث بيانات كل مستخدم معزولة تلقائياً عبر `BelongsToUser` Global Scope.
+نظام **Multi-tenant** حيث بيانات كل مستخدم معزولة تلقائياً عبر `BelongsToUser` Global Scope.
 
 ---
 
-## 🛠️ التقنيات المستخدمة
+## التقنيات المستخدمة
 
 ### Backend
+
 | الحزمة | الإصدار | الاستخدام |
 |--------|---------|-----------|
 | Laravel | 12.x | Framework الرئيسي |
@@ -22,694 +23,412 @@
 | MySQL | 8.x | قاعدة البيانات |
 | spatie/laravel-permission | ^6 | إدارة الأدوار والصلاحيات |
 | filament/filament | ^3 | لوحة الإدارة |
+| maatwebsite/excel | ^3 | استيراد/تصدير xlsx |
 | laravel/telescope | dev | مراقبة وتتبع الطلبات |
 
 ### Frontend
+
 | التقنية | الاستخدام |
 |---------|-----------|
 | Blade Templates | قوالب الواجهة |
 | Tailwind CSS v4 | التنسيق |
 | Alpine.js | التفاعلات بدون reload |
 | Chart.js | الرسوم البيانية |
+| Sortable.js | Drag & Drop للوسوم |
 | Tajawal Font | خط عربي احترافي |
 
 ### Testing
+
 | الأداة | النتيجة |
 |--------|---------|
-| Pest PHP | 53 / 53 ✅ |
+| Pest PHP | 54 / 54 ✅ |
 
 ---
 
-## 🏗️ مبدأ التصميم
+## مبدأ التصميم
 
 ```
-Controller → Form Request → Action → Service → Model
+Controller → Form Request → DTO → Action → Service → Model
 ```
 
 - **Controller**: يستقبل الطلب، يُفوّض للـ Action، يُعيد الاستجابة
 - **Form Request**: يتحقق من صحة البيانات (Arabic validation messages)
+- **DTO**: Data Transfer Object — ينقل البيانات بين الطبقات بأمان
 - **Action**: منطق عملية واحدة محددة — قابل للاختبار والإعادة
 - **Service**: منطق أعمال معقد يُستخدم عبر أكثر من Action
 - **Model**: البيانات والعلاقات فقط (لا منطق أعمال)
 
 ---
 
-## 📁 هيكل المجلدات الكامل
-
-```
-app/
-├── Console/
-│   └── Commands/
-│       ├── ProcessRecurringTransactions.php   ← Scheduler يومي 01:00
-│       └── SendDebtAlerts.php                 ← Scheduler يومي 08:00
-│
-├── Filament/
-│   ├── Resources/
-│   │   ├── UserResource.php                   ← إدارة المستخدمين (CRUD)
-│   │   └── TransactionResource.php            ← عرض المعاملات (قراءة فقط)
-│   ├── Widgets/
-│   │   ├── StatsOverviewWidget.php            ← إحصاءات كلية للمنصة
-│   │   └── UsersChartWidget.php               ← رسم بياني نمو المستخدمين
-│   └── Pages/                                 ← (auto-discovered)
-│
-├── Http/
-│   ├── Controllers/
-│   │   ├── Auth/                              ← Breeze controllers
-│   │   ├── BillingController.php
-│   │   ├── BudgetController.php
-│   │   ├── CategoryController.php
-│   │   ├── DashboardController.php
-│   │   ├── DebtController.php
-│   │   ├── ProjectController.php
-│   │   ├── RecurringController.php
-│   │   ├── ReportController.php
-│   │   ├── SettingsController.php
-│   │   └── TransactionController.php
-│   │
-│   ├── Middleware/
-│   │   └── EnsureSubscriptionActive.php
-│   │
-│   └── Requests/
-│       ├── Auth/
-│       ├── Billing/
-│       ├── Budgets/
-│       │   └── StoreBudgetRequest.php
-│       ├── Categories/
-│       │   ├── StoreCategoryRequest.php
-│       │   └── UpdateCategoryRequest.php
-│       ├── Debts/
-│       │   └── StoreDebtRequest.php
-│       ├── Projects/
-│       │   ├── StoreProjectRequest.php
-│       │   └── UpdateProjectRequest.php
-│       ├── Recurring/
-│       │   └── StoreRecurringRequest.php
-│       └── Transactions/
-│           ├── StoreTransactionRequest.php
-│           └── UpdateTransactionRequest.php
-│
-├── Models/
-│   ├── Budget.php
-│   ├── Category.php
-│   ├── Debt.php
-│   ├── Project.php
-│   ├── RecurringTransaction.php
-│   ├── Subscription.php
-│   ├── Transaction.php
-│   └── User.php                               ← FilamentUser, HasRoles
-│
-├── Modules/
-│   ├── Billing/
-│   │   ├── Contracts/
-│   │   │   └── PaymentProviderInterface.php   ← Contract للمزود المستقبلي
-│   │   └── Services/
-│   │       └── SubscriptionService.php
-│   │
-│   ├── Budgets/
-│   │   ├── Actions/
-│   │   │   ├── CreateBudgetAction.php
-│   │   │   ├── UpdateBudgetAction.php
-│   │   │   └── DeleteBudgetAction.php
-│   │   ├── DTOs/
-│   │   │   └── BudgetData.php
-│   │   └── Services/
-│   │       └── BudgetTrackerService.php
-│   │
-│   ├── Categories/
-│   │   ├── Actions/
-│   │   │   ├── CreateCategoryAction.php
-│   │   │   ├── UpdateCategoryAction.php
-│   │   │   └── DeleteCategoryAction.php
-│   │   └── DTOs/
-│   │       └── CategoryData.php
-│   │
-│   ├── Debts/
-│   │   ├── Actions/
-│   │   │   ├── CreateDebtAction.php
-│   │   │   ├── RecordPartialPaymentAction.php
-│   │   │   └── MarkDebtAsPaidAction.php
-│   │   ├── DTOs/
-│   │   │   └── DebtData.php
-│   │   └── Services/
-│   │       └── DebtTrackerService.php
-│   │
-│   ├── Projects/
-│   │   ├── Actions/
-│   │   │   ├── CreateProjectAction.php
-│   │   │   ├── UpdateProjectAction.php
-│   │   │   └── DeleteProjectAction.php
-│   │   ├── DTOs/
-│   │   │   └── ProjectData.php
-│   │   └── Services/
-│   │       └── ProjectFinancialService.php
-│   │
-│   ├── Recurring/
-│   │   ├── Actions/
-│   │   │   ├── CreateRecurringAction.php
-│   │   │   ├── UpdateRecurringAction.php
-│   │   │   ├── ToggleRecurringAction.php
-│   │   │   └── ProcessRecurringAction.php     ← ينشئ Transaction + يُحدّث next_due_date
-│   │   ├── DTOs/
-│   │   │   └── RecurringData.php
-│   │   └── Services/
-│   │       └── RecurringService.php
-│   │
-│   ├── Reports/
-│   │   └── Services/
-│   │       ├── CashFlowService.php
-│   │       ├── MonthlyReportService.php
-│   │       ├── ProfitLossService.php
-│   │       └── TopCategoriesService.php
-│   │
-│   └── Transactions/
-│       ├── Actions/
-│       │   ├── CreateTransactionAction.php
-│       │   ├── UpdateTransactionAction.php
-│       │   └── DeleteTransactionAction.php
-│       ├── DTOs/
-│       │   └── TransactionData.php
-│       └── Services/
-│           ├── TransactionService.php
-│           └── BalanceCalculatorService.php
-│
-├── Policies/
-│   ├── BudgetPolicy.php
-│   ├── CategoryPolicy.php
-│   ├── DebtPolicy.php
-│   ├── ProjectPolicy.php
-│   ├── RecurringPolicy.php
-│   └── TransactionPolicy.php
-│
-├── Providers/
-│   ├── AppServiceProvider.php                 ← تسجيل جميع Policies
-│   └── Filament/
-│       └── AdminPanelProvider.php             ← Panel /admin
-│
-└── Support/
-    ├── Enums/
-    │   ├── DebtStatus.php
-    │   ├── DebtType.php
-    │   ├── ProjectType.php
-    │   ├── RecurringFrequency.php             ← مع nextDate(Carbon): Carbon
-    │   ├── SubscriptionPlan.php
-    │   └── TransactionType.php
-    ├── Traits/
-    │   └── BelongsToUser.php                  ← Global Scope عزل تلقائي
-    └── Helpers/
-        └── MoneyFormatter.php
-
-resources/views/
-├── layouts/
-│   ├── app.blade.php                          ← Sidebar + Topbar (RTL)
-│   └── auth.blade.php
-├── components/
-│   ├── badge.blade.php
-│   ├── empty-state.blade.php
-│   ├── modal.blade.php
-│   ├── nav-item.blade.php
-│   ├── progress-bar.blade.php
-│   └── stats-card.blade.php
-├── billing/
-│   ├── index.blade.php                        ← صفحة أسعار 3 خطط
-│   └── success.blade.php
-├── budget/
-│   └── index.blade.php
-├── categories/
-│   └── index.blade.php
-├── dashboard/
-│   └── index.blade.php
-├── debts/
-│   ├── index.blade.php
-│   └── create.blade.php
-├── projects/
-│   ├── index.blade.php
-│   ├── show.blade.php
-│   ├── create.blade.php
-│   ├── edit.blade.php
-│   └── _form.blade.php
-├── recurring/
-│   ├── index.blade.php
-│   ├── create.blade.php
-│   └── edit.blade.php
-├── reports/
-│   └── index.blade.php
-├── settings/
-│   └── index.blade.php
-└── transactions/
-    ├── index.blade.php
-    ├── create.blade.php
-    └── edit.blade.php
-
-config/
-├── billing.php                                ← provider, plans, credentials
-└── stripe.php                                 ← فارغ (محجوز لتجنب cache errors)
-
-database/
-├── migrations/
-│   ├── ..._create_users_table.php
-│   ├── ..._create_projects_table.php
-│   ├── ..._create_categories_table.php
-│   ├── ..._create_transactions_table.php
-│   ├── ..._create_debts_table.php
-│   ├── ..._create_budgets_table.php
-│   ├── ..._create_recurring_transactions_table.php
-│   ├── ..._create_subscriptions_table.php
-│   ├── ..._add_payment_customer_id_to_users_table.php
-│   └── (spatie permission migrations)
-└── seeders/
-    ├── AdminSeeder.php                        ← super_admin role + admin user
-    └── DatabaseSeeder.php
-
-routes/
-└── web.php                                    ← جميع الـ routes
-
-docs/
-├── PROJECT.md                                 ← وصف المشروع والأهداف
-├── ARCHITECTURE.md                            ← هذا الملف
-└── TASKS.md                                   ← تتبع المهام
-```
-
----
-
-## 🗄️ تصميم قاعدة البيانات
-
-### جدول المستخدمين — `users`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف الفريد |
-| name | string | الاسم |
-| email | string unique | البريد الإلكتروني |
-| password | string | كلمة المرور (bcrypt) |
-| currency | string(3) | العملة الافتراضية (SAR) |
-| timezone | string | المنطقة الزمنية |
-| subscription_plan | enum | free / pro / business |
-| payment_customer_id | string nullable | معرف العميل عند مزود الدفع (generic) |
-| email_verified_at | timestamp | توقيت التحقق |
-| timestamps | — | created_at / updated_at |
-
-### جدول المشاريع — `projects`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف |
-| user_id | FK → users | المالك |
-| name | string | اسم المشروع |
-| description | text nullable | الوصف |
-| color | string | لون المشروع في الواجهة |
-| currency | string(3) | عملة المشروع |
-| type | enum | personal / business |
-| is_active | boolean | هل المشروع نشط؟ |
-| deleted_at | timestamp | Soft Delete |
-| timestamps | — | |
-
-### جدول الفئات — `categories`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف |
-| user_id | FK → users | المالك |
-| name | string | اسم الفئة |
-| type | enum | income / expense |
-| icon | string nullable | أيقونة |
-| color | string nullable | لون |
-| timestamps | — | |
-
-### جدول المعاملات — `transactions`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف |
-| user_id | FK → users | المالك |
-| project_id | FK → projects nullable | المشروع |
-| category_id | FK → categories nullable | الفئة |
-| type | enum | income / expense / transfer |
-| amount | decimal(15,2) | المبلغ |
-| currency | string(3) | العملة |
-| description | string nullable | الوصف |
-| notes | text nullable | ملاحظات |
-| transaction_date | date | تاريخ المعاملة |
-| reference | string nullable | رقم مرجعي |
-| deleted_at | timestamp | Soft Delete |
-| timestamps | — | |
-
-**Indexes:** `(user_id, transaction_date)`, `(project_id, type)`, `(user_id, type, transaction_date)`
-
-### جدول الديون — `debts`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف |
-| user_id | FK → users | المالك |
-| project_id | FK nullable | المشروع المرتبط |
-| type | enum | borrowed / lent |
-| party_name | string | اسم الطرف الآخر |
-| amount | decimal(15,2) | المبلغ الأصلي |
-| remaining_amount | decimal(15,2) | المبلغ المتبقي |
-| currency | string(3) | العملة |
-| due_date | date nullable | تاريخ الاستحقاق |
-| status | enum | active / partially_paid / paid |
-| notes | text nullable | ملاحظات |
-| deleted_at | timestamp | Soft Delete |
-| timestamps | — | |
-
-### جدول الميزانية — `budgets`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف |
-| user_id | FK → users | المالك |
-| category_id | FK → categories nullable | الفئة |
-| amount | decimal(15,2) | المبلغ المخصص |
-| period | enum | monthly / yearly |
-| month | tinyInteger nullable | الشهر (1-12) |
-| year | smallInteger | السنة |
-| timestamps | — | |
-
-### جدول المتكررة — `recurring_transactions`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف |
-| user_id | FK → users | المالك |
-| category_id | FK nullable | الفئة |
-| project_id | FK nullable | المشروع |
-| type | enum | income / expense |
-| amount | decimal(15,2) | المبلغ |
-| description | string | الوصف |
-| frequency | enum | daily / weekly / monthly / yearly |
-| start_date | date | تاريخ البدء |
-| end_date | date nullable | تاريخ الانتهاء (null = مفتوح) |
-| next_due_date | date | التاريخ التالي للمعالجة |
-| is_active | boolean | هل مفعّل؟ |
-| currency | string(3) | العملة |
-| timestamps | — | |
-
-### جدول الاشتراكات — `subscriptions`
-
-| العمود | النوع | الوصف |
-|--------|-------|-------|
-| id | ULID | المعرّف |
-| user_id | FK → users | المالك |
-| plan | enum | free / pro / business |
-| status | enum | active / cancelled / expired |
-| starts_at | timestamp | بداية الاشتراك |
-| ends_at | timestamp nullable | نهاية الاشتراك |
-| payment_provider | string | اسم المزود (manual / أي مزود) |
-| provider_subscription_id | string nullable | معرف الاشتراك عند المزود |
-| timestamps | — | |
-
----
-
-## ⚙️ القرارات المعمارية
-
-### 1. BelongsToUser — عزل البيانات التلقائي
+## نمط العزل متعدد المستأجرين (Multi-tenancy)
 
 ```php
-trait BelongsToUser
-{
-    protected static function bootBelongsToUser(): void
-    {
+// BelongsToUser Trait — يُطبَّق على كل Model
+trait BelongsToUser {
+    protected static function bootBelongsToUser(): void {
         static::addGlobalScope('user', function (Builder $builder) {
             if (auth()->check()) {
-                $builder->where('user_id', auth()->id());
+                $builder->where($builder->getModel()->getTable() . '.user_id', auth()->id());
+            }
+        });
+
+        static::creating(function ($model) {
+            if (auth()->check() && empty($model->user_id)) {
+                $model->user_id = auth()->id();
             }
         });
     }
 }
 ```
 
-- يُطبَّق تلقائياً على: Project, Category, Transaction, Debt, Budget, RecurringTransaction
-- في سياق CLI (الـ Scheduler): `auth()->check()` يُرجع `false` — الـ Scope لا يُطبَّق — كل البيانات متاحة
-- في Filament Admin: `withoutGlobalScopes()` مطلوب صراحةً في `modifyQueryUsing()`
+**القاعدة:** كل Model يستخدم هذا الـ Trait لا يمكن لمستخدم الوصول لبيانات مستخدم آخر — حتى لو عرف الـ ID.
 
-### 2. نمط الـ Action Pattern
+---
 
-```php
-// كل عملية = Action مستقل قابل للاختبار
-class CreateProjectAction
-{
-    public function execute(ProjectData $data): Project
-    {
-        return Project::create($data->toArray());
-    }
-}
+## هيكل المجلدات الكامل
+
 ```
+app/
+├── Console/Commands/
+│   ├── ProcessRecurringTransactions.php   ← Scheduler 01:00 يومي
+│   ├── SendDebtAlerts.php                 ← Scheduler 08:00 يومي
+│   └── Crm/
+│       ├── RecalculateClientHealthCommand.php
+│       ├── RefreshClientSegmentsCommand.php
+│       └── ReconcileClientStatsCommand.php
+│
+├── Filament/
+│   ├── Resources/
+│   │   ├── UserResource.php               ← CRUD + Suspend/Activate/ResetPlan/SendEmail/DeleteData/Impersonate
+│   │   SubscriptionResource.php
+│   │   └── TransactionResource.php
+│   └── Widgets/
+│       ├── StatsOverviewWidget.php        ← MRR, ARR, Churn
+│       └── UsersChartWidget.php
+│
+├── Http/
+│   ├── Controllers/
+│   │   ├── Admin/
+│   │   │   └── ImpersonateController.php  ← impersonate() + leave()
+│   │   ├── Auth/
+│   │   ├── BillingController.php
+│   │   ├── BudgetController.php
+│   │   ├── CategoryController.php
+│   │   ├── DashboardController.php
+│   │   ├── DebtController.php
+│   │   ├── InvoiceController.php          ← CRUD + markSent + markPaid + cancel
+│   │   ├── OnboardingController.php
+│   │   ├── ProjectController.php
+│   │   ├── QuoteController.php            ← CRUD + markSent + convert + portal
+│   │   ├── RecurringController.php
+│   │   ├── ReportController.php
+│   │   ├── ServiceController.php
+│   │   ├── SettingsController.php
+│   │   ├── TeamMemberController.php
+│   │   └── TransactionController.php
+│   │
+│   └── Middleware/
+│       ├── EnsureUserIsActive.php
+│       └── EnsureSubscriptionActive.php
+│
+├── Models/
+│   ├── Budget.php
+│   ├── Category.php
+│   ├── Client.php                         ← BelongsToUser, SoftDeletes, ULID
+│   ├── Debt.php
+│   ├── Invoice.php                        ← BelongsToUser, SoftDeletes, ULID
+│   ├── InvoiceItem.php
+│   ├── Project.php
+│   ├── Quote.php                          ← BelongsToUser, SoftDeletes, ULID, token
+│   ├── QuoteItem.php
+│   ├── RecurringTransaction.php
+│   ├── Service.php
+│   ├── Subscription.php
+│   ├── TeamMember.php
+│   ├── Transaction.php
+│   └── User.php                           ← FilamentUser, HasRoles
+│
+├── Modules/
+│   ├── Billing/Services/SubscriptionService.php
+│   ├── Budgets/Actions/ + DTOs/ + Services/
+│   ├── Categories/Actions/ + DTOs/
+│   ├── CRM/
+│   │   ├── Actions/
+│   │   │   ├── CreateClientAction.php
+│   │   │   ├── UpdateClientAction.php
+│   │   │   ├── DeleteClientAction.php
+│   │   │   ├── ArchiveClientAction.php
+│   │   │   ├── LogClientActivityAction.php
+│   │   │   └── ExecuteAutomationAction.php  ← Job: تنفيذ قاعدة أتمتة
+│   │   ├── DTOs/
+│   │   │   ├── CreateClientDTO.php
+│   │   │   ├── UpdateClientDTO.php
+│   │   │   └── ClientFiltersDTO.php
+│   │   ├── Enums/
+│   │   │   ├── ClientStatus.php
+│   │   │   ├── ClientSource.php
+│   │   │   ├── FollowUpType.php
+│   │   │   ├── FollowUpPriority.php
+│   │   │   ├── HealthScoreGrade.php
+│   │   │   ├── AutomationTrigger.php
+│   │   │   └── ClientActivityType.php
+│   │   ├── Http/Controllers/
+│   │   │   ├── ClientController.php
+│   │   │   ├── ClientTagController.php
+│   │   │   ├── ClientFollowUpController.php
+│   │   │   ├── ClientSegmentController.php
+│   │   │   ├── ClientImportController.php
+│   │   │   └── AutomationRuleController.php
+│   │   ├── Models/                         ← (CRM-specific models in app/Models/)
+│   │   ├── Policies/ClientPolicy.php
+│   │   ├── Requests/
+│   │   │   ├── StoreClientRequest.php
+│   │   │   └── UpdateClientRequest.php
+│   │   └── Services/
+│   │       ├── ClientService.php
+│   │       ├── ClientTagService.php
+│   │       ├── ClientHealthScoreService.php
+│   │       ├── ClientSegmentService.php
+│   │       ├── FollowUpService.php
+│   │       ├── AutomationRuleEngine.php
+│   │       └── SmartTagSuggestionService.php
+│   ├── Debts/Actions/ + DTOs/ + Services/
+│   ├── Projects/
+│   │   ├── Actions/ (Create/Update/Delete)
+│   │   ├── DTOs/ProjectData.php
+│   │   └── Services/ProjectFinancialService.php  ← per-currency summary
+│   ├── Recurring/Actions/ + DTOs/ + Services/
+│   ├── Reports/Services/ (CashFlow/MonthlyReport/ProfitLoss/TopCategories)
+│   └── Transactions/
+│       ├── Actions/ (Create/Update/Delete)
+│       ├── DTOs/TransactionData.php
+│       └── Services/
+│           ├── TransactionService.php     ← per-currency getSummary()
+│           └── BalanceCalculatorService.php
+│
+├── Policies/
+│   ├── BudgetPolicy.php
+│   ├── CategoryPolicy.php
+│   ├── DebtPolicy.php
+│   ├── InvoicePolicy.php
+│   ├── ProjectPolicy.php
+│   ├── QuotePolicy.php
+│   ├── RecurringPolicy.php
+│   └── TransactionPolicy.php
+│
+├── Support/
+│   ├── Enums/
+│   │   ├── DebtStatus.php / DebtType.php
+│   │   ├── InvoiceStatus.php              ← draft|sent|paid|overdue|cancelled
+│   │   ├── ProjectType.php                ← personal|business
+│   │   ├── QuoteStatus.php                ← draft|sent|viewed|accepted|rejected|expired|converted
+│   │   ├── RecurringFrequency.php
+│   │   ├── SubscriptionPlan.php
+│   │   ├── TransactionType.php
+│   │   └── UserStatus.php
+│   ├── Traits/
+│   │   └── BelongsToUser.php              ← Global Scope عزل تلقائي
+│   └── Helpers/MoneyFormatter.php
 
-### 3. DTOs بـ fromRequest()
+resources/views/
+├── layouts/
+│   ├── app.blade.php                      ← Sidebar RTL + Impersonation Banner
+│   └── auth.blade.php
+├── components/                            ← badge, empty-state, stats-card...
+├── crm/
+│   ├── clients/ (index, create, edit, show)
+│   ├── follow-ups/ (index)
+│   ├── tags/ (index — Drag & Drop)
+│   ├── segments/ (index)
+│   └── automation-rules/ (index, create, edit)
+├── invoices/ (index, create, edit, show)
+├── quotes/ (index, create, edit, show, portal)
+├── portal/
+│   ├── error.blade.php
+│   └── invoices/show.blade.php
+├── projects/ (index, show, create, edit)
+├── transactions/ (index, create, edit)
+└── ... (dashboard, reports, settings, billing, debts...)
 
-```php
-class ProjectData
-{
-    public function __construct(
-        public readonly string $name,
-        public readonly string $color,
-        public readonly ProjectType $type,
-        // ...
-    ) {}
+routes/
+├── web.php                                ← Auth routes + Public portal routes
+└── crm.php                                ← CRM module routes
 
-    public static function fromRequest(array $data): self
-    {
-        return new self(
-            name: $data['name'],
-            color: $data['color'],
-            type: ProjectType::from($data['type']),
-            // ...
-        );
-    }
-}
-```
+config/
+├── billing.php
+├── crm.php                                ← health_score weights + recency_bias
+└── stripe.php
 
-> **ملاحظة:** الـ DTOs تستخدم `fromRequest(array $data)` وليس `fromArray()`.
-
-### 4. RecurringFrequency::nextDate()
-
-```php
-enum RecurringFrequency: string
-{
-    case Daily   = 'daily';
-    case Weekly  = 'weekly';
-    case Monthly = 'monthly';
-    case Yearly  = 'yearly';
-
-    public function nextDate(Carbon $from): Carbon
-    {
-        return match($this) {
-            self::Daily   => $from->addDay(),
-            self::Weekly  => $from->addWeek(),
-            self::Monthly => $from->addMonth(),
-            self::Yearly  => $from->addYear(),
-        };
-    }
-}
-```
-
-### 5. ProcessRecurringAction — المنطق في CLI
-
-```php
-class ProcessRecurringAction
-{
-    public function execute(RecurringTransaction $recurring): Transaction
-    {
-        // صريح في user_id لأن auth() فارغ في CLI
-        $transaction = Transaction::create([
-            'user_id' => $recurring->user_id,
-            'amount'  => $recurring->amount,
-            // ...
-        ]);
-
-        $nextDate = $recurring->frequency->nextDate($recurring->next_due_date);
-        $recurring->update(['next_due_date' => $nextDate]);
-
-        if ($recurring->end_date && $nextDate->gt($recurring->end_date)) {
-            $recurring->update(['is_active' => false]);
-        }
-
-        return $transaction;
-    }
-}
-```
-
-### 6. PaymentProviderInterface — تجهيز لمزود الدفع
-
-```php
-interface PaymentProviderInterface
-{
-    public function createCheckoutUrl(User $user, string $plan): string;
-    public function createPortalUrl(User $user): string;
-    public function parseWebhook(string $payload, string $signature): array;
-    // returns: ['event' => string, 'data' => array]
-}
-```
-
-عند إضافة مزود دفع:
-1. إنشاء class ينفذ `PaymentProviderInterface`
-2. تسجيله في `AppServiceProvider` عبر `app()->bind()`
-3. تحديث `config/billing.php` — ضبط `BILLING_PROVIDER` في `.env`
-4. إكمال الـ TODOs في `BillingController`
-
-### 7. Filament Admin — حماية الوصول
-
-```php
-// User.php
-public function canAccessPanel(Panel $panel): bool
-{
-    return $this->hasRole('super_admin');
-}
-
-// TransactionResource.php — قراءة بيانات جميع المستخدمين
-public static function table(Table $table): Table
-{
-    return $table
-        ->modifyQueryUsing(fn ($query) => $query->withoutGlobalScopes()->with(['user', 'category', 'project']))
-        // ...
-}
+database/migrations/
+├── [core migrations...]
+├── 2026_05_xx_create_clients_table.php    ← CRM Phase 1
+├── 2026_05_xx_create_invoices_table.php   ← Phase 18
+├── 2026_05_xx_create_quotes_table.php     ← Phase 19
+├── 2026_05_28_000001_make_transactions_project_id_nullable.php
+├── 2026_05_29_000001_fix_quotes_number_unique_per_user.php
+└── 2026_05_29_000002_fix_invoices_number_unique_per_user.php
 ```
 
 ---
 
-## 📅 Scheduled Commands
+## قرارات معمارية مهمة
 
-| Command | التوقيت | الوظيفة |
-|---------|---------|---------|
-| `recurring:process` | يومياً 01:00 | معالجة المعاملات المتكررة المستحقة |
-| `debts:send-alerts` | يومياً 08:00 | إرسال تنبيهات الديون القريبة من الاستحقاق |
+### 1. ULID كمفتاح مسار
 
-```php
-// bootstrap/app.php أو Console/Kernel.php
-Schedule::command('recurring:process')->dailyAt('01:00');
-Schedule::command('debts:send-alerts')->dailyAt('08:00');
+**القرار:** كل Model يستخدم ULID (`char(26)`) كـ route key بدلاً من `id` الرقمي التسلسلي.
+
+**السبب:** يمنع enumeration attacks (تخمين IDs بالتسلسل) بينما يحتفظ بخاصية الترتيب الزمني المدمجة في ULID.
+
+**الاستثناء:** `clients` يستخدم `public_id` (ULID) بدلاً من `id` مع `getRouteKeyName() → 'public_id'`.
+
+### 2. Token منفصل لبوابة العميل
+
+**القرار:** `Quote.token` هو 48 حرف Base62 عشوائي — مستقل تماماً عن `ulid`.
+
+**السبب:** الـ ULID له ترتيب زمني مدمج قد يُساعد على التخمين. الـ token عشوائي بالكامل لجعل القسمة العامة `/q/{token}` آمنة تماماً بدون مصادقة.
+
+### 3. Unique Key per-user للترقيم
+
+**القرار:** `quotes.number` و `invoices.number` unique على `(user_id, number)` لا على `number` وحده.
+
+**السبب:** كل مستخدم في SaaS يبدأ ترقيمه من QUO-0001/INV-0001. الـ unique العالمي يُسبب `DuplicateEntry` عند ثاني مستخدم.
+
+### 4. عرض العملات منفصلة لا دمجها
+
+**القرار:** عند وجود معاملات/فواتير بعملات مختلفة، تُعرض مجمّعة per-currency مع بانر تحذيري.
+
+**السبب:** دمج عملات مختلفة بدون سعر صرف محدد يُنتج أرقاماً مُضللة. عرضها منفصلة أكثر أمانة وأمانة للمستخدم.
+
+### 5. إحصائيات العميل: حية لا مخزنة
+
+**القرار:** `ClientController::show()` يحسب `total_revenue/total_paid` من الفواتير مباشرة ويُحدِّث DB إذا تغيّرت.
+
+**السبب:** القيم المخزنة في `clients` table تُصبح قديمة عند أي تغيير في الفواتير. الحل: حساب حي عند الطلب + تحديث DB + تحديث عند كل `markPaid()`.
+
+### 6. SoftDeletes على الوثائق المالية
+
+**القرار:** `quotes`, `invoices`, `transactions`, `clients` جميعها تستخدم `SoftDeletes`.
+
+**السبب:** الوثائق المالية لا تُحذف نهائياً لأغراض التدقيق والمراجعة والمراجعة القانونية.
+
+---
+
+## تدفق المصادقة والأمان
+
+```
+HTTP Request
+    │
+    ▼
+[EnsureUserIsActive Middleware] ← يمنع المستخدمين الموقوفين
+    │
+    ▼
+[Auth Middleware (Breeze)]
+    │
+    ▼
+[BelongsToUser Global Scope] ← على كل Model تلقائياً
+    │
+    ▼
+[Policy Check] ← $this->authorize('action', $model)
+    │
+    ▼
+Controller Logic
 ```
 
 ---
 
-## 🔒 Policies المسجّلة
+## مخطط العلاقات الرئيسية
 
-```php
-// AppServiceProvider.php
-Gate::policy(Budget::class, BudgetPolicy::class);
-Gate::policy(Category::class, CategoryPolicy::class);
-Gate::policy(Debt::class, DebtPolicy::class);
-Gate::policy(Project::class, ProjectPolicy::class);
-Gate::policy(RecurringTransaction::class, RecurringPolicy::class);
-Gate::policy(Transaction::class, TransactionPolicy::class);
+```
+User
+ ├── Projects (hasMany)
+ │    ├── Transactions (hasMany)
+ │    ├── Invoices (hasMany)
+ │    ├── Quotes (hasMany)
+ │    └── ProjectService (pivot: amount, type, team_member_id)
+ │
+ ├── Clients (hasMany)
+ │    ├── Invoices (hasMany)
+ │    ├── Quotes (hasMany)
+ │    ├── FollowUps (hasMany)
+ │    ├── Activities (hasMany)
+ │    └── Tags (belongsToMany)
+ │
+ ├── Invoices (hasMany)
+ │    └── InvoiceItems (hasMany)
+ │
+ ├── Quotes (hasMany)
+ │    └── QuoteItems (hasMany)
+ │
+ ├── Transactions (hasMany)
+ ├── Categories (hasMany)
+ ├── Debts (hasMany)
+ ├── Budgets (hasMany)
+ ├── RecurringTransactions (hasMany)
+ └── Subscriptions (hasMany)
+
+Quote → Invoice (via reference = quote.number)
+Quote → Project (عند convertToInvoice مع create_project)
 ```
 
 ---
 
-## 🗺️ مسارات التطبيق (Routes)
+## Scheduler
 
 ```php
-// routes/web.php — داخل auth middleware
-Route::resource('projects', ProjectController::class);
-Route::resource('categories', CategoryController::class);
-Route::resource('transactions', TransactionController::class);
-Route::resource('debts', DebtController::class);
-Route::resource('budget', BudgetController::class)->only(['index', 'store', 'update', 'destroy']);
-Route::resource('recurring', RecurringController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-Route::post('/recurring/{recurring}/toggle', ...)->name('recurring.toggle');
-Route::post('/recurring/{recurring}/process-now', ...)->name('recurring.process-now');
-
-// Billing
-Route::prefix('billing')->name('billing.')->group(function () {
-    Route::get('/', [BillingController::class, 'index'])->name('index');
-    Route::post('/checkout', [BillingController::class, 'checkout'])->name('checkout');
-    Route::get('/success', [BillingController::class, 'success'])->name('success');
-    Route::post('/portal', [BillingController::class, 'portal'])->name('portal');
-});
-
-// Webhook — خارج CSRF middleware
-Route::post('/billing/webhook', [BillingController::class, 'webhook'])
-    ->withoutMiddleware([VerifyCsrfToken::class])
-    ->name('billing.webhook');
+// app/Console/Kernel.php
+$schedule->command('recurring:process')->dailyAt('01:00');
+$schedule->command('debts:send-alerts')->dailyAt('08:00');
 ```
 
 ---
 
-## 📦 Filament Admin Panel
+## Admin Panel (Filament)
 
-| المكوّن | الوصف |
+**المسار:** `/admin`  
+**الحماية:** `canAccessPanel()` → `hasRole('super_admin') && isActive()`
+
+### Resources
+
+| Resource | الوصف |
+|----------|-------|
+| UserResource | إدارة المستخدمين + Impersonate |
+| SubscriptionResource | عرض الاشتراكات |
+| TransactionResource | عرض المعاملات (قراءة فقط) |
+
+### Widgets
+
+| Widget | الوصف |
 |--------|-------|
-| URL | `/admin` |
-| الحماية | `super_admin` role (spatie) |
-| اللون | Indigo |
-| UserResource | CRUD كامل + roles management |
-| TransactionResource | قراءة فقط (withoutGlobalScopes) |
-| StatsOverviewWidget | إحصاءات المنصة الكلية |
-| UsersChartWidget | نمو المستخدمين (12 شهراً) |
-| AdminSeeder | `admin@workuflow.com` / `Admin@123` |
+| StatsOverviewWidget | MRR, ARR, Churn Rate |
+| UsersChartWidget | نمو المستخدمين |
+| RevenueWidget | إيرادات المنصة |
+| SystemHealthWidget | Queue/Failed Jobs/Scheduler/Log |
 
----
+### Admin Impersonation
 
-## ⚠️ قواعد مهمة للتطوير
-
-| القاعدة | التطبيق |
-|---------|---------|
-| لا منطق في Controllers | فوّض للـ Actions |
-| DTOs تستخدم `fromRequest()` | ليس `fromArray()` |
-| BelongsToUser في CLI | لا يُطبَّق تلقائياً — كل البيانات متاحة |
-| withoutGlobalScopes() في Filament | مطلوب صراحةً في كل Resource يحتاج cross-user data |
-| payment_customer_id | Generic — ليس stripe-specific |
-| اختبارات Pest | 53/53 — يجب أن تبقى خضراء |
-
----
-
-## 🌐 Landing Page التسويقية
-
-**الملف:** `resources/views/welcome.blade.php`  
-**المسار:** `/` (الصفحة الرئيسية للمنصة)
-
-### المحتوى
-| القسم | الوصف |
-|-------|-------|
-| Navbar | ذكي — يتغير حسب `@auth`: لوحة التحكم أو ابدأ مجاناً |
-| Hero | عنوان رئيسي + معاينة Dashboard (CSS خالص — KPIs + Chart) |
-| Pain Points | ٦ مشاكل يعانيها المستخدم المستهدف |
-| Features | ٨ مميزات مع أيقونات |
-| How It Works | ٤ خطوات بصرية |
-| Stats | أرقام المنصة |
-| Testimonials | ٣ آراء مستخدمين |
-| Pricing | ٣ خطط مرتبطة بـ `billing.index` |
-| CTA | دعوة للتسجيل |
-| Footer | روابط حقيقية للمسارات |
-
-### Route
-```php
-// routes/web.php
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+```
+Admin → /admin/users
+  → زر "دخول كمستخدم"
+  → GET /admin/impersonate/{userId}
+  → Session::put('impersonator_id', admin.id)
+  → Auth::login($targetUser)
+  → redirect → /dashboard (مع شريط أصفر)
+  → زر "العودة للأدمن"
+  → GET /admin/impersonate-leave
+  → Auth::login($admin)
+  → redirect → /admin/users
 ```
 
-> **ملاحظة:** الـ Navbar يعرض "لوحة التحكم" للمستخدم المسجّل تلقائياً عبر `@auth` — لا redirect.
-
 ---
 
-## 🛡️ خطة تطوير Admin المتقدم (مقترح)
+## إحصاءات المشروع
 
-مبني على Phase 15 الحالية. الأولويات:
-
-| المهمة | الأولوية | الوصف التقني |
-|--------|----------|-------------|
-| SubscriptionResource | 🔴 | CRUD + Actions: activatePlan, cancelPlan, extendMonth |
-| UserResource Actions | 🔴 | suspend, resetPlan, sendMail, deleteData |
-| RevenueWidget | 🟠 | MRR + ARR + Churn + Donut Chart للخطط |
-| SystemHealthWidget | 🟡 | Queue status + Failed Jobs + آخر Scheduler run |
-
----
-
-## 🚀 الميزات المستقبلية
-
-- [ ] ربط مزود الدفع (Tap / Paddle / غيره) — تنفيذ `PaymentProviderInterface`
-- [ ] REST API كامل — Laravel Sanctum
-- [ ] تطبيق Flutter (iOS / Android)
-- [ ] رؤى مالية بالذكاء الاصطناعي (AI Insights)
-- [ ] مسح الإيصالات بـ OCR
-- [ ] تكامل مع البنوك (Open Banking)
-- [ ] دعم الفرق (Teams / Multi-user)
-- [ ] تكامل مع Zapier / n8n
-- [ ] SubscriptionResource في Filament
-
----
-
-*آخر تحديث: مايو 2026 — وثيقة حية تُحدَّث مع كل تغيير معماري*
+| المقياس | القيمة |
+|---------|--------|
+| إجمالي Migrations | ~35 |
+| إجمالي Models | ~20 |
+| إجمالي Controllers | ~25 |
+| إجمالي Enums | ~15 |
+| اختبارات Pest | 54/54 ✅ |
+| ملفات Blade | ~60 |
+| المراحل المكتملة | 20 مرحلة |

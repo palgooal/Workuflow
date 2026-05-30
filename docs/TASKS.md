@@ -9,11 +9,59 @@
 
 | البيان | القيمة |
 |--------|--------|
-| إجمالي المراحل | 17 مرحلة + Marketing + Admin+ + UX |
+| إجمالي المراحل | 20 مرحلة + Marketing + Admin+ + UX |
 | الحالة الحالية | ✅ على الهواء — workuflow.palgoals.com |
 | اختبارات Pest | 54/54 ✅ |
 | PHP | 8.2 / Laravel 12 |
-| مرجع CRM | `docs/CLIENTS-CRM-SPEC-V2.md` (2164 سطر) |
+| مرجع CRM | `docs/CLIENTS-CRM-SPEC-V2.md` |
+| نظام الفواتير | `docs/INVOICES.md` ✅ |
+| نظام عروض الأسعار | `docs/QUOTES.md` ✅ |
+| دعم العملات المتعددة | `docs/MULTI-CURRENCY.md` ✅ |
+| آخر تحديث | 29 مايو 2026 |
+
+---
+
+## 🚦 الحالة الراهنة — 29 مايو 2026
+
+### ✅ مكتمل بالكامل
+| المجال | التفاصيل |
+|--------|---------|
+| البنية التحتية | Phase 1-3 (DB + Auth + Layout) |
+| المشاريع | Phase 4 + 4.3 + 4.5 — مع دعم عملات متعددة |
+| الفئات | Phase 5 |
+| الالتزامات المتكررة | Phase 5.5 |
+| المعاملات | Phase 6 — مع ملخص per-currency |
+| لوحة التحكم | Phase 7 |
+| الديون | Phase 8 |
+| التقارير | Phase 9 |
+| الإشعارات | Phase 10 |
+| الاشتراكات | Phase 11 (هيكل جاهز — Stripe) |
+| الإعدادات | Phase 12 |
+| الأمان والاختبارات | Phase 13 — 54/54 ✅ |
+| النشر على الإنتاج | Phase 14.1 — workuflow.palgoals.com ✅ |
+| لوحة الإدارة (Filament) | Phase 15 + Admin+ (A.1→A.4) |
+| Landing Page | Marketing |
+| تحسينات UX | U.1→U.3 |
+| تحسينات مايو 2026 | Phase 16 (16.1→16.12) |
+| CRM — Sprint 0→7 | قاعدة بيانات + Models + Controllers + Views + Import/Export + Health Score + Automation + Follow-ups |
+| نظام الفواتير | Phase 18 — CRUD + طباعة + بوابة عميل |
+| نظام عروض الأسعار | Phase 19 — CRUD + بوابة عميل + تحويل لفاتورة/مشروع |
+| إصلاحات وتحسينات | Phase 20 — Multi-currency + unique keys + Impersonation |
+
+### ⏳ جزئي / مؤجل
+| المجال | ما تم | ما تبقى |
+|--------|-------|---------|
+| CRM Sprint 8 — Client Portal | `portal/error.blade.php` + `portal/invoices/show.blade.php` | ربط كامل بنظام tokens + PDF للعملاء |
+| Admin Impersonation | Controller + Routes + Filament زر + شريط العودة | لا شيء — ✅ مكتمل في Phase 20 |
+
+### ❌ لم يُنفَّذ بعد
+| المجال | السبب |
+|--------|-------|
+| Phase 14.2 — REST API | مؤجل — الأولوية للواجهة الحالية |
+| أسعار الصرف اليدوية | مؤجل — موثَّق في `docs/MULTI-CURRENCY.md` |
+| التوقيع الرقمي للعروض | مؤجل — موثَّق في `docs/QUOTES.md` |
+| `quote_activities` audit trail | مؤجل — موثَّق في `docs/QUOTES.md` |
+| إرسال الفاتورة بالبريد | مؤجل — موثَّق في `docs/INVOICES.md` |
 
 ---
 
@@ -42,7 +90,7 @@ Marketing→ الصفحة التسويقية (Landing Page)             ✅ مك
 Admin+   → تطوير Admin المتقدم                         ✅ مكتمل (A.1→A.4)
 UX+      → تحسينات تجربة المستخدم                      ✅ مكتمل (U.1→U.3)
 Phase 16 → تحسينات مايو 2026 (16.1→16.12)             ✅ مكتمل
-Phase 17 → نظام CRM المتقدم (8 Sprints / 38 مهمة)     🔄 قيد التطوير
+Phase 17 → نظام CRM المتقدم (8 Sprints / 38 مهمة)     ✅ مكتمل (Sprint 0→7) / ⏳ Sprint 8 جزئي
 Phase 18 → نظام الفواتير (Invoices)                   ✅ مكتمل
 Phase 19 → نظام عروض الأسعار (Quotes)                ✅ مكتمل
 Phase 20 → إصلاحات وتحسينات مايو 2026               ✅ مكتمل

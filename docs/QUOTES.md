@@ -1,379 +1,370 @@
-# نظام عروض الأسعار — دراهم
+# موديول عروض الأسعار (Quotes)
 
-> تاريخ الإنشاء: 28 مايو 2026  
-> آخر تحديث: 29 مايو 2026  
-> الإصدار: 1.1.0  
-> المطوّر: دراهم — نظام إدارة مالي للمستقلين
+> آخر تحديث: 29 مايو 2026 | الإصدار: 1.1.0
 
 ---
 
-## نظرة عامة
+## Overview
 
-نظام عروض الأسعار يتيح للمستقل إنشاء عروض أسعار احترافية وإرسالها للعملاء عبر رابط آمن، ومتابعة حالتها من المسودة حتى التحويل لفاتورة.
-
-### الميزات الأساسية
-
-- إنشاء عروض أسعار بتعدد البنود مع حساب تلقائي للإجماليات
-- رابط عميل آمن لا يتطلب تسجيل دخول (`/q/{token}`)
-- قبول/رفض العرض من بوابة العميل مع تسجيل سبب الرفض
-- تحويل العرض المقبول مباشرة إلى فاتورة
-- تاريخ انتهاء صلاحية مع تحديث تلقائي للحالة
-- طباعة / تصدير PDF عبر `window.print()`
-- إنشاء من ثلاثة مسارات: ملف العميل، صفحة المشروع، صفحة /quotes
+موديول Quotes يُتيح للمستقل إنشاء عروض أسعار احترافية وإرسالها للعملاء عبر رابط آمن، ومتابعة حالتها من المسودة حتى التحويل لفاتورة أو مشروع. يشمل بوابة عميل عامة لا تتطلب تسجيل دخول.
 
 ---
 
-## قاعدة البيانات
+## Business Requirements
 
-### جدول `quotes`
-
-| العمود | النوع | الوصف |
-|--------|------|-------|
-| id | bigint PK | |
-| ulid | char(26) unique | مفتاح المسار (route key) |
-| token | varchar(64) unique | رمز البوابة العامة (48 حرف عشوائي) |
-| user_id | FK → users | المستخدم المالك |
-| client_id | FK → clients | العميل المستهدف |
-| project_id | char(26) nullable | المشروع المرتبط (اختياري) |
-| number | varchar(50) unique | الرقم التسلسلي (QUO-0001) |
-| title | varchar(255) nullable | عنوان وصفي للعرض |
-| status | varchar(20) | الحالة (QuoteStatus Enum) |
-| issue_date | date | تاريخ الإصدار |
-| valid_until | date nullable | تاريخ انتهاء الصلاحية |
-| subtotal | decimal(12,2) | المجموع الفرعي |
-| tax_rate | decimal(5,2) | نسبة الضريبة % |
-| tax_amount | decimal(12,2) | مبلغ الضريبة |
-| discount | decimal(12,2) | مبلغ الخصم |
-| total | decimal(12,2) | الإجمالي النهائي |
-| currency | varchar(3) | العملة (ILS افتراضي) |
-| notes | text nullable | ملاحظات للعميل |
-| terms | text nullable | الشروط والأحكام |
-| sent_at | timestamp nullable | وقت الإرسال |
-| viewed_at | timestamp nullable | أول مشاهدة من العميل |
-| accepted_at | timestamp nullable | وقت القبول |
-| rejected_at | timestamp nullable | وقت الرفض |
-| converted_at | timestamp nullable | وقت التحويل لفاتورة |
-| client_ip | varchar(45) nullable | IP العميل عند القبول/الرفض |
-| rejection_reason | varchar(500) nullable | سبب رفض العميل |
-| deleted_at | timestamp nullable | الحذف الناعم (SoftDeletes) |
-
-### جدول `quote_items`
-
-| العمود | النوع | الوصف |
-|--------|------|-------|
-| id | bigint PK | |
-| quote_id | FK → quotes cascadeDelete | |
-| description | varchar(500) | وصف البند |
-| quantity | decimal(10,2) | الكمية |
-| unit_price | decimal(12,2) | سعر الوحدة |
-| total | decimal(12,2) | الكمية × سعر الوحدة |
-| sort_order | smallint | ترتيب العرض |
+| المتطلب | الحل |
+|---------|------|
+| إرسال عرض سعر احترافي للعميل | ورقة عرض مُنسَّقة مع رابط آمن |
+| متابعة حالة العرض | دورة حياة بـ 7 حالات مع timestamps |
+| قبول/رفض العرض من العميل | بوابة عميل عامة بدون تسجيل دخول |
+| تحويل العرض المقبول لفاتورة | `convertToInvoice()` مع نسخ البنود |
+| تحويل العرض لمشروع + فاتورة دفعة واحدة | خيار `create_project` عند التحويل |
+| تاريخ انتهاء الصلاحية | `valid_until` مع تحديث تلقائي للحالة |
+| طباعة / تصدير PDF | `window.print()` بـ CSS مخصص |
+| إنشاء العرض من عدة مسارات | ملف العميل، صفحة المشروع، `/quotes` |
 
 ---
 
-## دورة حياة العرض (QuoteStatus)
+## Database Structure
+
+### Tables
+
+#### quotes
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| id | bigint PK | | auto | |
+| ulid | char(26) | | | مفتاح المسار — unique |
+| token | varchar(64) | | | رمز البوابة العامة — 48 حرف عشوائي — unique |
+| user_id | FK → users | | | المالك |
+| client_id | FK → clients | | | العميل المستهدف |
+| project_id | char(26) | ✓ | NULL | المشروع المرتبط |
+| number | varchar(50) | | | QUO-XXXX — unique per (user_id, number) |
+| title | varchar(255) | ✓ | NULL | عنوان وصفي |
+| status | varchar(20) | | 'draft' | QuoteStatus enum |
+| issue_date | date | | | تاريخ الإصدار |
+| valid_until | date | ✓ | NULL | تاريخ انتهاء الصلاحية |
+| subtotal | decimal(12,2) | | 0 | المجموع الفرعي |
+| tax_rate | decimal(5,2) | | 0 | نسبة الضريبة % |
+| tax_amount | decimal(12,2) | | 0 | مبلغ الضريبة |
+| discount | decimal(12,2) | | 0 | مبلغ الخصم |
+| total | decimal(12,2) | | 0 | الإجمالي النهائي |
+| currency | varchar(3) | | 'ILS' | العملة |
+| notes | text | ✓ | NULL | ملاحظات للعميل |
+| terms | text | ✓ | NULL | الشروط والأحكام |
+| sent_at | timestamp | ✓ | NULL | وقت الإرسال |
+| viewed_at | timestamp | ✓ | NULL | أول مشاهدة من العميل |
+| accepted_at | timestamp | ✓ | NULL | وقت القبول |
+| rejected_at | timestamp | ✓ | NULL | وقت الرفض |
+| converted_at | timestamp | ✓ | NULL | وقت التحويل لفاتورة |
+| client_ip | varchar(45) | ✓ | NULL | IP عند القبول/الرفض |
+| rejection_reason | varchar(500) | ✓ | NULL | سبب الرفض من العميل |
+| deleted_at | timestamp | ✓ | NULL | SoftDeletes |
+| created_at / updated_at | timestamps | | | |
+
+**Indexes:**
+- `quotes_user_number_unique` — UNIQUE (`user_id`, `number`)
+- `quotes_user_status_idx` — (`user_id`, `status`)
+- `quotes_user_client_idx` — (`user_id`, `client_id`)
+- `quotes_valid_until_idx` — (`valid_until`)
+
+#### quote_items
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| id | bigint PK | | |
+| quote_id | FK → quotes | | cascadeOnDelete |
+| description | varchar(500) | | وصف البند |
+| quantity | decimal(10,2) | | الكمية |
+| unit_price | decimal(12,2) | | سعر الوحدة |
+| total | decimal(12,2) | | quantity × unit_price |
+| sort_order | smallint | | ترتيب العرض |
+| created_at / updated_at | timestamps | | |
+
+---
+
+## Enums
+
+### QuoteStatus
+
+**الموقع:** `app/Support/Enums/QuoteStatus.php`
+
+| Value | Label | Icon | Description |
+|-------|-------|------|-------------|
+| `draft` | مسودة | 📝 | قابلة للتعديل |
+| `sent` | مُرسَلة | 📤 | أُرسل للعميل |
+| `viewed` | مشاهَدة | 👁️ | فُتح الرابط من العميل |
+| `accepted` | مقبولة | ✅ | وافق العميل |
+| `rejected` | مرفوضة | ❌ | رفض العميل |
+| `expired` | منتهية | ⏰ | انتهت صلاحيتها |
+| `converted` | محوَّلة | 🧾 | تحوّلت لفاتورة |
+
+**قواعد الانتقال:**
 
 ```
 Draft → Sent → Viewed → Accepted → Converted
-                     ↘ Rejected
-              (منتهي الصلاحية = Expired — يُحسب تلقائياً)
+                      ↘ Rejected
+                (Expired: يُحسَب تلقائياً — ليس حالة نهائية)
 ```
 
-| الحالة | القيمة | الأيقونة | الوصف |
-|--------|--------|---------|-------|
-| Draft | `draft` | 📝 | مسودة — قابلة للتعديل |
-| Sent | `sent` | 📤 | أُرسل للعميل |
-| Viewed | `viewed` | 👁️ | شاهده العميل (أول فتح للرابط) |
-| Accepted | `accepted` | ✅ | قبله العميل |
-| Rejected | `rejected` | ❌ | رفضه العميل |
-| Expired | `expired` | ⏰ | انتهت صلاحيته |
-| Converted | `converted` | 🧾 | حُوِّل إلى فاتورة |
-
-### قواعد الانتقال
-
-- `isEditable()` → Draft فقط
-- `canBeSent()` → Draft / Sent / Viewed
-- `isPending()` → Sent / Viewed (ينتظر رد العميل)
-- `canConvert()` → Accepted فقط
-- `isExpired()` → `valid_until` ماضٍ + الحالة ليست Accepted/Rejected/Converted
+| الدالة | الحالات المسموحة |
+|--------|----------------|
+| `isEditable()` | Draft فقط |
+| `canBeSent()` | Draft, Sent, Viewed |
+| `isPending()` | Sent, Viewed |
+| `canConvert()` | Accepted فقط |
 
 ---
 
-## Model: Quote
+## Models
+
+### Quote
 
 **الموقع:** `app/Models/Quote.php`
 
-### الخصائص التلقائية (Boot)
+#### Relationships
 
 ```php
-// عند الإنشاء:
-$quote->ulid  = Str::ulid();         // مفتاح المسار
-$quote->token = Str::random(48);      // رمز البوابة العامة
-$quote->number = 'QUO-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+user()    → belongsTo(User::class)
+client()  → belongsTo(Client::class)
+project() → belongsTo(Project::class)     // nullable
+items()   → hasMany(QuoteItem::class)
+invoice() → hasOne(Invoice::class, 'reference', 'number')  // بعد التحويل
 ```
 
-### العلاقات
+#### Scopes
+
+لا scopes مخصصة — يعتمد على `BelongsToUser` Global Scope للعزل التلقائي.
+
+#### Boot — Auto-Generation
 
 ```php
-user()    → belongsTo(User)
-client()  → belongsTo(Client)
-project() → belongsTo(Project)  // nullable
-items()   → hasMany(QuoteItem)
-invoice() → hasOne(Invoice, 'reference', 'number')  // بعد التحويل
+static::creating(function (self $quote) {
+    $quote->ulid   = Str::ulid()->toString();          // مفتاح مسار
+    $quote->token  = Str::random(48);                  // رمز البوابة
+    $quote->number = self::generateNumber($quote->user_id); // QUO-XXXX
+});
 ```
 
-### الدوال المساعدة
+#### Key Methods
 
 ```php
-recalculate()   // subtotal → taxAmount → total → save
-isExpired()     // valid_until ماضٍ + حالة غير نهائية
-portalUrl()     // route('quotes.portal', $this->token)
-getRouteKeyName() → 'ulid'
+// إعادة حساب الإجماليات وحفظها
+recalculate(): void
+    subtotal  = sum(items.quantity × items.unit_price)
+    taxAmount = round(subtotal × taxRate / 100, 2)
+    total     = max(0, subtotal + taxAmount - discount)
+
+// هل انتهت الصلاحية؟ (لا تنطبق على الحالات النهائية)
+isExpired(): bool
+    valid_until < today AND status NOT IN [accepted, rejected, converted]
+
+// رابط البوابة العامة
+portalUrl(): string
+    route('quotes.portal', $this->token)
+
+// توليد رقم فريد per-user
+generateNumber(int $userId): string
+    count = Quote::withTrashed()->where('user_id', $userId)->count()
+    // + حلقة race-condition للتحقق
+    return 'QUO-' . str_pad($next, 4, '0', STR_PAD_LEFT)
+
+// Route Key
+getRouteKeyName(): string → 'ulid'
 ```
+
+### QuoteItem
+
+**الموقع:** `app/Models/QuoteItem.php`
+
+```php
+quote() → belongsTo(Quote::class)
+```
+
+**Casts:** `quantity`, `unit_price`, `total` → decimal:2
 
 ---
 
-## Controller: QuoteController
+## Services
+
+لا يوجد QuoteService مستقل — المنطق في `QuoteController` مباشرة لأن العمليات بسيطة وغير متكررة.
+
+---
+
+## Controllers
+
+### QuoteController
 
 **الموقع:** `app/Http/Controllers/QuoteController.php`
 
-### المسارات المحمية بـ Auth
+#### المسارات المحمية (Auth Required)
 
-| الفعل | المسار | الدالة | الوصف |
-|------|--------|-------|-------|
-| GET | /quotes | index | قائمة مع إحصائيات |
-| GET | /quotes/create | create | نموذج الإنشاء |
-| POST | /quotes | store | حفظ عرض جديد |
-| GET | /quotes/{ulid} | show | عرض تفصيلي |
-| GET | /quotes/{ulid}/edit | edit | نموذج التعديل (Draft فقط) |
-| PUT | /quotes/{ulid} | update | حفظ التعديلات |
-| DELETE | /quotes/{ulid} | destroy | حذف ناعم |
-| POST | /quotes/{ulid}/mark-sent | markSent | تغيير الحالة إلى Sent |
-| POST | /quotes/{ulid}/convert | convertToInvoice | تحويل لفاتورة |
+| Method | Route | Middleware | Description |
+|--------|-------|-----------|-------------|
+| GET | /quotes | auth,verified | قائمة مع إحصائيات |
+| GET | /quotes/create | auth,verified | نموذج الإنشاء |
+| POST | /quotes | auth,verified | حفظ عرض جديد |
+| GET | /quotes/{ulid} | auth,verified | عرض تفصيلي |
+| GET | /quotes/{ulid}/edit | auth,verified | نموذج التعديل (Draft فقط) |
+| PUT | /quotes/{ulid} | auth,verified | حفظ التعديلات |
+| DELETE | /quotes/{ulid} | auth,verified | حذف ناعم |
+| POST | /quotes/{ulid}/mark-sent | auth,verified | تغيير → Sent |
+| POST | /quotes/{ulid}/convert | auth,verified | تحويل لفاتورة ± مشروع |
 
-### المسارات العامة (بدون Auth)
+#### المسارات العامة (No Auth)
 
-| الفعل | المسار | الدالة | الوصف |
-|------|--------|-------|-------|
-| GET | /q/{token} | portal | بوابة العميل |
-| POST | /q/{token}/accept | accept | قبول العرض |
-| POST | /q/{token}/reject | reject | رفض العرض |
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | /q/{token} | بوابة العميل — يُسجّل Viewed عند أول زيارة |
+| POST | /q/{token}/accept | قبول العرض + تسجيل client_ip |
+| POST | /q/{token}/reject | رفض العرض + rejection_reason + client_ip |
 
-### `convertToInvoice()` — منطق التحويل
+#### convertToInvoice — المنطق الكامل
 
-```php
-// 1. (اختياري) إنشاء مشروع جديد إذا طُلب ذلك:
-//    - project.name           = project_name من الطلب
-//    - project.contract_value = quote.total
-//    - يُربط المشروع بالعرض (quote.project_id = project.id)
-//
-// 2. إنشاء الفاتورة:
-//    - ينسخ: client_id, project_id, currency, notes, tax_rate, discount, total
-//    - ينسخ جميع البنود (QuoteItem → InvoiceItem)
-//    - يضبط: invoice.reference = quote.number
-//
-// 3. تحديث العرض:
-//    - quote.status       = Converted
-//    - quote.converted_at = now()
-//
-// 4. يعيد التوجيه إلى صفحة الفاتورة الجديدة
+```
+Request: create_project?, project_name?, project_type?
+  ↓
+[اختياري] إنشاء Project (contract_value = quote.total)
+         ربط project_id بالعرض
+  ↓
+إنشاء Invoice (نسخ: client_id, project_id, currency, tax_rate, discount, notes, terms)
+  ↓
+نسخ QuoteItems → InvoiceItems
+  ↓
+invoice.recalculate()
+  ↓
+quote.status = Converted, quote.converted_at = now()
+  ↓
+redirect → invoices.show
 ```
 
-### حقول الطلب الاختيارية
+---
 
-| الحقل | النوع | الوصف |
-|-------|------|-------|
-| `create_project` | boolean | إنشاء مشروع مرتبط |
-| `project_name` | string (max 255) | اسم المشروع (مطلوب إذا `create_project=1`) |
-| `project_type` | `business` \| `personal` | نوع المشروع (افتراضي: `business`) |
+## Policies
 
-> **ملاحظة:** خيار إنشاء المشروع يظهر فقط إذا كان العرض **غير مرتبط بمشروع مسبقاً**.
+لا يوجد `QuotePolicy` مستقل. الحماية تعتمد على:
+- `BelongsToUser` Global Scope — يمنع رؤية عروض الآخرين تلقائياً
+- `abort_if(! $quote->status->canConvert(), 422)` — فحوصات صريحة في Controller
+- `abort_unless($request->user()?->hasRole('super_admin'), 403)` — في Impersonation
 
 ---
 
-## بوابة العميل (Client Portal)
+## Frontend
 
-### كيف تعمل
+### Views
 
-1. المستقل يضغط "تسجيل كمُرسَل" → الحالة تصبح `Sent`
-2. ينسخ رابط العميل: `https://domain.com/q/{token}`
-3. العميل يفتح الرابط (لا يحتاج تسجيل دخول)
-4. عند أول فتح: `Sent → Viewed`، يُسجَّل `viewed_at`
-5. العميل يضغط "قبول العرض" أو يفتح نموذج الرفض
-6. يُسجَّل الإجراء + `client_ip` + `accepted_at`/`rejected_at`
-7. يصل إشعار للمستقل (flash message عند الرجوع للصفحة)
+| View | Purpose | Alpine.js Component |
+|------|---------|-------------------|
+| `quotes/index.blade.php` | قائمة + إحصائيات (total/pending/accepted/rejected/converted/value) | — |
+| `quotes/create.blade.php` | نموذج إنشاء ديناميكي | `quoteForm()` |
+| `quotes/edit.blade.php` | نموذج تعديل مع بيانات محملة | `quoteForm()` |
+| `quotes/show.blade.php` | ورقة عرض + أزرار إجراءات + modal تحويل | `open-convert-modal` event |
+| `quotes/portal.blade.php` | بوابة عميل عامة (no layout) | `showRejectForm` |
 
-### الأمان
-
-- الرمز مكوَّن من 48 حرف عشوائي (Base62) → 62^48 احتمال ≈ مستحيل التخمين
-- لا يُعرض ID العرض في الرابط
-- العميل لا يرى أي بيانات غير عرضه
-- IP مُسجَّل كدليل أساسي فقط (ليس توقيعاً قانونياً)
-
----
-
-## التكامل مع باقي النظام
-
-### من ملف العميل (`/clients/{id}`)
-
-- تبويب "عروض الأسعار" يعرض جميع عروض العميل
-- زر "إنشاء عرض سعر" يوجه إلى `/quotes/create?client_id={id}`
-
-### من صفحة المشروع (`/projects/{id}`)
-
-- قسم "عروض الأسعار" يعرض عروض المشروع
-- زر "إنشاء عرض" يوجه إلى `/quotes/create?project_id={id}&client_id={client_id}`
-
-### من الصفحة المستقلة (`/quotes`)
-
-- قائمة شاملة بجميع العروض
-- إحصائيات: إجمالي العروض، المعلقة، المقبولة، المرفوضة، قيمة المقبولة
-
----
-
-## واجهات المستخدم
-
-| الملف | الوصف |
-|-------|-------|
-| `resources/views/quotes/index.blade.php` | قائمة العروض + إحصائيات |
-| `resources/views/quotes/create.blade.php` | نموذج الإنشاء (Alpine.js) |
-| `resources/views/quotes/edit.blade.php` | نموذج التعديل |
-| `resources/views/quotes/show.blade.php` | عرض تفصيلي + إجراءات |
-| `resources/views/quotes/portal.blade.php` | بوابة العميل العامة |
-
-### Alpine.js — `quoteForm()`
-
-الدالة المسؤولة عن تفاعلية نماذج الإنشاء/التعديل:
+### Alpine.js — quoteForm()
 
 ```javascript
 {
-    items: [],          // مصفوفة البنود
+    items: [],          // مصفوفة البنود [{description, quantity, unit_price}]
     taxRate: 0,         // نسبة الضريبة
-    discount: 0,        // الخصم
-    subtotal: 0,        // يُحسب تلقائياً
-    taxAmount: 0,       // يُحسب تلقائياً
-    total: 0,           // يُحسب تلقائياً
+    discount: 0,        // الخصم الثابت
+    subtotal: 0,        // محسوب تلقائياً
+    taxAmount: 0,       // محسوب تلقائياً
+    total: 0,           // محسوب تلقائياً
 
     addItem()           // إضافة بند فارغ
     addServiceItem(name) // إضافة من كتالوج الخدمات
-    removeItem(index)   // حذف بند (الحد الأدنى بند واحد)
+    removeItem(index)   // حذف بند (الحد الأدنى: بند واحد)
     recalc()           // إعادة حساب الإجماليات
 }
 ```
 
----
-
-## الطباعة / PDF
-
-يستخدم النظام `window.print()` مع CSS مخصص:
-
-```css
-@media print {
-    .no-print { display: none !important; }  /* يخفي الأزرار والروابط */
-    body { background: white !important; }
-    .quote-paper { box-shadow: none !important; border: none !important; }
-}
-```
-
-لا يوجد مكتبة خارجية — متصفح العميل يتولى التحويل لـ PDF.
-
----
-
-## إضافات مستقبلية
-
-### 1. التوقيع الرقمي (Digital Signature)
-
-لتعزيز القوة القانونية للعرض المقبول:
-
-```
-- اسم الموقِّع (حقل نصي إلزامي عند القبول)
-- توقيع بخطي (Canvas HTML5 — رسم بالماوس/اللمس)
-- IP Address (مُسجَّل بالفعل)
-- User Agent (متصفح + نظام تشغيل)
-- Timestamp دقيق
-- حفظ صورة التوقيع كـ base64 في العمود signature_data
-```
-
-**تعديلات DB المطلوبة:**
-
-```sql
-ALTER TABLE quotes 
-ADD COLUMN signer_name VARCHAR(255) NULL,
-ADD COLUMN signature_data TEXT NULL,       -- base64 PNG
-ADD COLUMN signer_user_agent VARCHAR(500) NULL;
-```
-
-### 2. سجل النشاطات `quote_activities`
-
-جدول تدقيق كامل يُسجِّل كل تغيير على العرض:
-
+**تحذير ParseError:** لا تستخدم `@json(old('items', [['key'=>'val']]))` — Blade لا يعالج `[` داخل `@json()` في PHP 8.2. استخدم:
 ```php
-Schema::create('quote_activities', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('quote_id')->constrained()->cascadeOnDelete();
-    $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-    $table->string('event', 50); // sent, viewed, accepted, rejected, converted, edited
-    $table->string('client_ip', 45)->nullable();
-    $table->string('user_agent', 500)->nullable();
-    $table->json('meta')->nullable(); // بيانات إضافية حسب نوع الحدث
-    $table->timestamp('occurred_at')->useCurrent();
-});
+@php $defaultItems = old('items') ?: [['description'=>'','quantity'=>1,'unit_price'=>0]]; @endphp
+@json($defaultItems)
 ```
-
-**الأحداث المُسجَّلة:**
-
-| الحدث | المُشغِّل | البيانات الإضافية |
-|-------|---------|-----------------|
-| `created` | المستقل | — |
-| `edited` | المستقل | `{fields_changed}` |
-| `sent` | المستقل | — |
-| `viewed` | العميل | `{ip, user_agent}` |
-| `accepted` | العميل | `{ip, signer_name}` |
-| `rejected` | العميل | `{ip, reason}` |
-| `converted` | المستقل | `{invoice_id}` |
-
-### 3. إشعارات البريد الإلكتروني
-
-```
-- عند قبول العرض → بريد للمستقل: "✅ قبل {client_name} عرضك {quote_number}"
-- عند رفض العرض → بريد للمستقل: "❌ رفض {client_name} عرضك"
-- قبل انتهاء الصلاحية بيوم → بريد للمستقل: "⏰ ينتهي عرض {number} غداً"
-```
-
-### 4. قوالب العروض (Templates)
-
-حفظ عرض كقالب واستخدامه لاحقاً — مفيد للمستقلين ذوي خدمات ثابتة.
 
 ---
 
-## ملاحظات تقنية
+## User Flow
 
-- **SoftDeletes** مفعَّل — الوثائق المالية لا تُحذف نهائياً
-- **ULID** كمفتاح مسار — يمنع التخمين التسلسلي لروابط show/edit
-- **Token مستقل** عن ULID — البوابة تستخدم token والنظام الداخلي يستخدم ulid
-- **global scope BelongsToUser** — كل استعلام مقيَّد بـ `user_id` تلقائياً
-- **recalculate()** يُستدعى بعد كل create/update لضمان دقة الإجماليات
-
----
-
-## إصلاحات موثَّقة
-
-| # | المشكلة | السبب | الإصلاح |
-|---|---------|-------|---------|
-| 1 | `ParseError: Unclosed '[' does not match ')'` في create.blade.php | Blade parser لا يعالج مصفوفات PHP متداخلة داخل `@json()` | نقل القيمة الافتراضية إلى `@php $defaultItems = ... @endphp` ثم `@json($defaultItems)` |
-| 2 | `Duplicate entry 'QUO-0001'` عند إنشاء عرض لمستخدم جديد | `quotes.number` كان unique عالمياً، و`generateNumber()` تعيد 0 لمستخدمين جدد | Migration جديد: unique `(user_id, number)` + إصلاح `generateNumber()` |
-| 3 | `Duplicate entry 'INV-0001'` عند تحويل عرض لفاتورة | نفس مشكلة `invoices.number` | نفس الإصلاح على `Invoice::generateNumber()` |
-
----
-
-## أوامر مفيدة
-
-```bash
-# تطبيق Migrations
-php artisan migrate
-
-# فحص جداول العروض
-php artisan tinker
->>> \App\Models\Quote::count()
->>> \App\Models\Quote::first()->portalUrl()
 ```
+المستقل                          العميل
+  │                                │
+  ▼                                │
+إنشاء عرض (Draft)                 │
+  │                                │
+  ▼                                │
+تعديل البنود والإجماليات           │
+  │                                │
+  ▼                                │
+"تسجيل كمُرسَل" → status=Sent      │
+  │                                │
+  ├─── نسخ رابط العميل ────────────►│
+  │    /q/{token}                   │
+  │                                ▼
+  │                           فتح الرابط
+  │                        status = Viewed
+  │                        viewed_at = now()
+  │                                │
+  │                        ┌───────┴───────┐
+  │                        ▼               ▼
+  │                   قبول العرض      رفض العرض
+  │                status=Accepted  status=Rejected
+  │                accepted_at      rejected_at
+  │                client_ip        rejection_reason
+  │                                 client_ip
+  ▼
+تحويل لفاتورة
+[خيار: إنشاء مشروع]
+status = Converted
+```
+
+---
+
+## Security Considerations
+
+| الاعتبار | التطبيق |
+|---------|---------|
+| **Ownership** | `BelongsToUser` Global Scope — تلقائي على كل استعلام |
+| **Token Security** | 48 حرف Base62 عشوائي = 62^48 احتمال — مستحيل التخمين |
+| **ULID vs Sequential ID** | route key = `ulid` لا `id` — يمنع enumeration |
+| **SoftDeletes** | وثائق مالية لا تُحذف نهائياً |
+| **Rate Limiting** | محمي بـ `web` middleware + CSRF |
+| **IP Logging** | `client_ip` عند القبول/الرفض كدليل أساسي |
+| **No Auth on Portal** | `/q/{token}` عام — لكن token مستحيل التخمين |
+
+---
+
+## Performance Considerations
+
+| الاعتبار | التطبيق |
+|---------|---------|
+| **Eager Loading** | `with(['client', 'project'])` في index |
+| **Indexes** | `(user_id, status)`, `(user_id, client_id)`, `(valid_until)` |
+| **SoftDeletes في generateNumber** | `withTrashed()` لضمان عدم التكرار |
+| **Lazy recalculate** | `recalculate()` يُستدعى بعد create/update فقط |
+
+---
+
+## Known Bugs Fixed
+
+| # | الخطأ | السبب | الإصلاح |
+|---|-------|-------|---------|
+| 1 | `ParseError: Unclosed '['` | `@json()` + مصفوفة متداخلة | نقل إلى `@php` block |
+| 2 | `Duplicate entry 'QUO-0001'` | unique عالمي على `number` | composite unique `(user_id, number)` |
+| 3 | `Duplicate entry 'INV-0001'` | نفس المشكلة في invoices | نفس الإصلاح |
+
+---
+
+## Future Enhancements
+
+| الميزة | الأولوية | الملاحظة |
+|--------|---------|---------|
+| التوقيع الرقمي | عالية | اسم + Canvas + IP + UserAgent + timestamp + base64 PNG |
+| `quote_activities` audit trail | عالية | جدول يُسجّل: sent/viewed/accepted/rejected/converted/edited |
+| إشعار بريدي عند القبول/الرفض | متوسطة | Mailable + Queue |
+| قوالب عروض محفوظة | متوسطة | حفظ عرض كقالب وإعادة استخدامه |
+| انتهاء صلاحية تلقائي | منخفضة | Scheduled Command يغيّر حالة العروض المنتهية |
+| PDF عالي الجودة | منخفضة | `barryvdh/laravel-dompdf` بدلاً من `window.print()` |
