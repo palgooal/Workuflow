@@ -19,6 +19,31 @@
 
 ---
 
+## [2.6.0] — 2026-05-30
+
+### Added — إعدادات النظام من لوحة الإدارة
+- **`settings` table** — مخزن key-value لإعدادات النظام مع Cache تلقائي
+- **`Setting` Model** — `get()`, `set()`, `group()`, `setGroup()` مع Cache invalidation
+- **`email_templates` table** — قوالب HTML قابلة للتعديل مع دعم المتغيرات
+- **`EmailTemplate` Model** — `render(key, vars)` يستبدل المتغيرات ويُرجع subject + body
+- **`MailSettings` Filament Page** — إعدادات SMTP كاملة + اختبار إرسال من الأدمن
+- **`EmailTemplateResource`** — إدارة قوالب البريد (تعديل + معاينة + تجربة إرسال)
+- **`CustomResetPasswordNotification`** — يستخدم قالب `password_reset` من DB
+- **`emails/template.blade.php`** — قالب HTML موحَّد لجميع رسائل النظام
+- **`docs/SETTINGS-ADMIN.md`** — توثيق كامل للموديول
+
+### Changed
+- `AppServiceProvider::boot()` — يطبّق إعدادات البريد من DB على runtime
+- `User::sendPasswordResetNotification()` — يستخدم `CustomResetPasswordNotification`
+- `WelcomeEmail` — يستخدم قالب `welcome` من DB إذا وُجد
+
+### Fixed
+- 500 على `/forgot-password` — `MAIL_SCHEME=smtps` لـ port 465
+- البريد يصل كـ Spam — تصحيح `MAIL_FROM_NAME` و `MAIL_FROM_ADDRESS`
+- `invoices/edit.blade.php` ParseError — نفس إصلاح `@json()` مع مصفوفة متداخلة
+
+---
+
 ## [2.5.0] — 2026-05-29
 
 ### Added

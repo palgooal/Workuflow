@@ -12,8 +12,6 @@ class ListClients extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\CreateAction::make()->label('إضافة عميل'),
-        ];
+        return [];  // قراءة فقط — الإدارة الحقيقية في /clients
     }
 }
