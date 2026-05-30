@@ -224,13 +224,16 @@
 </div>
 
 <script>
+@php
+    $invoiceItems = $invoice->items->map(fn($i) => [
+        'description' => $i->description,
+        'quantity'    => (float) $i->quantity,
+        'unit_price'  => (float) $i->unit_price,
+    ])->values()->all();
+@endphp
 function invoiceForm() {
     return {
-        items: @json($invoice->items->map(fn($i) => [
-            'description' => $i->description,
-            'quantity'    => (float) $i->quantity,
-            'unit_price'  => (float) $i->unit_price,
-        ])),
+        items: @json($invoiceItems),
         taxRate:   {{ old('tax_rate',  $invoice->tax_rate)  }},
         discount:  {{ old('discount',  $invoice->discount)  }},
         subtotal:  {{ $invoice->subtotal }},
