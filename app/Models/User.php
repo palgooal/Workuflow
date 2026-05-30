@@ -111,6 +111,14 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
         return $this->status === UserStatus::Suspended;
     }
 
+    // ==================== Notifications ====================
+
+    /** استخدام قالب البريد المخصص لإعادة تعيين كلمة المرور */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\CustomResetPasswordNotification($token));
+    }
+
     // ==================== Filament Admin ====================
 
     public function canAccessPanel(Panel $panel): bool

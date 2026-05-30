@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\EmailTemplate;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -19,20 +20,32 @@ class WelcomeEmail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'مرحباً بك في دراهم 🎉',
-        );
+        $tpl = EmailTemplate::render('welcome', []);
+        $subject = $tpl['subject'] ?? 'مرحباً بك في دراهم 🎉';
+
+        return new Envelope(subject: $subject);
     }
 
     public function content(): Content
     {
+        $tpl = EmailTemplate::render('welcome', [
+            '{{name}}'      => $this->user->name,
+            '{{login_url}}' => config('app.url') . '/dashboard',
+        ]);
+
+        // إذا وُجد قالب في DB استخدمه، وإلا استخدم الـ view القديم
+        if ($tpl) {
+            return new Content(
+                view: 'emails.template',
+                with: ['body' => $tpl['body']],
+            );
+        }
+
         return new Content(
             view: 'emails.welcome',
             with: [
                 'userName'     => $this->user->name,
                 'dashboardUrl' => config('app.url') . '/dashboard',
-                'billingUrl'   => config('app.url') . '/billing',
-                'settingsUrl'  => config('app.url') . '/settings',
             ],
         );
     }
