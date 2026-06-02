@@ -16,6 +16,7 @@
     <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
         @foreach([
             ['id' => 'profile',     'label' => '👤 الملف الشخصي'],
+            ['id' => 'invoice',     'label' => '🧾 قالب الفاتورة'],
             ['id' => 'security',    'label' => '🔒 الأمان'],
             ['id' => 'preferences', 'label' => '⚙️ التفضيلات'],
             ['id' => 'plan',        'label' => '💼 الخطة'],
@@ -355,18 +356,126 @@
         </div>
     </div>
 
+    {{-- ==================== Invoice Settings Tab ==================== --}}
+    @php
+        $userId      = auth()->id();
+        $invColor    = \App\Models\Setting::get("invoice_color_{$userId}", '#4f46e5');
+        $invName     = \App\Models\Setting::get("invoice_company_name_{$userId}", auth()->user()->name);
+        $invInfo     = \App\Models\Setting::get("invoice_company_info_{$userId}", '');
+        $invFooter   = \App\Models\Setting::get("invoice_footer_{$userId}", '');
+        $invLogoPath = \App\Models\Setting::get("invoice_logo_{$userId}");
+    @endphp
+    <div x-show="tab === 'invoice'" id="invoice" style="display:none">
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+            <h2 class="text-base font-semibold text-gray-800">🧾 تخصيص قالب الفاتورة</h2>
+
+            <form method="POST" action="{{ route('settings.invoice') }}" enctype="multipart/form-data" class="space-y-5">
+                @csrf
+
+                {{-- شعار الشركة --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">شعار الشركة</label>
+                    @if($invLogoPath)
+                    <div class="flex items-center gap-4 mb-3">
+                        <img src="{{ Storage::url($invLogoPath) }}" alt="Logo" class="h-16 w-auto rounded-lg border border-gray-200 object-contain p-1">
+                        <label class="flex items-center gap-2 text-sm text-red-500 cursor-pointer">
+                            <input type="checkbox" name="remove_logo" value="1" class="rounded border-gray-300">
+                            حذف الشعار الحالي
+                        </label>
+                    </div>
+                    @endif
+                    <input type="file" name="invoice_logo" accept="image/*"
+                           class="block w-full text-sm text-gray-500 file:ml-0 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 transition">
+                    <p class="text-xs text-gray-400 mt-1">PNG أو JPG — بحد أقصى 2MB</p>
+                </div>
+
+                {{-- لون القالب --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">لون القالب الرئيسي</label>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <input type="color" name="invoice_color" value="{{ $invColor }}"
+                               x-on:input="document.getElementById('colorText').value=$el.value; document.getElementById('previewHeader').style.background=$el.value"
+                               class="w-12 h-10 rounded-lg border border-gray-200 cursor-pointer p-1">
+                        <input type="text" id="colorText" value="{{ $invColor }}"
+                               oninput="document.querySelector('[name=invoice_color]').value=this.value; document.getElementById('previewHeader').style.background=this.value"
+                               class="w-28 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono">
+                        <div class="flex gap-2">
+                            @foreach(['#4f46e5','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#1e293b'] as $c)
+                            <button type="button" onclick="setColor('{{ $c }}')"
+                                    class="w-7 h-7 rounded-full border-2 border-white shadow hover:scale-110 transition"
+                                    style="background:{{ $c }}" title="{{ $c }}"></button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                {{-- اسم الشركة --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">اسم الشركة / المستقل</label>
+                    <input type="text" name="invoice_company_name" value="{{ old('invoice_company_name', $invName) }}"
+                           placeholder="مثال: أحمد للتصميم"
+                           class="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                {{-- معلومات التواصل --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">معلومات التواصل</label>
+                    <textarea name="invoice_company_info" rows="3"
+                              placeholder="العنوان، الهاتف، البريد الإلكتروني، رقم السجل التجاري..."
+                              class="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none">{{ old('invoice_company_info', $invInfo) }}</textarea>
+                </div>
+
+                {{-- نص الفوتر --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">نص أسفل الفاتورة</label>
+                    <input type="text" name="invoice_footer" value="{{ old('invoice_footer', $invFooter) }}"
+                           placeholder="مثال: شكراً لتعاملك معنا — الدفع خلال 30 يوماً"
+                           class="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                {{-- معاينة الهيدر --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">معاينة</label>
+                    <div id="previewHeader" class="rounded-xl p-4 flex items-center gap-3"
+                         style="background: {{ $invColor }}">
+                        @if($invLogoPath)
+                        <img src="{{ Storage::url($invLogoPath) }}" alt="Logo" class="h-10 w-auto object-contain">
+                        @else
+                        <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                            {{ mb_substr($invName ?: 'A', 0, 1) }}
+                        </div>
+                        @endif
+                        <div>
+                            <p class="text-white font-bold text-sm">{{ $invName ?: 'اسم الشركة' }}</p>
+                            <p class="text-white/70 text-xs">فاتورة رقم INV-0001</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if(session('success') && str_contains(session('success') ?? '', 'فاتورة'))
+                <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-2">
+                    ✅ {{ session('success') }}
+                </div>
+                @endif
+
+                <div class="flex justify-end">
+                    <button type="submit"
+                            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition">
+                        حفظ إعدادات الفاتورة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
-@push('scripts')
 <script>
-    // فتح التبويب الصحيح إذا كان هناك fragment في الـ URL
-    document.addEventListener('DOMContentLoaded', function () {
-        const hash = window.location.hash.replace('#', '');
-        if (hash && ['profile', 'security', 'preferences', 'plan'].includes(hash)) {
-            // Alpine.js سيتولى الأمر من خلال x-data
-        }
-    });
+function setColor(hex) {
+    document.querySelector('[name=invoice_color]').value = hex;
+    document.getElementById('colorText').value = hex;
+    document.getElementById('previewHeader').style.background = hex;
+}
 </script>
-@endpush
 
 @endsection

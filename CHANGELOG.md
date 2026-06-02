@@ -2,7 +2,7 @@
 
 > All notable changes to this project will be documented in this file.  
 > Format: [Semantic Versioning](https://semver.org) — `MAJOR.MINOR.PATCH`  
-> آخر تحديث: 29 مايو 2026
+> آخر تحديث: 2 يونيو 2026
 
 ---
 
@@ -11,11 +11,48 @@
 
 ### Planned
 - أسعار الصرف اليدوية (Multi-Currency conversion)
-- إرسال الفاتورة/العرض بالبريد الإلكتروني
 - التوقيع الرقمي لعروض الأسعار
 - `quote_activities` audit trail
 - REST API كامل (Laravel Sanctum)
-- CRM Sprint 8 — Client Portal (Business Plan)
+
+---
+
+## [2.8.0] — 2026-06-02
+
+### Added — قالب فاتورة قابل للتخصيص
+
+- **تبويب "قالب الفاتورة"** في `/settings#invoice` — تخصيص كامل لشكل الفاتورة
+  - رفع شعار الشركة (PNG/JPG) مع حذف الشعار القديم تلقائياً
+  - لون القالب الرئيسي مع color picker وألوان جاهزة
+  - اسم الشركة / المستقل ومعلومات التواصل
+  - نص مخصص يظهر في أسفل الفاتورة
+  - معاينة فورية للهيدر عند تغيير اللون
+- **`GET /invoices/{ulid}/pdf`** — تنزيل فاتورة PDF بتصميم محترف (mPDF)
+  - يستخدم لون وشعار ومعلومات المستخدم من الإعدادات
+  - دعم كامل للغة العربية وRTL
+- **`invoices/pdf.blade.php`** — قالب PDF ديناميكي يتكيف مع إعدادات كل مستخدم
+- **إعدادات مخزَّنة** بمفاتيح `invoice_*_{userId}` في جدول `settings`
+
+### Added — تذكيرات الفواتير التلقائية
+
+- **`invoice_reminder_logs`** table — تتبع التذكيرات المرسلة ومنع التكرار
+- **`SendInvoiceReminders`** command — يشتغل يومياً الساعة 9:00
+  - تذكير قبل يومين من تاريخ الاستحقاق (`before_due`)
+  - تذكير فور التأخر عن الاستحقاق (`overdue`) مع تحديث حالة الفاتورة تلقائياً
+  - إرسال إيميل للعميل (`InvoiceReminderMail`)
+  - إشعار داخلي للمستخدم يظهر في `/notifications`
+  - تسجيل تذكير واتساب للإرسال اليدوي
+- **`InvoiceReminderMail`** — Mailable مخصص برسالة قبل/بعد الاستحقاق
+- **`InvoiceOverdueNotification`** / **`InvoiceDueSoonNotification`** — إشعارات database
+- **`GET /invoices/reminders/whatsapp`** — صفحة التذكيرات المعلّقة
+  - تعرض الفواتير التي تحتاج تذكير واتساب مع رسالة جاهزة
+  - زر "تم الإرسال" يحذف التذكير من القائمة
+- **زر "واتساب + PDF"** في صفحة الفاتورة — ينزّل الـ PDF ويفتح واتساب تلقائياً
+
+### Notes
+- `php artisan storage:link` مطلوب لعرض شعارات الشركة
+- `php artisan migrate` مطلوب لجدول `invoice_reminder_logs`
+- الـ Scheduler يعمل تلقائياً عبر cron job المُعدّ مسبقاً
 
 ---
 

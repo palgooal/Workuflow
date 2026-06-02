@@ -12,6 +12,7 @@ use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\TransactionType;
 use Illuminate\Http\RedirectResponse;
@@ -364,5 +365,32 @@ class InvoiceController extends Controller
         $clientId = $invoice->client->public_id;
         $invoice->delete();
         return redirect()->route('clients.show', $clientId)->with('success', 'تم حذف الفاتورة.');
+    }
+
+    // ==================== Reminders ====================
+
+    public function whatsappReminders(Request $request): \Illuminate\View\View
+    {
+        $pendingReminders = \DB::table('invoice_reminder_logs as r')
+            ->join('invoices as i', 'r.invoice_id', '=', 'i.id')
+            ->join('clients as c', 'i.client_id', '=', 'c.id')
+            ->where('r.user_id', $request->user()->id)
+            ->where('r.channel', 'whatsapp')
+            ->whereNull('i.deleted_at')
+            ->orderByDesc('r.sent_at')
+            ->select('r.id', 'r.type', 'r.sent_at', 'i.number', 'i.total', 'i.currency', 'i.due_date', 'i.ulid', 'c.name as client_name', 'c.phone as client_phone')
+            ->paginate(20);
+
+        return view('invoices.reminders-whatsapp', compact('pendingReminders'));
+    }
+
+    public function markReminderSent(Request $request, int $log): \Illuminate\Http\JsonResponse
+    {
+        \DB::table('invoice_reminder_logs')
+            ->where('id', $log)
+            ->where('user_id', $request->user()->id)
+            ->delete();
+
+        return response()->json(['message' => 'تم تمييز التذكير كمُرسَل.']);
     }
 }

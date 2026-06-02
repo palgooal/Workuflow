@@ -51,7 +51,7 @@
                         {{-- Icon --}}
                         <div class="shrink-0 mt-0.5">
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl
-                                {{ $type === 'debt_overdue' ? 'bg-red-100' : ($type === 'debt_due_soon' ? 'bg-yellow-100' : 'bg-gray-100') }}">
+                                {{ in_array($type, ['debt_overdue', 'invoice_overdue']) ? 'bg-red-100' : (in_array($type, ['debt_due_soon', 'invoice_due_soon']) ? 'bg-yellow-100' : 'bg-gray-100') }}">
                                 {{ $icon }}
                             </div>
                         </div>

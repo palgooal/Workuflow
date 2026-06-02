@@ -62,3 +62,12 @@ Schedule::command('crm:refresh-segments')
 
 // إحماء الـ Cache كل ساعة (اختياري في الإنتاج)
 // Schedule::command('cache:prune-stale-tags')->hourly();
+
+// ==================== Invoices — تذكيرات الفواتير ====================
+
+// تذكيرات الفواتير المستحقة والمتأخرة كل صباح الساعة 09:00
+Schedule::command('invoices:send-reminders')
+    ->dailyAt('09:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/invoice-reminders.log'));

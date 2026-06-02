@@ -1,6 +1,6 @@
 # موديول الفواتير (Invoices)
 
-> آخر تحديث: 1 يونيو 2026 | الإصدار: 1.3.0
+> آخر تحديث: 2 يونيو 2026 | الإصدار: 1.4.0
 
 ---
 
@@ -319,10 +319,53 @@ $services = array_filter(
 
 ---
 
+## قالب الفاتورة القابل للتخصيص (v1.4.0)
+
+### الإعدادات — `/settings#invoice`
+
+| الحقل | المفتاح في DB | الوصف |
+|-------|--------------|-------|
+| شعار الشركة | `invoice_logo_{userId}` | مسار الملف في `storage/public/logos/{userId}/` |
+| لون القالب | `invoice_color_{userId}` | HEX مثل `#4f46e5` |
+| اسم الشركة | `invoice_company_name_{userId}` | يظهر في الهيدر |
+| معلومات التواصل | `invoice_company_info_{userId}` | عنوان، هاتف، إيميل |
+| نص الفوتر | `invoice_footer_{userId}` | يظهر في أسفل الفاتورة |
+
+### ملاحظات تقنية
+- `php artisan storage:link` مطلوب لعرض الشعارات
+- الشعار يُخزَّن في `storage/app/public/logos/{userId}/`
+- قالب PDF يقرأ الإعدادات مباشرة من `Setting::get()` مع cache
+
+---
+
+## تذكيرات الفواتير التلقائية (v1.3.0)
+
+### الجدول — `invoice_reminder_logs`
+
+| العمود | النوع | الوصف |
+|--------|-------|-------|
+| invoice_id | FK | الفاتورة المرتبطة |
+| user_id | FK | صاحب الفاتورة |
+| type | `before_due` / `overdue` | نوع التذكير |
+| channel | `email` / `whatsapp` | قناة الإرسال |
+| sent_at | timestamp | وقت الإرسال |
+
+**Unique constraint:** `(invoice_id, type, channel)` — لمنع التكرار
+
+### Command — `invoices:send-reminders`
+
+يشتغل **يومياً الساعة 09:00** عبر Scheduler. لكل مستخدم:
+- يبحث عن فواتير `due_date = today + 2` → يرسل تذكير `before_due`
+- يبحث عن فواتير `due_date < today` → يرسل تذكير `overdue` + يحدّث الحالة
+
+### صفحة التذكيرات — `GET /invoices/reminders/whatsapp`
+
+تعرض تذكيرات الواتساب المعلّقة مع رسالة جاهزة لكل فاتورة.
+
+---
+
 ## Future Enhancements
 
 | الميزة | الأولوية |
 |--------|---------|
-| قوالب فواتير قابلة للتخصيص (شعار + ألوان) | متوسطة |
-| تذكيرات تلقائية للفواتير المتأخرة | متوسطة |
 | دفع إلكتروني مباشر من الفاتورة | مستقبلية |

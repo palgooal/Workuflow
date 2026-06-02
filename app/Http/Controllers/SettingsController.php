@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Settings\UpdatePreferencesRequest;
 use App\Http\Requests\Settings\UpdateProfileRequest;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
@@ -124,5 +126,44 @@ class SettingsController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/')->with('success', 'تم حذف الحساب بنجاح.');
+    }
+
+    // ==================== Invoice Settings ====================
+
+    public function updateInvoice(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'invoice_logo'         => ['nullable', 'image', 'max:2048'],
+            'invoice_color'        => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'invoice_company_name' => ['nullable', 'string', 'max:100'],
+            'invoice_company_info' => ['nullable', 'string', 'max:300'],
+            'invoice_footer'       => ['nullable', 'string', 'max:300'],
+        ]);
+
+        $userId = $request->user()->id;
+
+        // رفع الشعار
+        if ($request->hasFile('invoice_logo')) {
+            // حذف الشعار القديم
+            $oldLogo = Setting::get("invoice_logo_{$userId}");
+            if ($oldLogo) Storage::disk('public')->delete($oldLogo);
+
+            $path = $request->file('invoice_logo')->store("logos/{$userId}", 'public');
+            Setting::set("invoice_logo_{$userId}", $path, 'invoice');
+        }
+
+        // حذف الشعار إذا طُلب
+        if ($request->input('remove_logo')) {
+            $oldLogo = Setting::get("invoice_logo_{$userId}");
+            if ($oldLogo) Storage::disk('public')->delete($oldLogo);
+            Setting::set("invoice_logo_{$userId}", null, 'invoice');
+        }
+
+        $fields = ['invoice_color', 'invoice_company_name', 'invoice_company_info', 'invoice_footer'];
+        foreach ($fields as $field) {
+            Setting::set("{$field}_{$userId}", $request->input($field), 'invoice');
+        }
+
+        return back()->with('success', 'تم حفظ إعدادات الفاتورة.')->withFragment('invoice');
     }
 }

@@ -63,6 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{invoice}/cancel',       [InvoiceController::class, 'cancel'])->name('cancel');
         Route::post('/{invoice}/send-client',  [InvoiceController::class, 'sendToClient'])->name('send-client');
         Route::get('/{invoice}/pdf',           [InvoiceController::class, 'downloadPdf'])->name('pdf');
+        Route::get('/reminders/whatsapp',      [InvoiceController::class, 'whatsappReminders'])->name('reminders.whatsapp');
+        Route::post('/reminders/{log}/mark-sent', [InvoiceController::class, 'markReminderSent'])->name('reminders.mark-sent');
     });
 
     // Clients — تم نقله إلى CRM Module (routes/crm.php via CRMServiceProvider)
@@ -123,6 +125,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/settings/password',         [SettingsController::class, 'updatePassword'])->name('settings.password');
     Route::patch('/settings/preferences',      [SettingsController::class, 'updatePreferences'])->name('settings.preferences');
     Route::delete('/settings/account',         [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
+    Route::post('/settings/invoice',           [SettingsController::class, 'updateInvoice'])->name('settings.invoice');
 
     // Budget — Phase 4.5
     Route::resource('budget', BudgetController::class)
