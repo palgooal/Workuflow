@@ -369,6 +369,24 @@ class InvoiceController extends Controller
 
     // ==================== Reminders ====================
 
+    // ==================== Public View (Signed URL) ====================
+
+    public function publicView(Request $request, string $ulid): \Illuminate\View\View
+    {
+        $invoice = Invoice::where('ulid', $ulid)
+            ->with(['client', 'project', 'items', 'user'])
+            ->firstOrFail();
+
+        // تحديث الحالة إلى Sent إذا كانت Draft (العميل فتح الرابط)
+        if ($invoice->status === InvoiceStatus::Draft) {
+            $invoice->update(['status' => InvoiceStatus::Sent]);
+        }
+
+        return view('invoices.public', compact('invoice'));
+    }
+
+    // ==================== Reminders ====================
+
     public function whatsappReminders(Request $request): \Illuminate\View\View
     {
         $pendingReminders = \DB::table('invoice_reminder_logs as r')

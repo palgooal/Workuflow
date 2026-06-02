@@ -155,6 +155,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ══════════════════════════════════════════════════════
 // بوابة العميل لعروض الأسعار — بدون Auth (رابط عام مُؤمَّن بـ token)
 // ══════════════════════════════════════════════════════
+// ── صفحة الفاتورة العامة للعميل (signed URL — بدون تسجيل دخول) ──────
+Route::get('/invoice/{ulid}/view', [InvoiceController::class, 'publicView'])
+    ->name('invoices.public-view')
+    ->middleware('signed');
+
 Route::prefix('q')->name('quotes.')->group(function () {
     Route::get('/{token}',         [QuoteController::class, 'portal'])->name('portal');
     Route::post('/{token}/accept', [QuoteController::class, 'accept'])->name('accept');

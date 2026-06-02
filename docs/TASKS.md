@@ -1,7 +1,7 @@
 # ✅ خطة المهام الكاملة — دراهم SaaS Financial Platform
 
 > وثيقة تتبع المهام — Laravel 12 / PHP 8.2  
-> آخر تحديث: 29 مايو 2026 — Phase 19 (نظام عروض الأسعار) + Phase 20 (إصلاحات متعددة) مكتملان ✅
+> آخر تحديث: 2 يونيو 2026 — Phase 22 (الفواتير المتقدمة) مكتمل ✅
 
 ---
 
@@ -18,7 +18,7 @@
 | نظام عروض الأسعار | `docs/QUOTES.md` ✅ |
 | دعم العملات المتعددة | `docs/MULTI-CURRENCY.md` ✅ |
 | إعدادات النظام من الأدمن | `docs/SETTINGS-ADMIN.md` ✅ |
-| آخر تحديث | 30 مايو 2026 |
+| آخر تحديث | 2 يونيو 2026 |
 
 ---
 
@@ -62,7 +62,7 @@
 | أسعار الصرف اليدوية | مؤجل — موثَّق في `docs/MULTI-CURRENCY.md` |
 | التوقيع الرقمي للعروض | مؤجل — موثَّق في `docs/QUOTES.md` |
 | `quote_activities` audit trail | مؤجل — موثَّق في `docs/QUOTES.md` |
-| إرسال الفاتورة بالبريد | مؤجل — موثَّق في `docs/INVOICES.md` |
+| دفع إلكتروني مباشر من الفاتورة | مستقبلي — يحتاج PaymentProviderInterface |
 
 ---
 
@@ -96,6 +96,7 @@ Phase 18 → نظام الفواتير (Invoices)                   ✅ مكتم
 Phase 19 → نظام عروض الأسعار (Quotes)                ✅ مكتمل
 Phase 20 → إصلاحات وتحسينات مايو 2026               ✅ مكتمل
 Phase 21 → إعدادات النظام من لوحة الإدارة           ✅ مكتمل
+Phase 22 → الفواتير المتقدمة (PDF + واتساب + تذكيرات + قالب مخصص)  ✅ مكتمل
 ```
 
 ---
@@ -1671,4 +1672,46 @@ public function authenticate(Request $request): RedirectResponse
 - [x] البريد Spam — تصحيح MAIL_FROM_NAME + MAIL_FROM_ADDRESS
 - [x] `invoices/edit.blade.php` ParseError — إصلاح `@json()` مع مصفوفة متداخلة
 
-*آخر تحديث: 30 مايو 2026*
+---
+
+## 🧾 Phase 22 — الفواتير المتقدمة (Advanced Invoices) ✅
+
+> التوثيق التفصيلي في: `docs/INVOICES.md` — الإصدار 1.4.0
+
+### ✅ 22.1 — تصدير PDF (mPDF)
+- [x] `GET /invoices/{ulid}/pdf` — تنزيل فاتورة PDF
+- [x] `InvoiceController::downloadPdf()` — يستخدم mPDF مع دعم RTL وعربية
+- [x] `resources/views/invoices/pdf.blade.php` — قالب ديناميكي يقرأ إعدادات المستخدم
+
+### ✅ 22.2 — إرسال عبر واتساب
+- [x] زر "واتساب + PDF" في `invoices/show.blade.php`
+- [x] ينزّل PDF تلقائياً ثم يفتح واتساب برسالة جاهزة
+- [x] `sendWhatsappWithPdf()` JavaScript function
+
+### ✅ 22.3 — تذكيرات تلقائية
+- [x] Migration: `invoice_reminder_logs` — تتبع التذكيرات ومنع التكرار
+- [x] `SendInvoiceReminders` Command — يشتغل يومياً الساعة 09:00
+  - تذكير قبل يومين (`before_due`) + عند التأخر (`overdue`)
+  - إيميل تلقائي للعميل + إشعار داخلي + تسجيل واتساب
+- [x] `InvoiceReminderMail` — Mailable مخصص
+- [x] `InvoiceDueSoonNotification` + `InvoiceOverdueNotification` — database notifications
+- [x] `GET /invoices/reminders/whatsapp` — صفحة التذكيرات المعلّقة
+- [x] Scheduler: `routes/console.php` — `dailyAt('09:00')`
+
+### ✅ 22.4 — قالب فاتورة قابل للتخصيص
+- [x] تبويب "🧾 قالب الفاتورة" في `/settings#invoice`
+  - رفع شعار الشركة (PNG/JPG، max 2MB)
+  - لون القالب مع color picker وألوان جاهزة
+  - اسم الشركة ومعلومات التواصل
+  - نص مخصص في أسفل الفاتورة
+  - معاينة فورية للهيدر
+- [x] `SettingsController::updateInvoice()` — حفظ الإعدادات في `settings` table
+- [x] قالب PDF يقرأ إعدادات كل مستخدم تلقائياً بمفاتيح `invoice_*_{userId}`
+
+### ⚠️ إجراءات مطلوبة على السيرفر
+```bash
+php artisan migrate          # جدول invoice_reminder_logs
+php artisan storage:link     # لعرض شعارات الشركة
+```
+
+*آخر تحديث: 2 يونيو 2026*
