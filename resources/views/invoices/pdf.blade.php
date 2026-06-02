@@ -251,7 +251,7 @@
     @if($footer)
     <div class="footer-custom">{{ $footer }}</div>
     @endif
-    <div>{{ $company ?: ($invoice->user->name ?? '') }} — تم الإنشاء بواسطة Workuflow</div>
+    <div>{{ $company ?: ($invoice->user->name ?? '') }} — تم الإنشاء بواسطة دراهم</div>
 </div>
 
 </body>

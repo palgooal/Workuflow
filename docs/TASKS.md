@@ -1,7 +1,7 @@
 # ✅ خطة المهام الكاملة — دراهم SaaS Financial Platform
 
 > وثيقة تتبع المهام — Laravel 12 / PHP 8.2  
-> آخر تحديث: 2 يونيو 2026 — Phase 22 (الفواتير المتقدمة) مكتمل ✅
+> آخر تحديث: 2 يونيو 2026 — Phase 22 + Phase 23 (قائمة العملاء المتقدمة) مكتملان ✅
 
 ---
 
@@ -97,6 +97,7 @@ Phase 19 → نظام عروض الأسعار (Quotes)                ✅ مكت
 Phase 20 → إصلاحات وتحسينات مايو 2026               ✅ مكتمل
 Phase 21 → إعدادات النظام من لوحة الإدارة           ✅ مكتمل
 Phase 22 → الفواتير المتقدمة (PDF + واتساب + تذكيرات + قالب مخصص)  ✅ مكتمل
+Phase 23 → قائمة العملاء المتقدمة (بحث فوري + Infinite Scroll + Bulk Actions)  ✅ مكتمل
 ```
 
 ---
@@ -1385,7 +1386,7 @@ public function authenticate(Request $request): RedirectResponse
 | #118 | S6.1: AutomationRuleEngine + Migration + AutomationRule Model | ✅ |
 | #119 | S6.2: 5 AutomationActions + BaseAutomationAction + AutomationNotification + ExecuteAutomationAction Job | ✅ |
 | #120 | S6.3: AutomationConditionEvaluator (nested AND/OR, per-cycle cache) | ✅ |
-| #121 | S7.1: Client List View — index + create + edit + show (4 views) | ✅ |
+| #121 | S7.1: Client List View — index + create + edit + show (4 views) + بحث فوري + Infinite Scroll + Bulk Actions | ✅ |
 | #122 | S7.2: Client Profile View — 3 tabs (activity + followups + info) | ✅ |
 | #123 | S7.3: Tag Management UI (صفحة كاملة + Sortable.js) | ✅ |
 | #124 | S7.4: Follow-ups Dashboard (3 أعمدة + Modal إضافة سريعة) | ✅ |
@@ -1713,5 +1714,35 @@ public function authenticate(Request $request): RedirectResponse
 php artisan migrate          # جدول invoice_reminder_logs
 php artisan storage:link     # لعرض شعارات الشركة
 ```
+
+---
+
+## ⚡ Phase 23 — قائمة العملاء المتقدمة ✅
+
+> التوثيق في: `docs/CLIENTS-CRM-SPEC-V2.md`
+
+### ✅ 23.1 — بحث فوري (Live Search)
+- [x] حقل البحث يرسل AJAX request بعد 350ms debounce بدون reload
+- [x] تحديث URL تلقائياً (`history.replaceState`) لحفظ حالة البحث
+- [x] `ClientController::index()` يعيد JSON عند `wantsJson()`
+- [x] `clientToArray()` — helper يحوّل Client model إلى array للـ JSON
+
+### ✅ 23.2 — Infinite Scroll
+- [x] استبدال pagination الأزرار بـ `IntersectionObserver` على sentinel
+- [x] تحميل 20 عميل إضافي تلقائياً عند الوصول لأسفل الصفحة
+- [x] `loadMore()` — يستخدم cursor من API ويضيف الصفوف للجدول
+- [x] مؤشر "جاري التحميل..." + رسالة "وصلت للنهاية ✓"
+
+### ✅ 23.3 — Bulk Actions
+- [x] Checkbox على كل صف + "تحديد الكل" في الـ header
+- [x] Toolbar تظهر عند التحديد: أرشفة / تعيين وسم / إلغاء التحديد
+- [x] `POST /clients/bulk-action` — يطبق الإجراء على المحددين
+- [x] `ClientController::bulkAction()` — يدعم: archive / tag
+- [x] إزالة الصفوف المؤرشفة من الجدول فوراً بدون reload
+- [x] Toast notification عند اكتمال الإجراء
+
+### ✅ 23.4 — Backend
+- [x] `ClientService::countClients()` — عدّ العملاء مع الفلاتر
+- [x] `routes/crm.php` — إضافة `POST /clients/bulk-action`
 
 *آخر تحديث: 2 يونيو 2026*

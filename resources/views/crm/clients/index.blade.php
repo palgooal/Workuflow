@@ -3,7 +3,7 @@
 @section('title', 'إدارة العملاء')
 
 @section('content')
-<div class="space-y-5" x-data="clientList()">
+<div class="space-y-5" x-data="clientList()" x-init="init()">
 
     {{-- ==================== Header ==================== --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -162,8 +162,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    <input type="text" name="search" value="{{ $filters->search }}"
+                    <input type="text" name="search" id="liveSearch" value="{{ $filters->search }}"
                            placeholder="الاسم، الشركة، البريد، الهاتف…"
+                           x-on:input.debounce.350ms="liveSearch($event.target.value)"
+                           x-on:keydown.enter.prevent="liveSearch($event.target.value)"
                            class="w-full pr-9 pl-4 py-2 text-sm border border-gray-200 rounded-lg
                                   focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none">
                 </div>
@@ -244,6 +246,42 @@
         </form>
     </div>
 
+    {{-- ==================== Bulk Toolbar ==================== --}}
+    <div x-show="selectedIds.length > 0" x-cloak x-transition
+         class="bg-indigo-600 text-white rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
+        <span class="text-sm font-medium" x-text="selectedIds.length + ' عملاء محددين'"></span>
+        <div class="flex items-center gap-2 mr-auto">
+            <button x-on:click="bulkAction('archive')"
+                    class="px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-lg transition">
+                أرشفة
+            </button>
+            <div class="relative" x-data="{ openTag: false }">
+                <button x-on:click="openTag = !openTag"
+                        class="px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-lg transition flex items-center gap-1">
+                    تعيين وسم
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="openTag" x-on:click.away="openTag=false"
+                     class="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 min-w-44"
+                     style="top: calc(100% + 4px)">
+                    @foreach($tags as $tag)
+                    <button x-on:click="bulkAction('tag', {{ $tag->id }}); openTag=false"
+                            class="w-full text-right px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full inline-block" style="background:{{ $tag->color ?? '#6366f1' }}"></span>
+                        {{ $tag->name }}
+                    </button>
+                    @endforeach
+                </div>
+            </div>
+            <button x-on:click="selectedIds = []"
+                    class="px-3 py-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 rounded-lg transition">
+                إلغاء التحديد
+            </button>
+        </div>
+    </div>
+
     {{-- ==================== جدول العملاء ==================== --}}
     <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
 
@@ -281,6 +319,12 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50">
+                        <th class="py-3 px-3 w-10">
+                            <input type="checkbox"
+                                   x-on:change="toggleAll($event.target.checked)"
+                                   :checked="selectedIds.length > 0 && selectedIds.length === visibleCount"
+                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </th>
                         <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap">العميل</th>
                         <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap hidden md:table-cell">الحالة</th>
                         <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap hidden lg:table-cell">الوسوم</th>
@@ -291,7 +335,15 @@
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @foreach($clients as $client)
-                    <tr class="hover:bg-gray-50 transition group">
+                    <tr class="hover:bg-gray-50 transition group"
+                        :class="selectedIds.includes({{ $client->id }}) ? 'bg-indigo-50/50' : ''">
+                        <td class="py-3 px-3">
+                            <input type="checkbox"
+                                   value="{{ $client->id }}"
+                                   x-on:change="toggleClient({{ $client->id }}, $event.target.checked)"
+                                   :checked="selectedIds.includes({{ $client->id }})"
+                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        </td>
 
                         {{-- معلومات العميل --}}
                         <td class="py-3 px-4">
@@ -435,34 +487,15 @@
             </table>
         </div>
 
-        {{-- ==================== Cursor Pagination ==================== --}}
-        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+        {{-- Footer: Count + Infinite Scroll --}}
+        <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
             <p class="text-sm text-gray-500">
-                عرض {{ $clients->count() }} عميل
+                عرض <span x-text="visibleCount"></span> عميل
+                <span x-show="loadingMore" class="mr-2 text-indigo-500 text-xs">جاري التحميل…</span>
             </p>
-            <div class="flex gap-2">
-                @if($clients->previousPageUrl())
-                <a href="{{ $clients->previousPageUrl() }}"
-                   class="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 bg-white
-                          border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                    السابق
-                </a>
-                @endif
-                @if($clients->hasMorePages())
-                <a href="{{ $clients->nextPageUrl() }}"
-                   class="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 bg-white
-                          border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                    التالي
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                </a>
-                @endif
-            </div>
+            <p x-show="!hasMore && visibleCount > 0" class="text-xs text-gray-400">وصلت للنهاية ✓</p>
         </div>
+        <div id="scroll-sentinel" class="h-1"></div>
         @endif
 
     </div>
@@ -712,7 +745,208 @@
 <script>
 function clientList() {
     return {
-        // منطق القائمة — يمكن التوسع مستقبلاً
+        // ── State ────────────────────────────────────────────────────
+        selectedIds:  [],
+        visibleCount: {{ $clients->count() }},
+        hasMore:      {{ $clients->hasMorePages() ? 'true' : 'false' }},
+        nextCursor:   '{{ $clients->nextCursor()?->encode() ?? '' }}',
+        loadingMore:  false,
+        searching:    false,
+        currentSearch: '{{ $filters->search ?? '' }}',
+
+        // ── Init ─────────────────────────────────────────────────────
+        init() {
+            this.$nextTick(() => this.setupInfiniteScroll());
+        },
+
+        // ── Infinite Scroll ──────────────────────────────────────────
+        setupInfiniteScroll() {
+            const sentinel = document.getElementById('scroll-sentinel');
+            if (!sentinel) return;
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && this.hasMore && !this.loadingMore) {
+                    this.loadMore();
+                }
+            }, { rootMargin: '200px' });
+            observer.observe(sentinel);
+        },
+
+        async loadMore() {
+            if (!this.hasMore || this.loadingMore || !this.nextCursor) return;
+            this.loadingMore = true;
+            try {
+                const params = new URLSearchParams(window.location.search);
+                params.set('cursor', this.nextCursor);
+                const res  = await fetch(`{{ route('clients.index') }}?${params}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const json = await res.json();
+                this.renderClients(json.data, true);
+                this.hasMore    = json.has_more;
+                this.nextCursor = json.next_cursor ?? '';
+                this.visibleCount += json.data.length;
+            } catch(e) { console.error(e); }
+            finally { this.loadingMore = false; }
+        },
+
+        // ── Live Search ───────────────────────────────────────────────
+        async liveSearch(term) {
+            this.currentSearch = term;
+            this.searching     = true;
+            this.selectedIds   = [];
+            try {
+                const params = new URLSearchParams(window.location.search);
+                params.set('search', term);
+                params.delete('cursor');
+                // تحديث URL بدون reload
+                history.replaceState({}, '', `?${params}`);
+                const res  = await fetch(`{{ route('clients.index') }}?${params}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const json = await res.json();
+                this.renderClients(json.data, false);
+                this.hasMore      = json.has_more;
+                this.nextCursor   = json.next_cursor ?? '';
+                this.visibleCount = json.data.length;
+            } catch(e) { console.error(e); }
+            finally { this.searching = false; }
+        },
+
+        // ── Render Clients ────────────────────────────────────────────
+        renderClients(clients, append) {
+            const tbody = document.querySelector('table tbody');
+            if (!tbody) return;
+            if (!append) tbody.innerHTML = '';
+
+            if (!append && clients.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="7" class="py-12 text-center text-gray-400 text-sm">
+                        لا توجد نتائج تطابق البحث
+                    </td></tr>`;
+                return;
+            }
+
+            clients.forEach(c => {
+                const tags = (c.tags || []).slice(0, 3).map(t =>
+                    `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium text-white"
+                           style="background-color:${t.color}">${t.icon || ''}${t.name}</span>`
+                ).join('');
+
+                const health = c.health_score != null
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold
+                        ${c.health_score >= 75 ? 'text-teal-600 bg-teal-50' : c.health_score >= 50 ? 'text-amber-600 bg-amber-50' : 'text-red-500 bg-red-50'}">
+                        ★ ${c.health_score}</span>`
+                    : '<span class="text-xs text-gray-300">—</span>';
+
+                const status = c.status_label
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${c.status_badge}">${c.status_label}</span>`
+                    : '';
+
+                const initials = c.name ? c.name.charAt(0) : '?';
+                const avatarCls = c.is_archived ? 'bg-gray-100 text-gray-400' : 'bg-indigo-100 text-indigo-700';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 transition group';
+                tr.dataset.clientId = c.id;
+                tr.innerHTML = `
+                    <td class="py-3 px-3">
+                        <input type="checkbox" value="${c.id}"
+                               onchange="document.querySelector('[x-data]').__x.$data.toggleClient(${c.id}, this.checked)"
+                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${avatarCls}">
+                                ${initials}
+                            </div>
+                            <div class="min-w-0">
+                                <a href="${c.show_url}" class="font-medium text-gray-900 hover:text-indigo-600 transition truncate block">
+                                    ${c.name}
+                                </a>
+                                ${c.company ? `<p class="text-xs text-gray-400 truncate">${c.company}</p>` : (c.email ? `<p class="text-xs text-gray-400 truncate">${c.email}</p>` : '')}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 hidden md:table-cell">${status}</td>
+                    <td class="py-3 px-4 hidden lg:table-cell"><div class="flex flex-wrap gap-1">${tags}</div></td>
+                    <td class="py-3 px-4 hidden xl:table-cell">${health}</td>
+                    <td class="py-3 px-4 hidden xl:table-cell">
+                        <span class="text-xs text-gray-500">${c.last_contact || '<span class="text-gray-300">لا يوجد</span>'}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <a href="${c.show_url}" class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="عرض">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+                            <a href="${c.edit_url}" class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="تعديل">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+        },
+
+        // ── Bulk Actions ─────────────────────────────────────────────
+        toggleClient(id, checked) {
+            if (checked) {
+                if (!this.selectedIds.includes(id)) this.selectedIds.push(id);
+            } else {
+                this.selectedIds = this.selectedIds.filter(i => i !== id);
+            }
+        },
+
+        toggleAll(checked) {
+            const checkboxes = document.querySelectorAll('table tbody input[type=checkbox]');
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                this.toggleClient(parseInt(cb.value), checked);
+            });
+            if (!checked) this.selectedIds = [];
+        },
+
+        async bulkAction(action, tagId = null) {
+            if (this.selectedIds.length === 0) return;
+            const label = action === 'archive' ? 'أرشفة' : 'تعيين وسم';
+            if (!confirm(`هل تريد ${label} ${this.selectedIds.length} عملاء؟`)) return;
+
+            try {
+                const body = { action, client_ids: this.selectedIds };
+                if (tagId) body.tag_id = tagId;
+                const res  = await fetch('{{ route('clients.bulk-action') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(body),
+                });
+                const json = await res.json();
+                if (res.ok) {
+                    // إزالة الصفوف من الجدول
+                    if (action === 'archive') {
+                        this.selectedIds.forEach(id => {
+                            document.querySelector(`tr[data-client-id="${id}"]`)?.remove();
+                        });
+                        this.visibleCount -= this.selectedIds.length;
+                    }
+                    this.selectedIds = [];
+                    // Toast بسيط
+                    const t = document.createElement('div');
+                    t.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-sm px-5 py-3 rounded-xl shadow-lg';
+                    t.textContent = json.message;
+                    document.body.appendChild(t);
+                    setTimeout(() => t.remove(), 3000);
+                    if (action === 'tag') window.location.reload();
+                }
+            } catch(e) { console.error(e); }
+        },
     }
 }
 

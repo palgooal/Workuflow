@@ -25,7 +25,7 @@ class ClientController extends Controller
 
     // ==================== List ====================
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', Client::class);
 
@@ -35,10 +35,44 @@ class ClientController extends Controller
             filters: $filters,
         );
 
-        $tags = $this->tagService->forUser($request->user()->id);
+        // طلب AJAX للبحث الفوري / Infinite Scroll
+        if ($request->wantsJson()) {
+            return response()->json([
+                'data'        => $clients->map(fn ($c) => $this->clientToArray($c)),
+                'next_cursor' => $clients->nextCursor()?->encode(),
+                'has_more'    => $clients->hasMorePages(),
+            ]);
+        }
+
+        $tags  = $this->tagService->forUser($request->user()->id);
         $stats = $this->clientService->stats($request->user()->id);
 
         return view('crm.clients.index', compact('clients', 'filters', 'tags', 'stats'));
+    }
+
+    private function clientToArray(Client $c): array
+    {
+        return [
+            'id'           => $c->id,
+            'public_id'    => $c->public_id,
+            'name'         => $c->name,
+            'company'      => $c->company,
+            'email'        => $c->email,
+            'phone'        => $c->phone,
+            'is_archived'  => $c->is_archived,
+            'status'       => $c->status?->value,
+            'status_label' => $c->status?->label(),
+            'status_badge' => $c->status?->badgeClass(),
+            'health_score' => $c->health_score,
+            'last_contact' => $c->last_contact_at?->diffForHumans(),
+            'tags'         => $c->tags->map(fn ($t) => [
+                'name'  => $t->name,
+                'color' => $t->color ?? '#6366f1',
+                'icon'  => $t->icon,
+            ])->toArray(),
+            'show_url'     => route('clients.show', $c->public_id),
+            'edit_url'     => route('clients.edit', $c->public_id),
+        ];
     }
 
     // ==================== Create ====================
@@ -73,6 +107,7 @@ class ClientController extends Controller
         $client = $this->clientService->findWithRelations($client->id, $request->user()->id);
 
         $tagSuggestions = $this->tagService->suggest($client);
+        $allTags        = $this->tagService->forUser($request->user()->id);
 
         $projects = \App\Models\Project::where('client_id', $client->id)
             ->where('user_id', $request->user()->id)
@@ -136,7 +171,7 @@ class ClientController extends Controller
         }
 
         return view('crm.clients.show', compact(
-            'client', 'tagSuggestions', 'projects',
+            'client', 'tagSuggestions', 'allTags', 'projects',
             'clientInvoices', 'clientQuotes',
             'revenueByCurrency', 'paidByCurrency', 'outstandingByCurrency'
         ));
@@ -185,6 +220,41 @@ class ClientController extends Controller
 
     // ==================== Archive ====================
 
+    // ==================== Bulk Action ====================
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action'     => ['required', 'in:archive,restore,tag'],
+            'client_ids' => ['required', 'array', 'min:1', 'max:200'],
+            'tag_id'     => ['nullable', 'integer'],
+        ]);
+
+        $action    = $request->input('action');
+        $clientIds = $request->input('client_ids');
+        $userId    = $request->user()->id;
+
+        $clients = Client::whereIn('id', $clientIds)
+            ->where('user_id', $userId)
+            ->get();
+
+        foreach ($clients as $client) {
+            match ($action) {
+                'archive' => $this->clientService->archive($client, $userId),
+                'restore' => $this->clientService->restore($client, $userId),
+                'tag'     => $request->filled('tag_id')
+                    ? $this->tagService->assign($client, [$request->integer('tag_id')], $userId)
+                    : null,
+                default   => null,
+            };
+        }
+
+        return response()->json([
+            'message' => "تم تطبيق الإجراء على {$clients->count()} عميل.",
+            'count'   => $clients->count(),
+        ]);
+    }
+
     public function archive(Request $request, string $publicId): RedirectResponse
     {
         $client = $this->resolveClient($publicId, $request->user()->id);
@@ -220,24 +290,37 @@ class ClientController extends Controller
         $client = $this->resolveClient($publicId, $request->user()->id);
         $this->authorize('view', $client);
 
-        $activities = $client->activities()
+        $perPage = 15;
+        $query   = $client->activities()
             ->with('actor:id,name')
             ->orderByDesc('occurred_at')
-            ->limit(50)
-            ->get()
-            ->map(fn ($a) => [
-                'id'          => $a->id,
-                'type'        => $a->type->value,
-                'type_label'  => $a->type->label(),
-                'icon'        => $a->type->icon(),
-                'color'       => $a->type->color(),
-                'description' => $a->description,
-                'actor'       => $a->actor?->name ?? 'النظام',
-                'occurred_at' => $a->occurred_at->toIso8601String(),
-                'occurred_ago'=> $a->occurred_at->diffForHumans(),
-            ]);
+            ->orderByDesc('id');
 
-        return response()->json(['data' => $activities]);
+        // cursor pagination يدوي عبر id
+        if ($cursor = $request->query('cursor')) {
+            $query->where('id', '<', (int) $cursor);
+        }
+
+        $items = $query->limit($perPage + 1)->get();
+        $hasMore    = $items->count() > $perPage;
+        $items      = $items->take($perPage);
+        $nextCursor = $hasMore ? $items->last()?->id : null;
+
+        $data = $items->map(fn ($a) => [
+            'id'          => $a->id,
+            'type'        => $a->type->value,
+            'icon'        => $a->type->icon(),
+            'color'       => $a->type->color(),
+            'description' => $a->description,
+            'actor'       => $a->actor?->name ?? 'النظام',
+            'occurred_ago'=> $a->occurred_at->diffForHumans(),
+        ]);
+
+        return response()->json([
+            'data'        => $data,
+            'has_more'    => $hasMore,
+            'next_cursor' => $nextCursor,
+        ]);
     }
 
     public function stats(Request $request): JsonResponse

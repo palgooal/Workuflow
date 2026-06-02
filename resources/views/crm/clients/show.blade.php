@@ -206,18 +206,49 @@
         </div>
 
         {{-- نقاط الصحة --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs text-gray-500">نقاط الصحة</p>
-            @if($client->health_score !== null)
-            @php
-                $score = $client->health_score;
-                $color = $score >= 75 ? 'text-teal-600' : ($score >= 50 ? 'text-amber-600' : 'text-red-500');
-            @endphp
-            <p class="text-2xl font-bold {{ $color }} mt-1">
-                {{ $score }}<span class="text-sm font-normal text-gray-500">/100</span>
+        @php
+            $hs = $client->latestHealthScore;
+            $hsScore = $hs?->score ?? $client->health_score;
+            $hsColor = !$hsScore ? 'text-gray-300' : ($hsScore >= 75 ? 'text-teal-600' : ($hsScore >= 50 ? 'text-amber-600' : 'text-red-500'));
+            $hsBg    = !$hsScore ? '' : ($hsScore >= 75 ? 'bg-teal-50' : ($hsScore >= 50 ? 'bg-amber-50' : 'bg-red-50'));
+            $factorLabels = [
+                'payment_rate'      => ['معدل الدفع', '35%'],
+                'recurrence'        => ['تكرار العمل', '25%'],
+                'revenue_value'     => ['قيمة الإيراد', '20%'],
+                'contact_regularity'=> ['انتظام التواصل', '10%'],
+                'response_rate'     => ['معدل الاستجابة', '10%'],
+            ];
+            $factors = $hs?->factorBreakdown() ?? [];
+        @endphp
+        <div class="bg-white rounded-xl border border-gray-100 p-4 col-span-1">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs text-gray-500">نقاط الصحة</p>
+                @if($hsScore !== null)
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ $hsBg }} {{ $hsColor }}">
+                    {{ $hs?->grade()->label() ?? '' }}
+                </span>
+                @endif
+            </div>
+            <p class="text-3xl font-bold {{ $hsColor }}">
+                {{ $hsScore ?? '—' }}<span class="text-sm font-normal text-gray-400">/100</span>
             </p>
-            @else
-            <p class="text-2xl font-bold text-gray-300 mt-1">—</p>
+            @if(!empty($factors))
+            <div class="mt-3 space-y-1.5">
+                @foreach($factorLabels as $key => [$label, $weight])
+                @php $val = $factors[$key] ?? 0; @endphp
+                <div>
+                    <div class="flex justify-between text-xs text-gray-500 mb-0.5">
+                        <span>{{ $label }}</span>
+                        <span class="font-medium text-gray-700">{{ $val }}%</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-500
+                            {{ $val >= 75 ? 'bg-teal-500' : ($val >= 50 ? 'bg-amber-400' : 'bg-red-400') }}"
+                             style="width: {{ $val }}%"></div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
             @endif
         </div>
     </div>
@@ -245,6 +276,7 @@
                     'invoices'   => ['label' => 'الفواتير', 'icon' => '🧾', 'badge' => $clientInvoices->count()],
                     'quotes'     => ['label' => 'عروض الأسعار', 'icon' => '📋', 'badge' => $clientQuotes->count()],
                     'followups'  => ['label' => 'المتابعات','icon' => '⏰'],
+                    'tags'       => ['label' => 'الوسوم',    'icon' => '🏷️', 'badge' => $client->tags->count()],
                     'info'       => ['label' => 'المعلومات','icon' => '📝'],
                 ];
             @endphp
@@ -264,12 +296,18 @@
         </div>
 
         {{-- ==================== تبويب النشاط ==================== --}}
-        <div x-show="tab === 'activity'" class="pt-4">
+        <div x-show="tab === 'activity'" class="pt-4" x-on:click.away="" x-init="loadTimeline(false)">
             <div class="bg-white rounded-xl border border-gray-100 p-5">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-700">سجل النشاط</h3>
-                    <button onclick="loadTimeline()"
-                            class="text-xs text-indigo-600 hover:underline">تحديث</button>
+                    <button x-on:click="loadTimeline(false)"
+                            class="text-xs text-indigo-600 hover:underline flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        تحديث
+                    </button>
                 </div>
                 <div id="timeline-container">
                     <div class="flex items-center justify-center py-8 text-gray-400">
@@ -279,6 +317,17 @@
                         </svg>
                         جاري التحميل…
                     </div>
+                </div>
+                {{-- زر تحميل المزيد --}}
+                <div x-show="timelineHasMore" class="mt-2 text-center">
+                    <button id="load-more-btn"
+                            x-on:click="loadTimeline(true)"
+                            :disabled="timelineLoading"
+                            class="text-xs text-indigo-600 hover:text-indigo-800 px-4 py-2 border border-indigo-200
+                                   rounded-lg hover:bg-indigo-50 transition disabled:opacity-50">
+                        <span x-show="!timelineLoading">تحميل المزيد</span>
+                        <span x-show="timelineLoading">جاري التحميل…</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -593,6 +642,103 @@
             </div>
         </div>
 
+        {{-- ==================== تبويب الوسوم ==================== --}}
+        <div x-show="tab === 'tags'" class="pt-4 space-y-4">
+
+            {{-- الوسوم الحالية --}}
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">الوسوم المُعيَّنة</h3>
+                @if($client->tags->isNotEmpty())
+                <div class="flex flex-wrap gap-2">
+                    @foreach($client->tags as $tag)
+                    <div class="flex items-center gap-1.5 pl-2 pr-3 py-1.5 rounded-full text-sm font-medium text-white"
+                         style="background-color: {{ $tag->color ?? '#6366f1' }}">
+                        @if($tag->icon)<span>{{ $tag->icon }}</span>@endif
+                        <span>{{ $tag->name }}</span>
+                        @can('update', $client)
+                        <form method="POST" action="{{ route('clients.tags.remove', [$client->public_id, $tag->id]) }}"
+                              x-on:submit.prevent="
+                                fetch($el.action, {
+                                    method: 'POST',
+                                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                                }).then(() => window.location.reload())">
+                            @csrf
+                            <button type="submit" class="ml-1 opacity-70 hover:opacity-100 transition" title="إزالة الوسم">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </form>
+                        @endcan
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <p class="text-sm text-gray-400">لا توجد وسوم مُعيَّنة بعد.</p>
+                @endif
+            </div>
+
+            {{-- إضافة وسم --}}
+            @can('update', $client)
+            @php $availableTags = $allTags->whereNotIn('id', $client->tags->pluck('id')); @endphp
+            @if($availableTags->isNotEmpty())
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">إضافة وسم</h3>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($availableTags as $tag)
+                    <form method="POST" action="{{ route('clients.tags.assign', [$client->public_id, $tag->id]) }}"
+                          x-on:submit.prevent="
+                            fetch($el.action, {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                            }).then(() => window.location.reload())">
+                        @csrf
+                        <button type="submit"
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border-2 transition hover:opacity-80"
+                                style="border-color: {{ $tag->color ?? '#6366f1' }}; color: {{ $tag->color ?? '#6366f1' }}">
+                            @if($tag->icon)<span>{{ $tag->icon }}</span>@endif
+                            {{ $tag->name }}
+                        </button>
+                    </form>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+            @endcan
+
+            {{-- الاقتراحات الذكية --}}
+            @if(!empty($tagSuggestions))
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                <h3 class="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    اقتراحات ذكية
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($tagSuggestions as $suggestion)
+                    <form method="POST" action="{{ route('clients.tags.assign', [$client->public_id, $suggestion->id]) }}"
+                          x-on:submit.prevent="
+                            fetch($el.action, {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                            }).then(() => window.location.reload())">
+                        @csrf
+                        <button type="submit"
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+                                       bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 transition">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background:{{ $suggestion->color ?? '#6366f1' }}"></span>
+                            + {{ $suggestion->name }}
+                        </button>
+                    </form>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+        </div>
+
         {{-- ==================== تبويب المعلومات ==================== --}}
         <div x-show="tab === 'info'" class="pt-4">
             <div class="bg-white rounded-xl border border-gray-100 p-5">
@@ -650,49 +796,66 @@
 @push('scripts')
 <script>
 function clientProfile() {
-    return {}
-}
+    return {
+        timelineCursor: null,
+        timelineHasMore: false,
+        timelineLoading: false,
 
-// تحميل Timeline عبر AJAX
-async function loadTimeline() {
-    const container = document.getElementById('timeline-container');
-    container.innerHTML = '<div class="flex items-center justify-center py-8 text-gray-400"><svg class="w-5 h-5 animate-spin ml-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>جاري التحميل…</div>';
+        async loadTimeline(append) {
+            const container = document.getElementById('timeline-container');
+            const btn       = document.getElementById('load-more-btn');
+            if (!append) {
+                container.innerHTML = '<div class="flex items-center justify-center py-8 text-gray-400"><svg class="w-5 h-5 animate-spin ml-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>جاري التحميل…</div>';
+            }
+            this.timelineLoading = true;
+            try {
+                let url = '{{ route('clients.timeline', $client->public_id) }}';
+                if (append && this.timelineCursor) url += '?cursor=' + this.timelineCursor;
+                const res  = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                const data = await res.json();
 
-    try {
-        const res  = await fetch('{{ route('clients.timeline', $client->public_id) }}', {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        const data = await res.json();
+                if (!append && (!data.data || data.data.length === 0)) {
+                    container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">لا يوجد نشاط بعد</p>';
+                    return;
+                }
 
-        if (!data.data || data.data.length === 0) {
-            container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">لا يوجد نشاط بعد</p>';
-            return;
-        }
-
-        container.innerHTML = '<div class="relative space-y-0">' +
-            data.data.map(item => `
-                <div class="flex gap-3 pb-4">
-                    <div class="flex-shrink-0 flex flex-col items-center">
-                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-base"
-                             style="background-color: ${item.color}20; color: ${item.color}">
-                            ${item.icon}
+                const html = (data.data || []).map(item => `
+                    <div class="flex gap-3 pb-4">
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-base"
+                                 style="background-color:${item.color}22; color:${item.color}">
+                                ${item.icon}
+                            </div>
+                            <div class="w-px flex-1 bg-gray-100 mt-1"></div>
                         </div>
-                        <div class="w-px flex-1 bg-gray-100 mt-1"></div>
-                    </div>
-                    <div class="flex-1 pt-0.5 pb-2">
-                        <p class="text-sm text-gray-800">${item.description}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">${item.actor} · ${item.occurred_ago}</p>
-                    </div>
-                </div>
-            `).join('') +
-        '</div>';
-    } catch (e) {
-        container.innerHTML = '<p class="text-sm text-red-400 text-center py-6">تعذّر تحميل النشاط</p>';
+                        <div class="flex-1 pt-0.5 pb-2">
+                            <p class="text-sm text-gray-800">${item.description}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">${item.actor} · ${item.occurred_ago}</p>
+                        </div>
+                    </div>`).join('');
+
+                if (!append) {
+                    container.innerHTML = '<div class="space-y-0">' + html + '</div>';
+                } else {
+                    container.querySelector('div')?.insertAdjacentHTML('beforeend', html);
+                }
+
+                this.timelineCursor  = data.next_cursor ?? null;
+                this.timelineHasMore = data.has_more ?? false;
+            } catch(e) {
+                if (!append) container.innerHTML = '<p class="text-sm text-red-400 text-center py-6">تعذّر تحميل النشاط</p>';
+            } finally {
+                this.timelineLoading = false;
+            }
+        },
     }
 }
 
 // تحميل التلقائي عند فتح الصفحة
-document.addEventListener('DOMContentLoaded', () => loadTimeline());
+document.addEventListener('DOMContentLoaded', () => {
+    const profile = document.querySelector('[x-data]')?.__x?.$data;
+    if (profile) profile.loadTimeline(false);
+});
 </script>
 @endpush
 @endsection

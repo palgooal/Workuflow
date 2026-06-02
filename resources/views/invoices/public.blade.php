@@ -154,7 +154,7 @@
         {{-- Footer --}}
         <div class="footer-section">
             @if($footer)<div class="footer-custom">{{ $footer }}</div>@endif
-            <div class="footer-brand">Workuflow — منصة المستقلين المالية</div>
+            <div class="footer-brand">دراهم — منصة المستقلين المالية</div>
         </div>
 
     </div>

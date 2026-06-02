@@ -108,6 +108,9 @@ Route::middleware(['auth', 'active.account'])->group(function () {
         Route::put('/{client}',      [ClientController::class, 'update'])->name('update');
         Route::delete('/{client}',   [ClientController::class, 'destroy'])->name('destroy');
 
+        // Bulk Actions
+        Route::post('/bulk-action', [ClientController::class, 'bulkAction'])->name('bulk-action');
+
         // إجراءات إضافية
         Route::post('/{client}/archive',  [ClientController::class, 'archive'])->name('archive');
         Route::post('/{client}/restore',  [ClientController::class, 'restore'])->name('restore');

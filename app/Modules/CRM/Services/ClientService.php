@@ -60,6 +60,13 @@ class ClientService
     /**
      * قائمة العملاء مع الفلاتر والـ Cursor Pagination
      */
+    public function countClients(int $userId, ClientFiltersDTO $filters): int
+    {
+        return (new ClientQueryBuilder($userId))
+            ->applyFilters($filters)
+            ->count();
+    }
+
     public function listClients(int $userId, ClientFiltersDTO $filters): CursorPaginator
     {
         return (new ClientQueryBuilder($userId))
