@@ -1,23 +1,21 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                الشرائح وصحة العملاء
-            </h2>
-            <a href="{{ route('clients.index') }}"
-               class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                العملاء
-            </a>
-        </div>
-    </x-slot>
+@extends('layouts.app')
+@section('title', 'الشرائح وصحة العملاء')
+@section('content')
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-xl font-bold text-gray-900">الشرائح وصحة العملاء</h1>
+    <a href="{{ route('clients.index') }}"
+       class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        العملاء
+    </a>
+</div>
 
     {{-- ==================== TOAST ==================== --}}
     <div
         x-data="{ show: false, message: '', type: 'success' }"
-        @show-toast.window="show = true; message = $event.detail.message; type = $event.detail.type || 'success'; setTimeout(() => show = false, 3500)"
+        x-on:show-toast.window="show = true; message = $event.detail.message; type = $event.detail.type || 'success'; setTimeout(() => show = false, 3500)"
         x-show="show"
         x-transition.opacity
         class="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium pointer-events-none"
@@ -793,4 +791,4 @@
     }
     </script>
 
-</x-app-layout>
+@endsection

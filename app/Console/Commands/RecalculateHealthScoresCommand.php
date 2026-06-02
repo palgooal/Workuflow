@@ -46,7 +46,7 @@ class RecalculateHealthScoresCommand extends Command
         $this->info('🔄 بدء إعادة حساب مؤشرات صحة العملاء...');
 
         // تحديد المستخدمين المستهدفين
-        $usersQuery = User::query()->where('suspended', false);
+        $usersQuery = User::query()->where('status', \App\Support\Enums\UserStatus::Active->value);
 
         if ($userId) {
             $usersQuery->where('id', $userId);

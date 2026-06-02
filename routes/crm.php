@@ -64,6 +64,7 @@ Route::middleware(['auth', 'active.account'])->group(function () {
             Route::post('/{segment}/execute', [ClientSegmentController::class, 'execute'])->name('execute');
             Route::post('/{segment}/pin',     [ClientSegmentController::class, 'pin'])->name('pin');
             Route::delete('/{segment}',       [ClientSegmentController::class, 'destroy'])->name('destroy');
+            Route::post('/recalculate-health',    [ClientSegmentController::class, 'recalculateHealth'])->name('recalculate-health');
         });
 
         // ==================== الاستيراد والتصدير ====================
