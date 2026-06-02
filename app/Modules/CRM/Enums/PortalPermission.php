@@ -32,7 +32,7 @@ enum PortalPermission: string
             self::DownloadInvoices => 'يمكن للعميل تنزيل الفواتير كـ PDF',
             self::MakePayments     => 'يمكن للعميل متابعة حالة دفعاته',
             self::ViewFiles        => 'يمكن للعميل عرض الملفات المشتركة معه',
-        ];
+        };
     }
 
     /** الصلاحيات الافتراضية عند إنشاء رمز جديد */

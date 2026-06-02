@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InvoiceMail;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Project;
 use App\Models\Transaction;
+use Mpdf\Mpdf;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
+use Illuminate\Http\Response;
 use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\TransactionType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class InvoiceController extends Controller
@@ -115,6 +121,51 @@ class InvoiceController extends Controller
             ->firstOrFail();
 
         return view('invoices.show', compact('invoice'));
+    }
+
+    // ==================== PDF ====================
+    public function downloadPdf(Request $request, string $ulid): Response
+    {
+        $invoice = Invoice::where('ulid', $ulid)
+            ->where('user_id', $request->user()->id)
+            ->with(['client', 'project', 'items'])
+            ->firstOrFail();
+
+        $defaultConfig   = (new ConfigVariables())->getDefaults();
+        $fontDirectories = $defaultConfig['fontDir'];
+        $defaultFontConfig = (new FontVariables())->getDefaults();
+        $fontData = $defaultFontConfig['fontdata'];
+
+        $mpdf = new Mpdf([
+            'mode'             => 'utf-8',
+            'format'           => 'A4',
+            'orientation'      => 'P',
+            'margin_top'       => 15,
+            'margin_bottom'    => 15,
+            'margin_left'      => 15,
+            'margin_right'     => 15,
+            'fontDir'          => array_merge($fontDirectories, [base_path('resources/fonts')]),
+            'fontdata'         => $fontData,
+            'default_font'     => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont'   => true,
+            'direction'        => 'rtl',
+        ]);
+
+        $mpdf->SetDirectionality('rtl');
+        $html = view('invoices.pdf', compact('invoice'))->render();
+        $mpdf->WriteHTML($html);
+
+        $filename = 'invoice-' . $invoice->number . '.pdf';
+
+        return response(
+            $mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN),
+            200,
+            [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]
+        );
     }
 
     // ==================== Edit ====================
@@ -271,6 +322,40 @@ class InvoiceController extends Controller
         $invoice = Invoice::where('ulid', $ulid)->where('user_id', $request->user()->id)->firstOrFail();
         $invoice->update(['status' => InvoiceStatus::Cancelled]);
         return back()->with('success', 'تم إلغاء الفاتورة.');
+    }
+
+    // ==================== إرسال للعميل ====================
+
+    public function sendToClient(Request $request, string $ulid): RedirectResponse
+    {
+        $invoice = Invoice::where('ulid', $ulid)
+            ->where('user_id', $request->user()->id)
+            ->with(['client', 'project'])
+            ->firstOrFail();
+
+        $request->validate([
+            'recipient_email' => 'required|email',
+        ]);
+
+        $toEmail    = $request->input('recipient_email');
+        $senderName = $request->user()->name;
+
+        try {
+            Mail::to($toEmail)->send(new InvoiceMail($invoice, $senderName));
+
+            // تحديث الحالة إلى Sent إذا كانت Draft
+            if ($invoice->status === InvoiceStatus::Draft) {
+                $invoice->update([
+                    'status'  => InvoiceStatus::Sent,
+                    'sent_at' => now(),
+                ]);
+            }
+
+            return back()->with('success', "✅ تم إرسال الفاتورة إلى {$toEmail} بنجاح.");
+
+        } catch (\Throwable $e) {
+            return back()->with('error', 'فشل إرسال البريد: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Request $request, string $ulid): RedirectResponse

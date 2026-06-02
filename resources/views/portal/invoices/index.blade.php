@@ -42,9 +42,9 @@
                 <tbody class="divide-y divide-gray-50">
                     @foreach($transactions as $tx)
                         @php
-                            $type = $tx->type instanceof \App\Enums\TransactionType
+                            $type = $tx->type instanceof \App\Support\Enums\TransactionType
                                 ? $tx->type
-                                : \App\Enums\TransactionType::tryFrom($tx->type);
+                                : \App\Support\Enums\TransactionType::tryFrom($tx->type);
                         @endphp
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-5 py-3.5">

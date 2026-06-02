@@ -121,7 +121,7 @@ class ClientPortalController extends Controller
         $projects = $client->projects()
             ->orderByDesc('created_at')
             ->limit(5)
-            ->get(['id', 'name', 'status', 'created_at', 'color']);
+            ->get(['id', 'name', 'created_at', 'color']);
 
         return view('portal.dashboard', compact('client', 'portalToken', 'summary', 'projects'));
     }

@@ -58,9 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{invoice}/edit',      [InvoiceController::class, 'edit'])->name('edit');
         Route::put('/{invoice}',           [InvoiceController::class, 'update'])->name('update');
         Route::delete('/{invoice}',        [InvoiceController::class, 'destroy'])->name('destroy');
-        Route::post('/{invoice}/mark-sent', [InvoiceController::class, 'markSent'])->name('mark-sent');
-        Route::post('/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('mark-paid');
-        Route::post('/{invoice}/cancel',    [InvoiceController::class, 'cancel'])->name('cancel');
+        Route::post('/{invoice}/mark-sent',    [InvoiceController::class, 'markSent'])->name('mark-sent');
+        Route::post('/{invoice}/mark-paid',    [InvoiceController::class, 'markPaid'])->name('mark-paid');
+        Route::post('/{invoice}/cancel',       [InvoiceController::class, 'cancel'])->name('cancel');
+        Route::post('/{invoice}/send-client',  [InvoiceController::class, 'sendToClient'])->name('send-client');
+        Route::get('/{invoice}/pdf',           [InvoiceController::class, 'downloadPdf'])->name('pdf');
     });
 
     // Clients — تم نقله إلى CRM Module (routes/crm.php via CRMServiceProvider)

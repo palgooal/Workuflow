@@ -1,10 +1,27 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
+@extends('layouts.app')
+
+@section('title', 'بوابة العميل — ' . $client->name)
+
+@section('content')
+
+    {{-- Toast --}}
+    <div
+        x-data="{ show: false, message: '', type: 'success' }"
+        x-on:show-toast.window="show = true; message = $event.detail.message; type = $event.detail.type || 'success'; setTimeout(() => show = false, 4500)"
+        x-show="show"
+        x-transition.opacity
+        class="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium pointer-events-none"
+        :class="type === 'success' ? 'bg-emerald-600' : 'bg-red-600'"
+        style="display:none"
+    >
+        <span x-text="message"></span>
+    </div>
+
+    <div class="py-8" x-data="portalTokenManager()">
+        {{-- Header --}}
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 mb-4 flex items-center justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    رموز بوابة العميل
-                </h2>
+                <h2 class="font-semibold text-xl text-gray-800">رموز بوابة العميل</h2>
                 <p class="text-sm text-gray-500 mt-0.5">{{ $client->name }}
                     @if($client->company) · {{ $client->company }} @endif
                 </p>
@@ -17,22 +34,6 @@
                 ملف العميل
             </a>
         </div>
-    </x-slot>
-
-    {{-- Toast --}}
-    <div
-        x-data="{ show: false, message: '', type: 'success' }"
-        @show-toast.window="show = true; message = $event.detail.message; type = $event.detail.type || 'success'; setTimeout(() => show = false, 4500)"
-        x-show="show"
-        x-transition.opacity
-        class="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium pointer-events-none"
-        :class="type === 'success' ? 'bg-emerald-600' : 'bg-red-600'"
-        style="display:none"
-    >
-        <span x-text="message"></span>
-    </div>
-
-    <div class="py-8" x-data="portalTokenManager()">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             {{-- Security Banner --}}
@@ -68,7 +69,7 @@
                                        :class="newToken.permissions.includes('{{ $perm->value }}') ? 'border-indigo-400 bg-indigo-50' : ''">
                                     <input type="checkbox"
                                            value="{{ $perm->value }}"
-                                           @change="togglePermission('{{ $perm->value }}')"
+                                           x-on:change="togglePermission('{{ $perm->value }}')"
                                            :checked="newToken.permissions.includes('{{ $perm->value }}')"
                                            class="mt-0.5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                     <div>
@@ -101,7 +102,7 @@
                         </div>
                     </div>
 
-                    <button @click="createToken()"
+                    <button x-on:click="createToken()"
                             :disabled="newToken.permissions.length === 0 || creating"
                             class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg x-show="!creating" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +133,7 @@
                     <p class="text-xs text-gray-500 mb-1">رمز الوصول:</p>
                     <div class="flex items-center gap-2">
                         <code class="text-xs font-mono text-gray-800 flex-1 break-all leading-relaxed" x-text="createdToken?.plaintext"></code>
-                        <button @click="copyToken(createdToken?.plaintext)"
+                        <button x-on:click="copyToken(createdToken?.plaintext)"
                                 class="shrink-0 p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 rounded-lg transition"
                                 title="نسخ الرمز">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,7 +148,7 @@
                     <p class="text-xs text-gray-500 mb-1">رابط البوابة مع الرمز:</p>
                     <div class="flex items-center gap-2">
                         <code class="text-xs font-mono text-indigo-700 flex-1 break-all" x-text="createdToken?.url"></code>
-                        <button @click="copyToken(createdToken?.url)"
+                        <button x-on:click="copyToken(createdToken?.url)"
                                 class="shrink-0 p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 rounded-lg transition"
                                 title="نسخ الرابط">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +158,7 @@
                     </div>
                 </div>
 
-                <button @click="createdToken = null"
+                <button x-on:click="createdToken = null"
                         class="text-xs text-emerald-700 hover:text-emerald-900 underline">
                     لقد نسخته — أخفِ الرمز
                 </button>
@@ -216,7 +217,7 @@
                                 </div>
 
                                 {{-- Revoke --}}
-                                <button @click="revokeToken({{ $token->id }})"
+                                <button x-on:click="revokeToken({{ $token->id }})"
                                         class="shrink-0 text-xs px-3 py-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200 hover:border-red-300 rounded-lg transition">
                                     إبطال
                                 </button>
@@ -339,6 +340,7 @@
             },
         };
     }
+    
     </script>
 
-</x-app-layout>
+@endsection

@@ -123,6 +123,7 @@
                 </svg>
                 تعديل
             </a>
+
             @endcan
 
             @if($client->is_archived)
