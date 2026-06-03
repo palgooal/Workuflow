@@ -9,6 +9,7 @@ use App\Modules\CRM\Enums\ClientStatus;
 use App\Modules\CRM\Enums\HealthScoreGrade;
 use App\Modules\CRM\Models\ClientTag;
 use App\Modules\CRM\Models\SavedSegment;
+use App\Modules\CRM\Services\ClientHealthScoreService;
 use App\Modules\CRM\Services\SavedSegmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,8 @@ use Illuminate\View\View;
 class ClientSegmentController extends Controller
 {
     public function __construct(
-        private readonly SavedSegmentService $segmentService,
+        private readonly SavedSegmentService      $segmentService,
+        private readonly ClientHealthScoreService $healthService,
     ) {}
 
     /**
@@ -172,6 +174,21 @@ class ClientSegmentController extends Controller
         return response()->json([
             'data'    => $segment,
             'message' => $pinned ? 'تم تثبيت الشريحة.' : 'تم إلغاء تثبيت الشريحة.',
+        ]);
+    }
+
+    /**
+     * إعادة حساب مؤشرات صحة العملاء للمستخدم الحالي
+     */
+    public function recalculateHealth(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Client::class);
+
+        $result = $this->healthService->recalculateForUser($request->user()->id);
+
+        return response()->json([
+            'message'   => "تم حساب مؤشر الصحة لـ {$result['processed']} عميل بنجاح.",
+            'processed' => $result['processed'],
         ]);
     }
 

@@ -375,9 +375,11 @@ Quote → Project (عند convertToInvoice مع create_project)
 ## Scheduler
 
 ```php
-// app/Console/Kernel.php
+// routes/console.php
 $schedule->command('recurring:process')->dailyAt('01:00');
 $schedule->command('debts:send-alerts')->dailyAt('08:00');
+$schedule->command('crm:recalculate-health-scores --apply-tags')->dailyAt('02:00');
+// Output: storage/logs/crm-health-scores.log
 ```
 
 ---

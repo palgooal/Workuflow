@@ -546,14 +546,51 @@
                 </div>
 
                 @if($withoutScore > 0)
-                <div class="mt-4 bg-gray-50 rounded-xl border border-gray-200 p-4 flex items-start gap-3 text-sm text-gray-600">
-                    <svg class="w-5 h-5 text-gray-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div x-data="{ loading: false, done: false, processed: 0, error: '' }"
+                     class="mt-4 bg-amber-50 rounded-xl border border-amber-200 p-4 flex items-start gap-3 text-sm text-gray-700">
+                    <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <span>
-                        <strong>{{ $withoutScore }}</strong> عميل من أصل <strong>{{ $totalClients }}</strong> لم يُحسب لهم مؤشر الصحة بعد.
-                        نفّذ الأمر <code class="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">php artisan crm:recalculate-health</code> لحساب جميع الدرجات.
-                    </span>
+                    <div class="flex-1">
+                        <template x-if="!done">
+                            <div class="flex items-center justify-between gap-4 flex-wrap">
+                                <span>
+                                    <strong>{{ $withoutScore }}</strong> عميل من أصل <strong>{{ $totalClients }}</strong> لم يُحسب لهم مؤشر الصحة بعد.
+                                </span>
+                                <button @click="
+                                        loading = true; error = '';
+                                        fetch('{{ route('clients.segments.recalculate-health') }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                'Accept': 'application/json',
+                                            }
+                                        })
+                                        .then(r => r.json())
+                                        .then(d => { done = true; processed = d.processed; })
+                                        .catch(() => { error = 'حدث خطأ، يرجى المحاولة مرة أخرى.'; loading = false; })
+                                    "
+                                    :disabled="loading"
+                                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium transition disabled:opacity-60 shrink-0">
+                                    <svg x-show="loading" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                    </svg>
+                                    <span x-text="loading ? 'جارٍ الحساب...' : 'احسب المؤشرات الآن'"></span>
+                                </button>
+                            </div>
+                        </template>
+                        <template x-if="done">
+                            <div class="flex items-center gap-2 text-emerald-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span>تم حساب مؤشر الصحة لـ <strong x-text="processed"></strong> عميل. أعد تحميل الصفحة لرؤية النتائج.</span>
+                                <button @click="window.location.reload()" class="underline text-xs text-emerald-600 hover:text-emerald-800">تحديث</button>
+                            </div>
+                        </template>
+                        <p x-show="error" class="mt-1 text-red-500 text-xs" x-text="error"></p>
+                    </div>
                 </div>
                 @endif
 

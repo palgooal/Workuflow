@@ -30,6 +30,7 @@
                 ['id' => 'budget',       'label' => 'الميزانية',          'emoji' => '📊'],
                 ['id' => 'recurring',    'label' => 'الالتزامات الثابتة', 'emoji' => '🔁'],
                 ['id' => 'reports',      'label' => 'التقارير',           'emoji' => '📈'],
+                ['id' => 'crm',          'label' => 'الشرائح وصحة العملاء','emoji' => '🎯'],
                 ['id' => 'tips',         'label' => 'نصائح وحيل',         'emoji' => '💡'],
             ];
             @endphp
@@ -393,6 +394,187 @@
 
                 <x-help-tip>
                     يمكنك فلترة التقارير حسب الفترة الزمنية: هذا الشهر، الشهر الماضي، 3 أشهر، أو نطاق مخصص.
+                </x-help-tip>
+
+            </x-help-section>
+        </div>
+
+        {{-- ==================== الشرائح وصحة العملاء ==================== --}}
+        <div x-show="tab === 'crm'" x-cloak>
+            <x-help-section emoji="🎯" title="الشرائح وصحة العملاء — اعرف كل عميل بعمق">
+
+                {{-- ما هو مؤشر الصحة --}}
+                <x-help-card title="ما هو مؤشر صحة العميل؟">
+                    <p class="text-gray-600 leading-relaxed">
+                        مؤشر الصحة هو <strong>درجة من 0 إلى 100</strong> تُخبرك تلقائياً بمدى جودة علاقتك مع كل عميل —
+                        بناءً على سلوكه الفعلي معك: هل يدفع في الوقت؟ هل يتعاون معك باستمرار؟ هل قيمته لعملك تنمو أم تتراجع؟
+                    </p>
+                    <p class="mt-3 text-gray-500 text-xs">
+                        بدلاً من الاعتماد على الانطباع الشخصي، تحصل على رقم موضوعي مبني على بياناتك الحقيقية.
+                    </p>
+                </x-help-card>
+
+                {{-- درجات التقييم --}}
+                <x-help-card title="درجات التقييم — ماذا تعني الأرقام؟">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xl font-bold text-emerald-700">80–100</span>
+                                <span class="text-xs font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">ممتاز</span>
+                            </div>
+                            <p class="text-xs text-emerald-700 leading-relaxed">عميل وفيّ، يدفع بانتظام، تواصله مستمر. احرص على الاهتمام به وتعزيز العلاقة.</p>
+                        </div>
+                        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xl font-bold text-blue-700">60–79</span>
+                                <span class="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">جيد</span>
+                            </div>
+                            <p class="text-xs text-blue-700 leading-relaxed">علاقة صحية بشكل عام، لكن ثمة جوانب تستحق التحسين. تابع من حين لآخر.</p>
+                        </div>
+                        <div class="p-3 bg-amber-50 rounded-xl border border-amber-100">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xl font-bold text-amber-700">40–59</span>
+                                <span class="text-xs font-semibold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">متوسط</span>
+                            </div>
+                            <p class="text-xs text-amber-700 leading-relaxed">العلاقة متذبذبة — تأخر في الدفع أو تواصل متقطع. يحتاج اهتماماً استباقياً.</p>
+                        </div>
+                        <div class="p-3 bg-red-50 rounded-xl border border-red-100">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xl font-bold text-red-700">0–39</span>
+                                <span class="text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">ضعيف</span>
+                            </div>
+                            <p class="text-xs text-red-700 leading-relaxed">علاقة متدهورة. انقطع التواصل أو تأخرت الدفعات بشكل ملحوظ — تحرك الآن.</p>
+                        </div>
+                    </div>
+                </x-help-card>
+
+                {{-- كيف تُحسَب الدرجة --}}
+                <x-help-card title="كيف تُحسَب الدرجة؟ — 5 عوامل ذكية">
+                    <p class="text-gray-500 text-xs mb-3">الخوارزمية تحلل سلوك العميل عبر 5 عوامل، لكل منها وزن مختلف:</p>
+                    <div class="space-y-2.5">
+                        @php $factors = [
+                            ['35%', 'bg-indigo-500', 'معدل الدفع', 'نسبة ما دفعه الفعلي من إجمالي الفواتير. هذا هو العامل الأهم — العميل الذي يدفع دائماً يستحق درجة عالية.'],
+                            ['25%', 'bg-violet-500', 'تكرار التعامل', 'عدد المعاملات والمشاريع خلال آخر 12 شهراً. العميل المتكرر أكثر قيمة من العميل المتقطع.'],
+                            ['20%', 'bg-blue-500', 'قيمة الإيراد', 'حجم ما دفعه نسبةً لباقي عملائك. العميل الأعلى قيمةً يأخذ درجة أعلى.'],
+                            ['10%', 'bg-sky-500', 'انتظام التواصل', 'متى كان آخر تواصل معك؟ العميل الذي تواصل منذ أسبوع أفضل من الذي لم تسمع عنه 6 أشهر.'],
+                            ['10%', 'bg-cyan-500', 'معدل الاستجابة', 'نسبة المتابعات التي اكتملت معه. متابعاتك معه تعكس مدى استجابته واهتمامه.'],
+                        ] @endphp
+                        @foreach($factors as [$weight, $color, $name, $desc])
+                        <div class="flex items-start gap-3">
+                            <div class="flex items-center justify-center w-10 h-6 {{ $color }} text-white text-xs font-bold rounded-lg shrink-0 mt-0.5">{{ $weight }}</div>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-xs">{{ $name }}</p>
+                                <p class="text-gray-500 text-xs mt-0.5 leading-relaxed">{{ $desc }}</p>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <p class="text-xs text-indigo-700 leading-relaxed">
+                            <strong>تحيّز الحداثة:</strong> الخوارزمية تُعطي الـ 3 أشهر الأخيرة وزناً أكبر (70%) مقارنةً بالتاريخ الكامل (30%).
+                            يعني عميل تحسّن مؤخراً → ترتفع درجته سريعاً. وعميل تراجع مؤخراً → تنخفض درجته حتى لو كان ممتازاً قديماً.
+                        </p>
+                    </div>
+                </x-help-card>
+
+                {{-- ما هي الشرائح --}}
+                <x-help-card title="ما هي الشرائح (Segments)؟">
+                    <p class="text-gray-600 leading-relaxed">
+                        الشريحة هي <strong>فلتر ذكي محفوظ</strong> يُجمّع عملاءك في مجموعات بشروط تحددها أنت.
+                        بدلاً من البحث يدوياً في كل مرة، تضغط على الشريحة وتحصل على القائمة فوراً.
+                    </p>
+                    <p class="mt-3 text-gray-500 text-xs leading-relaxed">
+                        مثال: "عملاء نشطون، صحتهم أقل من 40، ولديهم متابعة متأخرة" — هذا الفلتر يمكن حفظه كشريحة
+                        وفتحه بنقرة واحدة في أي وقت.
+                    </p>
+                </x-help-card>
+
+                {{-- أمثلة شرائح --}}
+                <x-help-card title="أمثلة على شرائح مفيدة">
+                    <div class="space-y-2">
+                        @php $examples = [
+                            ['🔴', 'العملاء في خطر', 'صحة أقل من 40 + آخر تواصل قبل أكثر من 60 يوماً', 'bg-red-50 border-red-100'],
+                            ['⏰', 'متابعات متأخرة', 'لديهم متابعة معلقة تجاوزت موعدها', 'bg-amber-50 border-amber-100'],
+                            ['💎', 'العملاء المميزون', 'إجمالي إيراد أعلى من 10,000 + صحة فوق 80', 'bg-emerald-50 border-emerald-100'],
+                            ['🔄', 'العملاء الخاملون', 'لا تواصل منذ 90 يوماً + لا مشاريع نشطة', 'bg-blue-50 border-blue-100'],
+                            ['💳', 'متأخرو الدفع', 'معدل الدفع أقل من 50% + لديهم فواتير', 'bg-orange-50 border-orange-100'],
+                        ] @endphp
+                        @foreach($examples as [$emoji, $name, $condition, $style])
+                        <div class="flex items-start gap-3 p-3 rounded-xl border {{ $style }}">
+                            <span class="text-xl shrink-0">{{ $emoji }}</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-xs">{{ $name }}</p>
+                                <p class="text-gray-500 text-xs mt-0.5">{{ $condition }}</p>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </x-help-card>
+
+                {{-- كيفية الاستخدام --}}
+                <x-help-card title="كيف تستخدم الشرائح وصحة العملاء؟">
+                    <div class="space-y-4">
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">اذهب إلى صفحة الشرائح</p>
+                                <p class="text-gray-500 text-xs mt-0.5">من القائمة الجانبية: <strong>العملاء ← الشرائح</strong>، ثم اختر تبويب <strong>"صحة العملاء"</strong> لترى نظرة عامة فورية.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">احسب مؤشرات الصحة</p>
+                                <p class="text-gray-500 text-xs mt-0.5">إذا رأيت تنبيهاً بوجود عملاء بدون درجة، اضغط <strong>"احسب المؤشرات الآن"</strong> — سيتم الحساب تلقائياً دون الحاجة لأي إجراء تقني.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">أنشئ شريحة مخصصة</p>
+                                <p class="text-gray-500 text-xs mt-0.5">في تبويب <strong>"الشرائح"</strong>، اضغط <strong>"شريحة جديدة"</strong>، اختر الحقل والشرط والقيمة، ثم احفظها باسم. يمكنك تثبيتها لتظهر في الأعلى دائماً.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">4</div>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">تصرّف بناءً على النتائج</p>
+                                <p class="text-gray-500 text-xs mt-0.5">من نتائج الشريحة، انقر على أي عميل لتفتح بطاقته وتتواصل معه مباشرةً عبر واتساب أو تضيف له متابعة.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </x-help-card>
+
+                {{-- الفلاتر المتاحة --}}
+                <x-help-card title="الفلاتر المتاحة عند بناء الشريحة">
+                    <div class="grid grid-cols-2 gap-2">
+                        @php $fields = [
+                            ['الحالة', 'نشط، موقوف، مُغلق...'],
+                            ['مصدر العميل', 'إحالة، موقع، تواصل اجتماعي...'],
+                            ['مؤشر الصحة', 'أعلى من / أقل من / بين'],
+                            ['إجمالي الإيراد', 'مقارنة بمبلغ محدد'],
+                            ['تاريخ التواصل', 'آخر 30 يوم، 90 يوم، سنة...'],
+                            ['الوسوم', 'يحمل / لا يحمل / يحمل الكل'],
+                            ['متابعة متأخرة', 'نعم أو لا'],
+                            ['عدد الفواتير', 'أكثر من / أقل من'],
+                        ] @endphp
+                        @foreach($fields as [$name, $desc])
+                        <div class="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                            <p class="font-semibold text-gray-800 text-xs">{{ $name }}</p>
+                            <p class="text-gray-400 text-xs mt-0.5">{{ $desc }}</p>
+                        </div>
+                        @endforeach
+                    </div>
+                </x-help-card>
+
+                {{-- tip --}}
+                <x-help-tip>
+                    تُحسَب درجات الصحة تلقائياً كل يوم في الساعة 2:00 صباحاً. لكن إذا أضفت بيانات جديدة وأردت رؤية النتائج فوراً، اضغط زر "احسب المؤشرات الآن" في صفحة الشرائح.
                 </x-help-tip>
 
             </x-help-section>
