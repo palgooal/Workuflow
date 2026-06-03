@@ -32,6 +32,111 @@ use Illuminate\Support\Facades\Log;
  */
 class ClientSegmentEngine
 {
+    // ==================== Field/Operator Registry ====================
+
+    private const FIELD_TYPES = [
+        'status'               => 'scalar',
+        'source'               => 'scalar',
+        'health_score'         => 'numeric',
+        'total_revenue'        => 'numeric',
+        'total_paid'           => 'numeric',
+        'invoice_count'        => 'numeric',
+        'last_contact_at'      => 'date',
+        'last_payment_at'      => 'date',
+        'created_at'           => 'date',
+        'tag_ids'              => 'tags',
+        'has_overdue_followup' => 'boolean',
+        'search'               => 'search',
+    ];
+
+    private const OPS_BY_TYPE = [
+        'scalar'  => ['equals', 'not_equals', 'contains', 'in', 'not_in', 'is_empty', 'is_not_empty'],
+        'numeric' => ['equals', 'not_equals', 'greater_than', 'less_than', 'between', 'is_empty', 'is_not_empty'],
+        'date'    => ['equals', 'not_equals', 'greater_than', 'less_than', 'between',
+                      'is_empty', 'is_not_empty', 'last_30_days', 'last_90_days', 'last_year'],
+        'tags'    => ['in', 'not_in', 'is_empty', 'is_not_empty', 'all_of'],
+        'boolean' => ['equals'],
+        'search'  => ['contains'],
+    ];
+
+    // Operators that don't require a value
+    private const NO_VALUE_OPS = ['is_empty', 'is_not_empty', 'last_30_days', 'last_90_days', 'last_year'];
+
+    // ==================== Validation ====================
+
+    /**
+     * تحقق من صحة بنية مصفوفة الفلاتر قبل الحفظ أو التنفيذ.
+     *
+     * @return array{valid: bool, errors: string[]}
+     */
+    public static function validateFilters(array $filters): array
+    {
+        $errors = [];
+
+        if (empty($filters)) {
+            return ['valid' => true, 'errors' => []];
+        }
+
+        foreach ($filters as $i => $filter) {
+            $prefix = "فلتر #" . ($i + 1);
+
+            if (!is_array($filter)) {
+                $errors[] = "{$prefix}: يجب أن يكون مصفوفة.";
+                continue;
+            }
+
+            $field = $filter['field'] ?? null;
+            $op    = $filter['op']    ?? null;
+            $value = $filter['value'] ?? null;
+
+            // حقل مطلوب وصحيح
+            if (!$field) {
+                $errors[] = "{$prefix}: الحقل (field) مطلوب.";
+                continue;
+            }
+
+            if (!array_key_exists($field, self::FIELD_TYPES)) {
+                $allowed = implode(', ', array_keys(self::FIELD_TYPES));
+                $errors[] = "{$prefix}: الحقل '{$field}' غير معروف. المتاح: {$allowed}";
+                continue;
+            }
+
+            // operator مطلوب وصحيح لنوع الحقل
+            if (!$op) {
+                $errors[] = "{$prefix}: العملية (op) مطلوبة.";
+                continue;
+            }
+
+            $type        = self::FIELD_TYPES[$field];
+            $allowedOps  = self::OPS_BY_TYPE[$type];
+
+            if (!in_array($op, $allowedOps, true)) {
+                $errors[] = "{$prefix}: العملية '{$op}' غير صالحة للحقل '{$field}'. المتاح: " . implode(', ', $allowedOps);
+                continue;
+            }
+
+            // القيمة مطلوبة إلا لعمليات is_empty / is_not_empty / last_X
+            if (!in_array($op, self::NO_VALUE_OPS, true) && ($value === null || $value === '')) {
+                $errors[] = "{$prefix}: القيمة (value) مطلوبة للعملية '{$op}'.";
+                continue;
+            }
+
+            // between يحتاج مصفوفة من عنصرين
+            if ($op === 'between') {
+                if (!is_array($value) || count($value) !== 2) {
+                    $errors[] = "{$prefix}: العملية 'between' تحتاج مصفوفة من قيمتين [min, max].";
+                }
+            }
+
+            // in / not_in / all_of تحتاج مصفوفة
+            if (in_array($op, ['in', 'not_in', 'all_of'], true) && !is_array($value)) {
+                $errors[] = "{$prefix}: العملية '{$op}' تحتاج مصفوفة من القيم.";
+            }
+        }
+
+        return ['valid' => empty($errors), 'errors' => $errors];
+    }
+
     /**
      * بناء Query من SavedSegment
      */

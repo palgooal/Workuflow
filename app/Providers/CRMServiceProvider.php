@@ -9,9 +9,13 @@ use App\Modules\CRM\Events\ClientArchived;
 use App\Modules\CRM\Events\ClientDeleted;
 use App\Modules\CRM\Events\ClientTagAssigned;
 use App\Modules\CRM\Events\ClientTagRemoved;
+use App\Modules\CRM\Events\FollowUpCreated;
+use App\Modules\CRM\Events\FollowUpCompleted;
 use App\Modules\CRM\Listeners\LogClientCreatedActivity;
 use App\Modules\CRM\Listeners\LogClientUpdatedActivity;
 use App\Modules\CRM\Listeners\LogClientTagActivity;
+use App\Modules\CRM\Listeners\LogFollowUpCreatedActivity;
+use App\Modules\CRM\Listeners\LogFollowUpCompletedActivity;
 use App\Modules\CRM\Models\ClientFollowUp;
 use App\Modules\CRM\Models\ClientImportLog;
 use App\Modules\CRM\Models\ClientPortalToken;
@@ -85,6 +89,10 @@ class CRMServiceProvider extends ServiceProvider
         // الأرشفة والحذف — بدون Listener حالياً (يُضاف في Sprint 6 مع Automation)
         // Event::listen(ClientArchived::class, ...);
         // Event::listen(ClientDeleted::class,  ...);
+
+        // GAP-06 Fix: Follow-up Events — C-01 compliant ($afterCommit = true)
+        Event::listen(FollowUpCreated::class,   LogFollowUpCreatedActivity::class);
+        Event::listen(FollowUpCompleted::class, LogFollowUpCompletedActivity::class);
     }
 
     /**

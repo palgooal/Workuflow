@@ -63,6 +63,26 @@ Schedule::command('crm:refresh-segments')
 // إحماء الـ Cache كل ساعة (اختياري في الإنتاج)
 // Schedule::command('cache:prune-stale-tags')->hourly();
 
+// ==================== CRM — Sprint 6: اكتشاف العملاء الخاملين ====================
+
+// اكتشاف العملاء الخاملين وتشغيل قواعد الأتمتة يومياً الساعة 04:00
+// يعمل بعد recalculate-health-scores (02:00) وreconcile-aggregates (03:00)
+// حتى تكون البيانات محدَّثة قبل تقييم الشروط
+Schedule::command('crm:detect-inactive')
+    ->dailyAt('04:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/crm-detect-inactive.log'));
+
+// ==================== CRM — Sprint 6: تذكيرات المتابعات ====================
+
+// إرسال تذكيرات المتابعات كل 30 دقيقة (نافذة الساعة الأخيرة في FollowUpService)
+Schedule::command('crm:send-follow-up-reminders')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/crm-follow-up-reminders.log'));
+
 // ==================== Invoices — تذكيرات الفواتير ====================
 
 // تذكيرات الفواتير المستحقة والمتأخرة كل صباح الساعة 09:00

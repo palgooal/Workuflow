@@ -326,9 +326,10 @@ class ClientHealthScoreService
 
     private function countContacts(int $clientId, int $months): int
     {
+        // client_activities يستخدم occurred_at وليس created_at (لا يوجد عمود created_at في الجدول)
         return (int) DB::table('client_activities')
             ->where('client_id', $clientId)
-            ->where('created_at', '>=', now()->subMonths($months))
+            ->where('occurred_at', '>=', now()->subMonths($months))
             ->count();
     }
 

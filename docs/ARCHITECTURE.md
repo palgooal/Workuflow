@@ -380,6 +380,15 @@ $schedule->command('recurring:process')->dailyAt('01:00');
 $schedule->command('debts:send-alerts')->dailyAt('08:00');
 $schedule->command('crm:recalculate-health-scores --apply-tags')->dailyAt('02:00');
 // Output: storage/logs/crm-health-scores.log
+
+$schedule->command('crm:reconcile-aggregates')->dailyAt('03:00');
+$schedule->command('crm:refresh-segments')->dailyAt('03:30');
+$schedule->command('crm:detect-inactive')->dailyAt('04:00');              // Sprint 6 — GAP-05
+// Output: storage/logs/crm-detect-inactive.log
+// Triggers: days_since_contact | health_score_below | invoice_overdue
+
+$schedule->command('crm:send-follow-up-reminders')->everyThirtyMinutes(); // Sprint 6 — GAP-04
+// Output: storage/logs/crm-follow-up-reminders.log
 ```
 
 ---

@@ -1,7 +1,7 @@
 # ✅ خطة المهام الكاملة — دراهم SaaS Financial Platform
 
 > وثيقة تتبع المهام — Laravel 12 / PHP 8.2  
-> آخر تحديث: 2 يونيو 2026 — Phase 22 + Phase 23 + Phase 24 (ملف العميل المتقدم) مكتملة ✅
+> آخر تحديث: 3 يونيو 2026 — Phase 25 (إصلاحات CRM + تحسينات) مكتملة ✅
 
 ---
 
@@ -18,7 +18,10 @@
 | نظام عروض الأسعار | `docs/QUOTES.md` ✅ |
 | دعم العملات المتعددة | `docs/MULTI-CURRENCY.md` ✅ |
 | إعدادات النظام من الأدمن | `docs/SETTINGS-ADMIN.md` ✅ |
-| آخر تحديث | 2 يونيو 2026 |
+| توثيق الـ Bugs والـ Gaps | `docs/KNOWN-BUGS-AND-GAPS.md` ✅ |
+| توثيق Follow-Ups | `docs/CRM-FOLLOW-UPS.md` ✅ |
+| توثيق Health Score + Segments | `docs/CRM-HEALTH-SEGMENTS.md` ✅ |
+| آخر تحديث | 3 يونيو 2026 |
 
 ---
 
@@ -48,6 +51,7 @@
 | نظام الفواتير | Phase 18 — CRUD + طباعة + بوابة عميل |
 | نظام عروض الأسعار | Phase 19 — CRUD + بوابة عميل + تحويل لفاتورة/مشروع |
 | إصلاحات وتحسينات | Phase 20 — Multi-currency + unique keys + Impersonation |
+| إصلاحات CRM + يونيو 2026 | Phase 25 — BUG-01/02/03 + GAP-01/04 + Help Center CRM tab |
 
 ### ⏳ جزئي / مؤجل
 | المجال | ما تم | ما تبقى |
@@ -99,6 +103,7 @@ Phase 21 → إعدادات النظام من لوحة الإدارة           
 Phase 22 → الفواتير المتقدمة (PDF + واتساب + تذكيرات + قالب مخصص)  ✅ مكتمل
 Phase 23 → قائمة العملاء المتقدمة (بحث فوري + Infinite Scroll + Bulk Actions)  ✅ مكتمل
 Phase 24 → ملف العميل المتقدم (Health Score + Timeline + تبويب الوسوم)  ✅ مكتمل
+Phase 25 → إصلاحات CRM + تحسينات يونيو 2026                           ✅ مكتمل
 ```
 
 ---
@@ -1781,4 +1786,77 @@ php artisan storage:link     # لعرض شعارات الشركة
 php artisan db:seed --class=SystemClientTagsSeeder
 ```
 
-*آخر تحديث: 2 يونيو 2026*
+---
+
+## 🔧 Phase 25 — إصلاحات CRM + تحسينات يونيو 2026 ✅
+
+> التوثيق التفصيلي في: `docs/KNOWN-BUGS-AND-GAPS.md` / `docs/CRM-HEALTH-SEGMENTS.md` / `docs/CRM-FOLLOW-UPS.md`
+
+### ✅ 25.1 — إصلاح BUG-01: Health Score يفشل لكل العملاء
+**التاريخ:** 3 يونيو 2026  
+**الملف:** `app/Modules/CRM/Services/ClientHealthScoreService.php`
+
+- [x] `countContacts()` كانت تستعلم `created_at` على جدول `client_activities`
+- [x] الجدول يستخدم `occurred_at` (لا `created_at`) — تسبّب في `Column not found 1054` لكل عميل
+- [x] **الإصلاح:** تغيير السطر 331: `'created_at'` → `'occurred_at'`
+- [x] Health Score يعمل الآن لجميع العملاء ✅
+
+---
+
+### ✅ 25.2 — إصلاح BUG-02 + BUG-03: صفحة المتابعات فارغة
+**التاريخ:** 3 يونيو 2026  
+**الملف:** `resources/views/crm/follow-ups/index.blade.php`
+
+- [x] **BUG-02:** الـ view كان يستخدم `<x-app-layout>` (component غير موجود) → تحويل لـ `@extends('layouts.app')`
+- [x] **BUG-03:** `@show-toast.window` يُفسَّر من Blade كـ `@show` directive → يُغلق الـ section مبكراً → `InvalidArgumentException`
+- [x] **الإصلاح:** تغيير `@show-toast.window` إلى `x-on:show-toast.window`
+- [x] **قاعدة موثّقة:** أي Alpine.js `@event` يبدأ بـ Blade directive (`@show`, `@error`, `@auth`...) يُكتب بـ `x-on:` — راجع `docs/CRM-FOLLOW-UPS.md §9`
+
+---
+
+### ✅ 25.3 — GAP-01: Schema Validation لفلاتر الشرائح
+**التاريخ:** 3 يونيو 2026
+
+- [x] `ClientSegmentEngine::validateFilters(array $filters): array` — دالة static جديدة
+- [x] تتحقق من: حقل معروف + operator صالح لنوع الحقل + قيمة موجودة + between/in صيغة صحيحة
+- [x] رسائل خطأ عربية واضحة لكل خطأ
+- [x] `ClientSegmentController::store()` — يستدعي `validateFilters()` قبل الحفظ → 422 إذا فاسد
+- [x] `ClientSegmentController::preview()` — نفس الحماية قبل التنفيذ
+
+---
+
+### ✅ 25.4 — GAP-04: تذكيرات المتابعات (Command + Scheduler)
+**التاريخ:** 3 يونيو 2026
+
+- [x] `app/Notifications/FollowUpReminderNotification.php` — إشعار داخلي (database channel) مع اسم العميل والنوع والموعد
+- [x] `app/Console/Commands/SendFollowUpReminders.php` — يستدعي `FollowUpService::dueForReminder()` ويُرسل إشعاراً لكل مستخدم
+- [x] دعم `--dry-run` لاختبار بدون إرسال
+- [x] `routes/console.php` — مجدوَل `everyThirtyMinutes()` مع `withoutOverlapping()`
+- [x] Log في `storage/logs/crm-follow-up-reminders.log`
+
+---
+
+### ✅ 25.5 — توثيق شامل
+**التاريخ:** 3 يونيو 2026
+
+- [x] `docs/CRM-HEALTH-SEGMENTS.md` — توثيق Health Score + Segment Engine (خوارزمية + routes + DB + gaps)
+- [x] `docs/CRM-FOLLOW-UPS.md` — توثيق Follow-Ups module (model + actions + service + routes + bug fix)
+- [x] `docs/KNOWN-BUGS-AND-GAPS.md` — سجل حي للـ bugs والـ gaps (3 bugs مُصلَحة + 7 gaps مُتتبَّعة)
+- [x] `docs/ARCHITECTURE.md` — تحديث بالـ schedulers الجديدة
+- [x] تبويب "🎯 الشرائح وصحة العملاء" في مركز المساعدة `/help`
+
+---
+
+### ⏳ 25.6 — Gaps معلّقة (للـ Sprint القادم)
+
+| Gap | الأولوية | الوصف |
+|-----|----------|-------|
+| GAP-02 | ✅ مُصلَح | `RecalculateClientHealthScoreJob` + dispatch من `markPaid()` |
+| GAP-03 | 🟠 Medium | جدولة `refreshCountsForUser()` لتحديث عدادات الشرائح |
+| GAP-05 | ✅ مُصلَح | `DetectInactiveClientsCommand` — 3 triggers + scheduler 04:00 |
+| GAP-06 | ✅ مُصلَح | FollowUpCreated/Completed Events + Listeners ($afterCommit = true) |
+| GAP-07 | 🟡 Low | إضافة `updated_at` لجدول `client_health_scores` |
+| GAP-08 | 🟡 Low | نقل `REVENUE_TOP` و `FREQ_TOP` إلى `config/crm.php` |
+| GAP-09 | 🟡 Low | تتبع score trend (صعود/هبوط) في `client_health_scores` |
+
+*آخر تحديث: 3 يونيو 2026*

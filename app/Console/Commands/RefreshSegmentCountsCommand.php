@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Modules\CRM\Services\ClientSegmentEngine;
+use App\Support\Enums\UserStatus;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -38,7 +39,7 @@ class RefreshSegmentCountsCommand extends Command
 
         $this->info('🔄 تحديث أعداد الشرائح الديناميكية...');
 
-        $usersQuery = User::query()->where('suspended', false);
+        $usersQuery = User::query()->where('status', UserStatus::Active->value);
         if ($userId) {
             $usersQuery->where('id', $userId);
         }

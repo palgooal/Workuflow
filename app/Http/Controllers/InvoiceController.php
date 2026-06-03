@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\InvoiceMail;
 use App\Models\Client;
+use App\Modules\CRM\Jobs\RecalculateClientHealthScoreJob;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Project;
@@ -313,6 +314,13 @@ class InvoiceController extends Controller
                     'last_payment_at' => $paidAt,
                 ]);
             }
+        }
+
+        // ── إعادة حساب Health Score للعميل في الخلفية (GAP-02) ─────
+        if ($invoice->client_id) {
+            RecalculateClientHealthScoreJob::dispatch($invoice->client_id)
+                ->onQueue('crm-default')
+                ->delay(now()->addSeconds(5)); // تأخير قصير لضمان commit DB أولاً
         }
 
         return back()->with('success', '✅ تم تسجيل الدفع وإضافة معاملة الدخل بنجاح.');

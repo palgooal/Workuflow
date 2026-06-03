@@ -10,6 +10,7 @@ use App\Modules\CRM\Enums\HealthScoreGrade;
 use App\Modules\CRM\Models\ClientTag;
 use App\Modules\CRM\Models\SavedSegment;
 use App\Modules\CRM\Services\ClientHealthScoreService;
+use App\Modules\CRM\Services\ClientSegmentEngine;
 use App\Modules\CRM\Services\SavedSegmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -109,6 +110,14 @@ class ClientSegmentController extends Controller
             'pinned'  => ['sometimes', 'boolean'],
         ]);
 
+        $validation = ClientSegmentEngine::validateFilters($request->input('filters', []));
+        if (!$validation['valid']) {
+            return response()->json([
+                'message' => 'الفلاتر تحتوي على أخطاء.',
+                'errors'  => ['filters' => $validation['errors']],
+            ], 422);
+        }
+
         $segment = $this->segmentService->create(
             userId:  $request->user()->id,
             name:    $request->string('name')->toString(),
@@ -133,6 +142,14 @@ class ClientSegmentController extends Controller
             'filters'  => ['required', 'array'],
             'per_page' => ['sometimes', 'integer', 'min:5', 'max:100'],
         ]);
+
+        $validation = ClientSegmentEngine::validateFilters($request->input('filters', []));
+        if (!$validation['valid']) {
+            return response()->json([
+                'message' => 'الفلاتر تحتوي على أخطاء.',
+                'errors'  => ['filters' => $validation['errors']],
+            ], 422);
+        }
 
         $results = $this->segmentService->preview(
             userId:  $request->user()->id,
