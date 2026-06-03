@@ -37,7 +37,9 @@ DB::table('client_activities')
 ```
 
 **الملف:** `app/Modules/CRM/Services/ClientHealthScoreService.php`  
-**الدالة:** `countContacts(int $clientId, int $months): int`
+**الدالة:** `countContacts(int $clientId, int $months): int` و `getFollowUpStats()`
+
+**خطأ مصاحب:** `getFollowUpStats()` كانت تستعلم `->whereNull('deleted_at')` على جدول `client_follow_ups` الذي لا يملك هذا العمود (لا يستخدم SoftDeletes). **الإصلاح:** حذف هذا الشرط.
 
 ---
 

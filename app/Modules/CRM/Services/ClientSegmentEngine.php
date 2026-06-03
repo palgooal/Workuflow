@@ -77,7 +77,7 @@ class ClientSegmentEngine
             return ['valid' => true, 'errors' => []];
         }
 
-        foreach ($filters as $i => $filter) {
+        foreach (array_values($filters) as $i => $filter) {
             $prefix = "فلتر #" . ($i + 1);
 
             if (!is_array($filter)) {

@@ -335,11 +335,12 @@ class ClientHealthScoreService
 
     private function getFollowUpStats(int $clientId, ?int $months = null): array
     {
+        // client_follow_ups لا يستخدم SoftDeletes — لا يوجد عمود deleted_at
         $query = DB::table('client_follow_ups')
-            ->where('client_id', $clientId)
-            ->whereNull('deleted_at');
+            ->where('client_id', $clientId);
 
         if ($months) {
+            // client_follow_ups يستخدم created_at (من timestamps()) — صحيح هنا
             $query->where('created_at', '>=', now()->subMonths($months));
         }
 

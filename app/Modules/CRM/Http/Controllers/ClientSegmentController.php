@@ -143,13 +143,9 @@ class ClientSegmentController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:5', 'max:100'],
         ]);
 
-        $validation = ClientSegmentEngine::validateFilters($request->input('filters', []));
-        if (!$validation['valid']) {
-            return response()->json([
-                'message' => 'الفلاتر تحتوي على أخطاء.',
-                'errors'  => ['filters' => $validation['errors']],
-            ], 422);
-        }
+        // ملاحظة: preview() يستخدم الصيغة القديمة {health_max: 50, status: 'active'} عبر ClientFiltersDTO
+        // validateFilters() مخصص فقط لصيغة الشرائح الجديدة [{field, op, value}] المستخدمة في store()
+        // لا نُطبّقه هنا لتجنب تعارض الصيغتين
 
         $results = $this->segmentService->preview(
             userId:  $request->user()->id,
