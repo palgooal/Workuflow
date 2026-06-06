@@ -8,21 +8,44 @@
          services: {{ json_encode(
              old('services', isset($project)
                  ? $project->services->map(fn($s) => [
-                     'service_id'     => (string) $s->id,
-                     'amount'         => $s->pivot->amount,
-                     'type'           => $s->pivot->type,
-                     'notes'          => $s->pivot->notes ?? '',
-                     'team_member_id' => (string) ($s->pivot->team_member_id ?? ''),
-                     'team_cost'      => $s->pivot->team_cost ?? '',
+                     'service_id' => (string) $s->id,
+                     'amount'     => $s->pivot->amount,
+                     'type'       => 'income',
+                     'notes'      => $s->pivot->notes ?? '',
+                     'members'    => \App\Models\ProjectServiceMember::where('project_service_id', $s->pivot->id)
+                                         ->get()
+                                         ->map(fn($m) => [
+                                             'team_member_id' => (string) $m->team_member_id,
+                                             'team_cost'      => $m->team_cost ?? '',
+                                         ])->toArray(),
                  ])->toArray()
                  : []
              )
          ) }},
          addService() {
-             this.services.push({ service_id: '', amount: '', type: 'income', notes: '', team_member_id: '', team_cost: '' });
+             this.services.push({ service_id: '', amount: '', type: 'income', notes: '', members: [] });
          },
          removeService(index) {
              this.services.splice(index, 1);
+         },
+         addMember(svcIndex) {
+             this.services[svcIndex].members.push({ team_member_id: '', team_cost: '' });
+         },
+         removeMember(svcIndex, memberIndex) {
+             this.services[svcIndex].members.splice(memberIndex, 1);
+         },
+         serviceMargin(svc) {
+             const revenue = parseFloat(svc.amount) || 0;
+             const cost    = svc.members.reduce((sum, m) => sum + (parseFloat(m.team_cost) || 0), 0);
+             const margin  = revenue - cost;
+             const pct     = revenue > 0 ? Math.round((margin / revenue) * 100 * 10) / 10 : null;
+             return { revenue, cost, margin, pct };
+         },
+         marginColor(pct) {
+             if (pct === null || pct >= 40) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+             if (pct >= 20) return 'bg-amber-50 text-amber-700 border-amber-200';
+             if (pct >= 0)  return 'bg-orange-50 text-orange-700 border-orange-200';
+             return 'bg-red-50 text-red-700 border-red-200';
          }
      }">
 
@@ -326,27 +349,93 @@
                                           focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white">
                         </div>
 
-                        {{-- Team Member Assignment --}}
-                        <div class="col-span-12 grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 mt-1">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1.5">المسؤول عن الخدمة</label>
-                                <select :name="`services[${index}][team_member_id]`" x-model="svc.team_member_id"
-                                        class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white
-                                               focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <option value="">— بدون تعيين —</option>
-                                    <template x-for="member in teamMembers" :key="member.id">
-                                        <option :value="String(member.id)" x-text="member.name"
-                                                :selected="String(member.id) === String(svc.team_member_id)"></option>
-                                    </template>
-                                </select>
+                        {{-- منفذو الخدمة --}}
+                        <div class="pt-2 border-t border-gray-100 mt-1 space-y-2">
+
+                            {{-- عنوان القسم + زر الإضافة --}}
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500">منفذو الخدمة</span>
+                                <button type="button" @click="addMember(index)"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium
+                                               text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    إضافة منفذ
+                                </button>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1.5">تكلفته على المشروع</label>
-                                <input type="number" :name="`services[${index}][team_cost]`" x-model="svc.team_cost"
-                                       min="0" step="0.01" placeholder="0.00"
-                                       class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm
-                                              focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
+
+                            {{-- قائمة المنفذين --}}
+                            <template x-for="(member, memberIndex) in svc.members" :key="memberIndex">
+                                <div class="flex items-center gap-2 bg-white border border-gray-100 rounded-lg p-2.5">
+
+                                    {{-- اسم المنفذ --}}
+                                    <select :name="`services[${index}][members][${memberIndex}][team_member_id]`"
+                                            x-model="member.team_member_id"
+                                            class="flex-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white
+                                                   focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">— اختر منفذاً —</option>
+                                        <template x-for="tm in teamMembers" :key="tm.id">
+                                            <option :value="String(tm.id)" x-text="tm.name"
+                                                    :selected="String(tm.id) === String(member.team_member_id)"></option>
+                                        </template>
+                                    </select>
+
+                                    {{-- تكلفة المنفذ --}}
+                                    <div class="relative w-28 flex-shrink-0">
+                                        <input type="number"
+                                               :name="`services[${index}][members][${memberIndex}][team_cost]`"
+                                               x-model="member.team_cost"
+                                               min="0" step="0.01" placeholder="0.00"
+                                               class="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm
+                                                      focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+
+                                    {{-- حذف المنفذ --}}
+                                    <button type="button" @click="removeMember(index, memberIndex)"
+                                            class="w-6 h-6 flex-shrink-0 flex items-center justify-center
+                                                   text-gray-300 hover:text-red-500 rounded transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
+
+                            {{-- رسالة إذا لا يوجد منفذون --}}
+                            <p x-show="svc.members.length === 0"
+                               class="text-xs text-gray-400 text-center py-1">
+                                لا يوجد منفذون — الخدمة بدون تكاليف تنفيذ
+                            </p>
+
+                            {{-- مؤشر الهامش الحي --}}
+                            <template x-if="parseFloat(svc.amount) > 0 || svc.members.length > 0">
+                                <div class="rounded-lg border px-3 py-2 flex items-center justify-between text-xs font-bold transition-colors"
+                                     :class="marginColor(serviceMargin(svc).pct)">
+                                    <div class="flex items-center gap-3">
+                                        <span>الهامش:</span>
+                                        <span x-text="serviceMargin(svc).margin.toLocaleString('ar-SA', {minimumFractionDigits: 0, maximumFractionDigits: 2})"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <template x-if="serviceMargin(svc).pct !== null">
+                                            <span x-text="`${serviceMargin(svc).pct}%`"></span>
+                                        </template>
+                                        {{-- أيقونة الحالة --}}
+                                        <template x-if="serviceMargin(svc).pct !== null && serviceMargin(svc).pct >= 40">
+                                            <span title="هامش ممتاز">✓</span>
+                                        </template>
+                                        <template x-if="serviceMargin(svc).pct !== null && serviceMargin(svc).pct >= 20 && serviceMargin(svc).pct < 40">
+                                            <span title="هامش مقبول">!</span>
+                                        </template>
+                                        <template x-if="serviceMargin(svc).pct !== null && serviceMargin(svc).pct >= 0 && serviceMargin(svc).pct < 20">
+                                            <span title="هامش منخفض — راجع التكاليف">⚠</span>
+                                        </template>
+                                        <template x-if="serviceMargin(svc).margin < 0">
+                                            <span title="خسارة">✕</span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
                     </div>

@@ -76,7 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->names('team');
 
     // Pay team member for a service
-    Route::post('projects/{project}/pay-team/{serviceId}', [ProjectController::class, 'payTeamMember'])->name('projects.pay-team');
+    Route::post('projects/{project}/pay-team/{memberId}', [ProjectController::class, 'payTeamMember'])->name('projects.pay-team');
 
     // Services (catalog)
     Route::resource('services', ServiceController::class)

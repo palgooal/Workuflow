@@ -283,58 +283,114 @@
     </div>
     @endif
 
-    {{-- Team Assignments --}}
-    @php
-        $teamAssignments = $project->services->filter(fn($s) => $s->pivot->team_member_id);
-    @endphp
-    @if($teamAssignments->count() > 0)
+    {{-- هامش الخدمات --}}
+    @if(! empty($summary['services_margin']))
     <div class="bg-white rounded-2xl border border-gray-100 p-5">
-        <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-            </svg>
-            الفريق المعين على المشروع
-        </h3>
-        <div class="space-y-3">
-            @foreach($teamAssignments as $service)
-            @php $member = \App\Models\TeamMember::find($service->pivot->team_member_id); @endphp
-            @if($member)
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
-                        {{ mb_substr($member->name, 0, 1) }}
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ $member->name }}</p>
-                        <p class="text-xs text-gray-400">{{ $service->name_ar ?? $service->name }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    @if($service->pivot->team_cost)
-                    <div class="text-left">
-                        <p class="text-sm font-semibold {{ $service->pivot->team_cost_paid ? 'text-green-600' : 'text-gray-900' }}">
-                            {{ number_format($service->pivot->team_cost, 2) }} {{ $project->currency }}
-                        </p>
-                        <p class="text-xs {{ $service->pivot->team_cost_paid ? 'text-green-500' : 'text-amber-500' }}">
-                            {{ $service->pivot->team_cost_paid ? '✅ تم الدفع' : '⏳ لم يُدفع' }}
-                        </p>
-                    </div>
-                    @if(! $service->pivot->team_cost_paid)
-                    <form method="POST" action="{{ route('projects.pay-team', [$project, $service->id]) }}">
-                        @csrf
-                        <button type="submit"
-                                class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition">
-                            تسجيل دفعة
-                        </button>
-                    </form>
-                    @endif
-                    @endif
-                </div>
+
+        {{-- Header --}}
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                هامش الخدمات
+            </h3>
+            {{-- إجمالي سريع --}}
+            @if($summary['total_services_revenue'] > 0)
+            <div class="text-xs text-gray-500">
+                إجمالي التكاليف:
+                <strong class="text-gray-700">{{ number_format($summary['total_members_cost'], 2) }} {{ $project->currency }}</strong>
             </div>
             @endif
+        </div>
+
+        <div class="space-y-3">
+            @foreach($summary['services_margin'] as $svcMargin)
+            @php
+                $pct = $svcMargin['margin_pct'];
+                $marginClasses = match(true) {
+                    $svcMargin['is_loss']      => ['badge' => 'bg-red-100 text-red-700',     'bar' => 'bg-red-500',    'border' => 'border-red-100'],
+                    $pct !== null && $pct < 20 => ['badge' => 'bg-orange-100 text-orange-700', 'bar' => 'bg-orange-400', 'border' => 'border-orange-100'],
+                    $pct !== null && $pct < 40 => ['badge' => 'bg-amber-100 text-amber-700',   'bar' => 'bg-amber-400',  'border' => 'border-amber-100'],
+                    default                    => ['badge' => 'bg-emerald-100 text-emerald-700','bar' => 'bg-emerald-500','border' => 'border-emerald-100'],
+                };
+            @endphp
+            <div class="rounded-xl border {{ $marginClasses['border'] }} bg-gray-50 overflow-hidden">
+
+                {{-- Service Row --}}
+                <div class="flex items-center justify-between px-4 py-3">
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-gray-900 truncate">{{ $svcMargin['name'] }}</p>
+                        <div class="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                            <span>إيراد: <strong class="text-gray-700">{{ number_format($svcMargin['revenue'], 2) }}</strong></span>
+                            @if($svcMargin['members_cost'] > 0)
+                            <span>تكلفة: <strong class="text-gray-700">{{ number_format($svcMargin['members_cost'], 2) }}</strong></span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        @if($pct !== null)
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full {{ $marginClasses['badge'] }}">
+                            {{ $svcMargin['is_loss'] ? '⚠ خسارة' : $pct . '%' }}
+                        </span>
+                        @endif
+                        <span class="text-sm font-bold {{ $svcMargin['is_loss'] ? 'text-red-600' : 'text-gray-800' }}">
+                            {{ number_format($svcMargin['margin'], 2) }} {{ $project->currency }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Progress Bar --}}
+                @if($svcMargin['revenue'] > 0 && $pct !== null)
+                <div class="h-1 bg-gray-100">
+                    <div class="{{ $marginClasses['bar'] }} h-1 transition-all duration-500"
+                         style="width: {{ max(0, min($pct, 100)) }}%"></div>
+                </div>
+                @endif
+
+                {{-- Members --}}
+                @if(! empty($svcMargin['members']))
+                <div class="px-4 py-2.5 space-y-1.5 bg-white border-t border-gray-100">
+                    @foreach($svcMargin['members'] as $memberData)
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-md bg-indigo-100 flex items-center justify-center
+                                        text-indigo-600 font-bold text-xs flex-shrink-0">
+                                {{ mb_substr($memberData['name'], 0, 1) }}
+                            </div>
+                            <span class="text-xs text-gray-700 font-medium">{{ $memberData['name'] }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            @if($memberData['team_cost'] > 0)
+                            <span class="text-xs font-semibold {{ $memberData['team_cost_paid'] ? 'text-green-600' : 'text-gray-700' }}">
+                                {{ number_format($memberData['team_cost'], 2) }} {{ $project->currency }}
+                            </span>
+                            @if($memberData['team_cost_paid'])
+                                <span class="text-xs text-green-500">✓ مدفوع</span>
+                            @else
+                                <form method="POST"
+                                      action="{{ route('projects.pay-team', [$project, $memberData['id']]) }}"
+                                      onsubmit="return confirm('تسجيل دفعة لـ {{ $memberData['name'] }}؟')">
+                                    @csrf
+                                    <button type="submit"
+                                            class="px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white
+                                                   text-xs font-medium rounded-lg transition">
+                                        دفع
+                                    </button>
+                                </form>
+                            @endif
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+
+            </div>
             @endforeach
         </div>
+
     </div>
     @endif
 

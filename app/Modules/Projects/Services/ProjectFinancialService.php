@@ -3,6 +3,7 @@
 namespace App\Modules\Projects\Services;
 
 use App\Models\Project;
+use App\Models\ProjectServiceMember;
 use App\Support\Enums\TransactionType;
 
 class ProjectFinancialService
@@ -47,11 +48,15 @@ class ProjectFinancialService
         $contractCollected = $contractValue > 0 ? min(round(($income / $contractValue) * 100, 1), 100) : null;
         $contractRemaining = $contractValue > 0 ? max($contractValue - $income, 0) : null;
 
-        // ميزانية التكاليف — بعملة المشروع فقط
-        $expenseBudget    = (float) ($project->expense_budget ?? 0);
+        // ميزانية التكاليف (محفوظة للتوافق مع البيانات القديمة)
+        $expenseBudget     = (float) ($project->expense_budget ?? 0);
         $budgetUsedPercent = $expenseBudget > 0 ? round(($expenses / $expenseBudget) * 100, 1) : null;
         $budgetRemaining   = $expenseBudget > 0 ? max($expenseBudget - $expenses, 0) : null;
         $budgetOverrun     = $expenseBudget > 0 && $expenses > $expenseBudget;
+
+        // ── هامش الخدمات — per-service margin ────────────────────────────
+        $project->loadMissing('services');
+        $servicesMargin = $this->calcServicesMargin($project);
 
         return [
             // بيانات per-currency
@@ -71,12 +76,69 @@ class ProjectFinancialService
             'contract_value'       => $contractValue ?: null,
             'contract_collected'   => $contractCollected,
             'contract_remaining'   => $contractRemaining,
-            // ميزانية التكاليف
+            // ميزانية التكاليف (legacy)
             'expense_budget'       => $expenseBudget ?: null,
             'budget_used_percent'  => $budgetUsedPercent,
             'budget_remaining'     => $budgetRemaining,
             'budget_overrun'       => $budgetOverrun,
+            // هامش الخدمات
+            'services_margin'         => $servicesMargin,
+            'total_members_cost'      => collect($servicesMargin)->sum('members_cost'),
+            'total_services_revenue'  => collect($servicesMargin)->sum('revenue'),
+            'total_services_margin'   => collect($servicesMargin)->sum('margin'),
         ];
+    }
+
+    /**
+     * حساب هامش كل خدمة بناءً على إيرادها وتكاليف منفذيها
+     *
+     * @return array<int, array{
+     *   service_id: int,
+     *   name: string,
+     *   revenue: float,
+     *   members_cost: float,
+     *   margin: float,
+     *   margin_pct: float|null,
+     *   is_loss: bool,
+     *   members: array
+     * }>
+     */
+    public function calcServicesMargin(Project $project): array
+    {
+        $result = [];
+
+        foreach ($project->services as $service) {
+            $pivotId = $service->pivot->id;
+            $revenue = (float) ($service->pivot->amount ?? 0);
+
+            // جلب المنفذين من الجدول الجديد
+            $members = ProjectServiceMember::with('teamMember')
+                ->where('project_service_id', $pivotId)
+                ->get();
+
+            $membersCost = $members->sum(fn ($m) => (float) ($m->team_cost ?? 0));
+            $margin      = $revenue - $membersCost;
+            $marginPct   = $revenue > 0 ? round(($margin / $revenue) * 100, 1) : null;
+
+            $result[] = [
+                'service_id'   => $service->id,
+                'pivot_id'     => $pivotId,
+                'name'         => $service->name_ar ?? $service->name ?? '',
+                'revenue'      => $revenue,
+                'members_cost' => $membersCost,
+                'margin'       => $margin,
+                'margin_pct'   => $marginPct,
+                'is_loss'      => $margin < 0,
+                'members'      => $members->map(fn ($m) => [
+                    'id'             => $m->id,
+                    'name'           => $m->teamMember?->name ?? '—',
+                    'team_cost'      => (float) ($m->team_cost ?? 0),
+                    'team_cost_paid' => $m->team_cost_paid,
+                ])->toArray(),
+            ];
+        }
+
+        return $result;
     }
 
     /**

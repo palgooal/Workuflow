@@ -14,7 +14,9 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Service;
+use App\Models\ProjectServiceMember;
 use App\Models\TeamMember;
+use Illuminate\Support\Facades\DB;
 use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\ProjectType;
 use App\Support\Enums\TransactionType;
@@ -77,15 +79,15 @@ class ProjectController extends Controller
             $syncData = [];
             foreach ($validated['services'] as $svc) {
                 $syncData[$svc['service_id']] = [
-                    'amount'         => $svc['amount'],
-                    'type'           => $svc['type'],
-                    'notes'          => $svc['notes'] ?? null,
-                    'team_member_id' => $svc['team_member_id'] ?? null,
-                    'team_cost'      => $svc['team_cost'] ?? null,
-                    'team_cost_paid' => false,
+                    'amount' => $svc['amount'],
+                    'type'   => 'income',
+                    'notes'  => $svc['notes'] ?? null,
                 ];
             }
             $project->services()->sync($syncData);
+
+            // حفظ منفذي كل خدمة
+            $this->syncServiceMembers($project, $validated['services']);
         }
 
         // ── إنشاء فاتورة مسودة تلقائياً عند ربط المشروع بعميل ──
@@ -105,6 +107,7 @@ class ProjectController extends Controller
         $project->load(['client', 'services']);
         $project->loadCount('transactions');
         $summary = $this->financialService->getSummary($project);
+        // تحميل بيانات المنفذين داخل الـ summary يتم في calcServicesMargin
 
         $recentTransactions = $project->transactions()
             ->with('category')
@@ -153,15 +156,15 @@ class ProjectController extends Controller
             $syncData = [];
             foreach ($validated['services'] as $svc) {
                 $syncData[$svc['service_id']] = [
-                    'amount'         => $svc['amount'],
-                    'type'           => $svc['type'],
-                    'notes'          => $svc['notes'] ?? null,
-                    'team_member_id' => $svc['team_member_id'] ?? null,
-                    'team_cost'      => $svc['team_cost'] ?? null,
-                    'team_cost_paid' => false,
+                    'amount' => $svc['amount'],
+                    'type'   => 'income',
+                    'notes'  => $svc['notes'] ?? null,
                 ];
             }
             $project->services()->sync($syncData);
+
+            // تحديث منفذي كل خدمة
+            $this->syncServiceMembers($project, $validated['services']);
         } else {
             $project->services()->detach();
         }
@@ -183,32 +186,72 @@ class ProjectController extends Controller
             ->with('success', 'تم حذف المشروع "' . $name . '".');
     }
 
-    public function payTeamMember(Project $project, string $serviceId): RedirectResponse
+    public function payTeamMember(Project $project, string $memberId): RedirectResponse
     {
         $this->authorize('update', $project);
 
-        $service = $project->services()->where('service_id', $serviceId)->first();
-        if (! $service || ! $service->pivot->team_cost || $service->pivot->team_cost_paid) {
+        $member = ProjectServiceMember::with('teamMember')
+            ->whereHas('projectService', fn ($q) => $q->where('project_id', $project->id))
+            ->where('id', $memberId)
+            ->first();
+
+        if (! $member || ! $member->team_cost || $member->team_cost_paid) {
             return back()->with('error', 'لا يمكن تسجيل الدفعة.');
         }
 
-        $member = TeamMember::find($service->pivot->team_member_id);
+        $service = $project->services()
+            ->wherePivot('id', $member->project_service_id)
+            ->first();
 
         Transaction::create([
             'user_id'          => auth()->id(),
             'project_id'       => $project->id,
             'type'             => TransactionType::Expense,
-            'amount'           => $service->pivot->team_cost,
+            'amount'           => $member->team_cost,
             'currency'         => $project->currency,
-            'description'      => 'دفعة لـ ' . ($member?->name ?? 'فريق') . ' - ' . ($service->name_ar ?? $service->name),
-            'payee'            => $member?->name,
+            'description'      => 'دفعة لـ ' . ($member->teamMember?->name ?? 'فريق') . ' - ' . ($service?->name_ar ?? $service?->name ?? ''),
+            'payee'            => $member->teamMember?->name,
             'transaction_date' => now(),
-            'reference'        => 'team_service_' . $serviceId,
+            'reference'        => 'team_member_' . $member->id,
         ]);
 
-        $project->services()->updateExistingPivot($serviceId, ['team_cost_paid' => true]);
+        $member->update(['team_cost_paid' => true]);
 
         return back()->with('success', 'تم تسجيل الدفعة كمصروف على المشروع.');
+    }
+
+    // ==================== Private Helpers ====================
+
+    private function syncServiceMembers(Project $project, array $services): void
+    {
+        foreach ($services as $svc) {
+            $pivotRow = DB::table('project_service')
+                ->where('project_id', $project->id)
+                ->where('service_id', $svc['service_id'])
+                ->first();
+
+            if (! $pivotRow) {
+                continue;
+            }
+
+            // حذف المنفذين القدامى لهذه الخدمة
+            ProjectServiceMember::where('project_service_id', $pivotRow->id)->delete();
+
+            // إدراج المنفذين الجدد
+            if (! empty($svc['members'])) {
+                foreach ($svc['members'] as $memberData) {
+                    if (empty($memberData['team_member_id'])) {
+                        continue;
+                    }
+                    ProjectServiceMember::create([
+                        'project_service_id' => $pivotRow->id,
+                        'team_member_id'     => $memberData['team_member_id'],
+                        'team_cost'          => $memberData['team_cost'] ?? null,
+                        'team_cost_paid'     => false,
+                    ]);
+                }
+            }
+        }
     }
 
     /**

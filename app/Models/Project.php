@@ -56,7 +56,8 @@ class Project extends Model
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class, 'project_service')
-            ->withPivot(['amount', 'type', 'client_id', 'notes', 'team_member_id', 'team_cost', 'team_cost_paid'])
+            ->using(ProjectServicePivot::class)
+            ->withPivot(['id', 'amount', 'type', 'client_id', 'notes'])
             ->withTimestamps();
     }
 

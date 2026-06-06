@@ -632,7 +632,8 @@ Sprint 1 (Foundation)
 | `2026_05_24_012000_create_client_import_logs_table.php` | client_import_logs | ✅ |
 
 **قرارات معمارية مُطبَّقة:**
-- VARCHAR بدل ENUM في جميع أعمدة الحالة (C-03 Fix — zero-downtime)
+- VARCHAR 
+بدل ENUM في جميع أعمدة الحالة (C-03 Fix — zero-downtime)
 - `public_id ULID` مُضاف على clients للروابط الخارجية
 - `client_activities` بجدول عادي + indexes مُركَّبة (بدل Partitioning — shared hosting)
 - `client_portal_tokens.token` يخزن SHA-256 hash فقط (C-04 Fix)

@@ -28,9 +28,11 @@ class UpdateProjectRequest extends FormRequest
             'services.*.service_id' => ['required_with:services', 'integer', 'exists:services,id'],
             'services.*.amount'     => ['required_with:services', 'numeric', 'min:0'],
             'services.*.type'       => ['required_with:services', 'in:income'],
-            'services.*.notes'          => ['nullable', 'string', 'max:255'],
-            'services.*.team_member_id' => ['nullable', 'string', 'exists:team_members,id'],
-            'services.*.team_cost'      => ['nullable', 'numeric', 'min:0'],
+            'services.*.notes'      => ['nullable', 'string', 'max:255'],
+            // منفذو الخدمة (متعددون)
+            'services.*.members'                      => ['nullable', 'array'],
+            'services.*.members.*.team_member_id'     => ['required_with:services.*.members', 'string', 'exists:team_members,id'],
+            'services.*.members.*.team_cost'          => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
