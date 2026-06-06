@@ -220,6 +220,59 @@ class ProjectController extends Controller
         return back()->with('success', 'تم تسجيل الدفعة كمصروف على المشروع.');
     }
 
+    // ==================== Smart Alerts ====================
+
+    public function serviceMarginHistory(int $serviceId): \Illuminate\Http\JsonResponse
+    {
+        $userId = auth()->id();
+
+        // جلب جميع pivot rows لهذه الخدمة من مشاريع المستخدم
+        $pivotRows = DB::table('project_service as ps')
+            ->join('projects as p', 'p.id', '=', 'ps.project_id')
+            ->where('p.user_id', $userId)
+            ->where('ps.service_id', $serviceId)
+            ->whereNull('p.deleted_at')
+            ->select('ps.id', 'ps.amount')
+            ->get();
+
+        if ($pivotRows->isEmpty()) {
+            return response()->json(['has_history' => false]);
+        }
+
+        // حساب هامش كل pivot row
+        $margins = [];
+        foreach ($pivotRows as $pivot) {
+            $membersTotal = ProjectServiceMember::where('project_service_id', $pivot->id)
+                ->sum('team_cost');
+
+            $revenue = (float) $pivot->amount;
+            $cost    = (float) $membersTotal;
+
+            if ($revenue > 0) {
+                $margins[] = round((($revenue - $cost) / $revenue) * 100, 1);
+            }
+        }
+
+        if (empty($margins)) {
+            return response()->json(['has_history' => false]);
+        }
+
+        $avgMargin   = round(array_sum($margins) / count($margins), 1);
+        $timesUsed   = count($pivotRows);
+
+        return response()->json([
+            'has_history' => true,
+            'avg_margin'  => $avgMargin,
+            'times_used'  => $timesUsed,
+            'label'       => match(true) {
+                $avgMargin >= 40 => 'ممتاز',
+                $avgMargin >= 20 => 'مقبول',
+                $avgMargin >= 0  => 'منخفض',
+                default          => 'خسارة',
+            },
+        ]);
+    }
+
     // ==================== Private Helpers ====================
 
     private function syncServiceMembers(Project $project, array $services): void
