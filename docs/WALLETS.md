@@ -1,6 +1,6 @@
 # موديول الصناديق والخزائن (Wallets)
 
-> تاريخ الإنشاء: 7 يونيو 2026 | الإصدار: 1.0.0
+> تاريخ الإنشاء: 7 يونيو 2026 | آخر تحديث: 7 يونيو 2026 | الإصدار: 1.1.0
 
 ---
 
@@ -16,7 +16,8 @@
 |---------|------|
 | تتبع الرصيد النقدي | Wallet model بحساب ديناميكي للرصيد |
 | أنواع مختلفة من الصناديق | WalletType enum: cash / bank / custom |
-| ربط المعاملات بصندوق | `wallet_id` nullable FK على `transactions` |
+| ربط المعاملات بصندوق | `wallet_id` **إجباري** على كل معاملة — الأموال لا تُسجَّل بدون صندوق |
+| اختيار الصندوق عند دفع الفاتورة | modal في صفحة الفاتورة يعرض الصناديق مع الرصيد |
 | التحويل بين الصناديق | `wallet_transfers` table + WalletTransfer model |
 | رسوم التحويل | حقل `fee` على `wallet_transfers` |
 | عملات متعددة | كل صندوق له عملة مستقلة |
@@ -60,8 +61,10 @@
 
 أُضيف عمود:
 ```
-wallet_id  char(26) nullable  FK → wallets(id) ON DELETE SET NULL
+wallet_id  char(26) NOT NULL (required)  FK → wallets(id) ON DELETE SET NULL
 ```
+
+> **قرار تصميمي:** `wallet_id` إجباري — كل معاملة يجب أن تنتمي لصندوق. لا يمكن تسجيل دخل أو مصروف بدون تحديد أين تذهب الأموال.
 
 ---
 
@@ -167,11 +170,42 @@ toWallet()   → belongsTo(Wallet::class, 'to_wallet_id')
 | `TransactionData` DTO | إضافة `?string $wallet_id` |
 | `CreateTransactionAction` | تمرير `wallet_id` للـ create |
 | `UpdateTransactionAction` | تمرير `wallet_id` للـ update |
-| `StoreTransactionRequest` | قاعدة `nullable\|exists:wallets,id` |
-| `UpdateTransactionRequest` | قاعدة `nullable\|exists:wallets,id` |
+| `StoreTransactionRequest` | قاعدة `required\|exists:wallets,id` — إجباري |
+| `UpdateTransactionRequest` | قاعدة `required\|exists:wallets,id` — إجباري |
 | `TransactionController::create()` | تمرير `$wallets` للـ view |
 | `TransactionController::edit()` | تمرير `$wallets` للـ view |
-| `transactions/_form.blade.php` | حقل select للصندوق |
+| `transactions/_form.blade.php` | حقل wallet بارز مع إطار ملون + رسالة "إلى أين ستذهب الأموال؟" |
+
+---
+
+## ربط الفواتير (markPaid)
+
+عند تسجيل دفع فاتورة، يظهر **modal** يعرض الصناديق النشطة مع رصيد كل منها.
+
+### التغييرات:
+
+| الملف | التعديل |
+|-------|---------|
+| `InvoiceController::show()` | يُمرِّر `$wallets` للـ view |
+| `InvoiceController::markPaid()` | يتحقق من `wallet_id` (required) ويمرره للمعاملة |
+| `invoices/show.blade.php` | زر "تسجيل الدفع" يفتح modal بدل form مباشر |
+
+### سلوك الـ modal:
+- يعرض اسم الفاتورة والمبلغ
+- يعرض جميع الصناديق النشطة مع النوع والعملة والرصيد الحالي
+- الصندوق الأول محدد تلقائياً
+- عند الإرسال تُسجَّل معاملة دخل مرتبطة بالصندوق المختار
+
+```php
+// InvoiceController::markPaid() — validation
+$request->validate([
+    'wallet_id' => ['required', 'string', 'exists:wallets,id'],
+]);
+
+// المعاملة تُنشأ مع wallet_id
+$txData['wallet_id'] = $request->wallet_id;
+Transaction::create($txData);
+```
 
 ---
 
@@ -187,6 +221,18 @@ php artisan migrate
 1. `2026_06_07_000001_create_wallets_table`
 2. `2026_06_07_000002_add_wallet_id_to_transactions_table`
 3. `2026_06_07_000003_create_wallet_transfers_table`
+
+---
+
+## Bug Fixes History
+
+### v1.1.0 — 7 يونيو 2026
+
+| Bug | Root Cause | Fix |
+|-----|-----------|-----|
+| `BadMethodCallException: Call to undefined method Wallet::forUser()` | `BelongsToUser` لا تحتوي على `forUser()` — الـ Global Scope يفلتر تلقائياً | إزالة `forUser(auth()->id())` واستخدام `Wallet::` مباشرة |
+| صفحة الصناديق فارغة | الـ views تستخدم `<x-app-layout>` بدل `@extends('layouts.app')` | إعادة كتابة Views بـ `@extends` + `@section('content')` |
+| `Unknown column 'is_active'` في إنشاء/تعديل الفاتورة | `InvoiceController` يستخدم `where('is_active', true)` على جدول projects الذي تحول لـ `status` enum | استبدال بـ `Project::active()` scope |
 
 ---
 
