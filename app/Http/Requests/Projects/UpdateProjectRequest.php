@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Projects;
 
+use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\ProjectType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
@@ -20,15 +21,16 @@ class UpdateProjectRequest extends FormRequest
             'type'        => ['required', new Enum(ProjectType::class)],
             'currency'    => ['required', 'string', 'in:SAR,ILS,USD,EUR,GBP,AED,KWD'],
             'color'       => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'description'    => ['nullable', 'string', 'max:500'],
-            'is_active'      => ['nullable', 'boolean'],
-            'client_id'      => ['nullable', 'integer', 'exists:clients,id'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'status'      => ['nullable', new Enum(ProjectStatus::class)],
+            'client_id'   => ['nullable', 'integer', 'exists:clients,id'],
             'contract_value' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
             'services'              => ['nullable', 'array'],
             'services.*.service_id' => ['required_with:services', 'integer', 'exists:services,id'],
             'services.*.amount'     => ['required_with:services', 'numeric', 'min:0'],
             'services.*.type'       => ['required_with:services', 'in:income'],
-            'services.*.notes'      => ['nullable', 'string', 'max:255'],
+            'services.*.notes'              => ['nullable', 'string', 'max:255'],
+            'services.*.target_margin_pct'  => ['nullable', 'integer', 'min:1', 'max:99'],
             // منفذو الخدمة (متعددون)
             'services.*.members'                      => ['nullable', 'array'],
             'services.*.members.*.team_member_id'     => ['required_with:services.*.members', 'string', 'exists:team_members,id'],

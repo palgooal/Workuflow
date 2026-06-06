@@ -12,19 +12,20 @@
                      'amount'     => $s->pivot->amount,
                      'type'       => 'income',
                      'notes'      => $s->pivot->notes ?? '',
-                     'members'    => \App\Models\ProjectServiceMember::where('project_service_id', $s->pivot->id)
-                                         ->get()
-                                         ->map(fn($m) => [
-                                             'team_member_id' => (string) $m->team_member_id,
-                                             'team_cost'      => $m->team_cost ?? '',
-                                         ])->toArray(),
+                     'members'           => \App\Models\ProjectServiceMember::where('project_service_id', $s->pivot->id)
+                                               ->get()
+                                               ->map(fn($m) => [
+                                                   'team_member_id' => (string) $m->team_member_id,
+                                                   'team_cost'      => $m->team_cost ?? '',
+                                               ])->toArray(),
+                     'target_margin_pct' => $s->pivot->target_margin_pct ?? '',
                  ])->toArray()
                  : []
              )
          ) }},
          historyRoute: '{{ route('projects.service-margin-history', '__ID__') }}',
          addService() {
-             this.services.push({ service_id: '', amount: '', type: 'income', notes: '', members: [], history: null, historyLoading: false });
+             this.services.push({ service_id: '', amount: '', type: 'income', notes: '', members: [], history: null, historyLoading: false, target_margin_pct: '' });
          },
          removeService(index) {
              this.services.splice(index, 1);
@@ -52,11 +53,16 @@
              const m = this.serviceMargin(svc);
              return m.revenue > 0 ? Math.round((m.cost / m.revenue) * 100) : null;
          },
-         targetMarginPct: 40,
+         targetMarginPct: {{ $targetMarginPct ?? 40 }},
+         effectiveMarginPct(svc) {
+             // الأولوية: هامش الخدمة المخصص → إعداد المستخدم العام
+             const custom = parseInt(svc.target_margin_pct);
+             return (custom >= 1 && custom <= 99) ? custom : this.targetMarginPct;
+         },
          suggestedPrice(svc) {
              const cost = svc.members.reduce((sum, m) => sum + (parseFloat(m.team_cost) || 0), 0);
              if (cost <= 0) return null;
-             const ratio = (100 - this.targetMarginPct) / 100;
+             const ratio = (100 - this.effectiveMarginPct(svc)) / 100;
              return ratio > 0 ? Math.ceil(cost / ratio) : null;
          },
          async fetchServiceHistory(svc) {
@@ -398,7 +404,7 @@
                                             class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
                                         💡 اقتراح:
                                         <span x-text="suggestedPrice(svc).toLocaleString('ar-SA')"></span>
-                                        (<span x-text="targetMarginPct"></span>% هامش)
+                                        (<span x-text="effectiveMarginPct(svc)"></span>% هامش)
                                     </button>
                                 </template>
                             </div>
@@ -412,14 +418,54 @@
                             <input type="hidden" :name="`services[${index}][type]`" value="income">
                         </div>
 
-                        {{-- Row 3: Notes --}}
-                        <div>
+                        {{-- Row 3: Notes + هامش مخصص --}}
+                        <div class="grid grid-cols-[1fr_auto] gap-2 items-start">
                             <input type="text"
                                    :name="`services[${index}][notes]`"
                                    x-model="svc.notes"
                                    placeholder="ملاحظات (اختياري)..."
                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600
                                           focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white">
+
+                            {{-- هامش مخصص للخدمة --}}
+                            <div class="flex-shrink-0" x-data="{ showMargin: svc.target_margin_pct !== '' }">
+                                <template x-if="!showMargin">
+                                    <button type="button"
+                                            @click="showMargin = true"
+                                            :title="`الهامش العام: ${targetMarginPct}%`"
+                                            class="flex items-center gap-1 px-2.5 py-2 text-xs text-gray-400
+                                                   hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition border border-gray-200 border-dashed">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                                        </svg>
+                                        <span x-text="`${targetMarginPct}%`"></span>
+                                    </button>
+                                </template>
+                                <template x-if="showMargin">
+                                    <div class="flex items-center gap-1">
+                                        <div class="relative">
+                                            <input type="number"
+                                                   :name="`services[${index}][target_margin_pct]`"
+                                                   x-model="svc.target_margin_pct"
+                                                   min="1" max="99" step="1"
+                                                   :placeholder="targetMarginPct"
+                                                   class="w-16 px-2 py-2 pl-5 rounded-lg border border-indigo-300 text-xs
+                                                          text-indigo-700 font-bold bg-indigo-50
+                                                          focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                                            <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-indigo-500 font-bold pointer-events-none">%</span>
+                                        </div>
+                                        <button type="button"
+                                                @click="svc.target_margin_pct = ''; showMargin = false"
+                                                class="text-gray-300 hover:text-red-400 transition"
+                                                title="إزالة الهامش المخصص">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
 
                         {{-- منفذو الخدمة --}}
@@ -514,11 +560,11 @@
                                 suggestedPrice(svc) !== null &&
                                 parseFloat(svc.amount) > 0 &&
                                 serviceMargin(svc).pct !== null &&
-                                serviceMargin(svc).pct < targetMarginPct
+                                serviceMargin(svc).pct < effectiveMarginPct(svc)
                             ">
                                 <div class="flex items-center justify-between rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-xs text-indigo-800">
                                     <span>
-                                        💡 لتحقيق هامش <strong x-text="`${targetMarginPct}%`"></strong>،
+                                        💡 لتحقيق هامش <strong x-text="`${effectiveMarginPct(svc)}%`"></strong>،
                                         السعر الموصى به:
                                         <strong x-text="suggestedPrice(svc).toLocaleString('ar-SA')"></strong>
                                     </span>
@@ -675,25 +721,39 @@
 
         </div>
 
-        {{-- Active toggle (only in edit) --}}
-        @isset($project)
-        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-            <div>
-                <p class="text-sm font-medium text-gray-900">حالة المشروع</p>
-                <p class="text-xs text-gray-400 mt-0.5">المشاريع المتوقفة لا تظهر في إحصاءات لوحة التحكم</p>
+        {{-- حالة المشروع --}}
+        @php
+            $currentStatus = old('status', isset($project) ? $project->status->value : 'active');
+            $statuses = [
+                ['value' => 'active',    'label' => 'نشط',    'icon' => '🟢', 'desc' => 'يُعمل عليه الآن'],
+                ['value' => 'completed', 'label' => 'مكتمل',  'icon' => '✅', 'desc' => 'تم التسليم والإغلاق'],
+                ['value' => 'on_hold',   'label' => 'متوقف',  'icon' => '⏸',  'desc' => 'مؤجل مؤقتاً'],
+                ['value' => 'cancelled', 'label' => 'ملغي',   'icon' => '❌', 'desc' => 'تم الإلغاء'],
+            ];
+        @endphp
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">حالة المشروع</label>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                @foreach($statuses as $s)
+                <label class="cursor-pointer">
+                    <input type="radio" name="status" value="{{ $s['value'] }}"
+                           {{ $currentStatus === $s['value'] ? 'checked' : '' }}
+                           class="sr-only peer">
+                    <div class="flex flex-col items-center gap-1 px-3 py-3 rounded-xl border-2 text-center
+                                transition cursor-pointer text-xs font-medium
+                                border-gray-200 text-gray-500
+                                peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700">
+                        <span class="text-base">{{ $s['icon'] }}</span>
+                        <span class="font-bold">{{ $s['label'] }}</span>
+                        <span class="text-gray-400 font-normal text-[10px] leading-tight peer-checked:text-indigo-500">{{ $s['desc'] }}</span>
+                    </div>
+                </label>
+                @endforeach
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="hidden" name="is_active" value="0">
-                <input type="checkbox" name="is_active" value="1"
-                       {{ old('is_active', $project->is_active) ? 'checked' : '' }}
-                       class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-500
-                            rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
-                <div class="absolute right-0.5 top-0.5 bg-white w-5 h-5 rounded-full shadow
-                            transition-transform peer-checked:translate-x-[-20px]"></div>
-            </label>
+            @error('status')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </div>
-        @endisset
 
         {{-- Actions --}}
         <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">

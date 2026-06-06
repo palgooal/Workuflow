@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\ProjectType;
 use App\Support\Enums\TransactionType;
 use App\Support\Traits\BelongsToUser;
@@ -26,7 +27,7 @@ class Project extends Model
         'color',
         'currency',
         'type',
-        'is_active',
+        'status',
         'contract_value',
         'expense_budget',
     ];
@@ -35,7 +36,7 @@ class Project extends Model
     {
         return [
             'type'           => ProjectType::class,
-            'is_active'      => 'boolean',
+            'status'         => ProjectStatus::class,
             'contract_value' => 'decimal:2',
             'expense_budget' => 'decimal:2',
         ];
@@ -57,7 +58,7 @@ class Project extends Model
     {
         return $this->belongsToMany(Service::class, 'project_service')
             ->using(ProjectServicePivot::class)
-            ->withPivot(['id', 'amount', 'type', 'client_id', 'notes'])
+            ->withPivot(['id', 'amount', 'type', 'client_id', 'notes', 'target_margin_pct'])
             ->withTimestamps();
     }
 
@@ -85,7 +86,13 @@ class Project extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', ProjectStatus::Active);
+    }
+
+    /** توافق مع الكود القديم الذي يستخدم $project->is_active */
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->status === ProjectStatus::Active;
     }
 
     public function scopeBusiness($query)

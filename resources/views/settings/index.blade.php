@@ -233,6 +233,38 @@
                     @enderror
                 </div>
 
+                {{-- الهامش المستهدف --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                        الهامش المستهدف للخدمات
+                        <span class="text-gray-400 font-normal text-xs">(%)</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mb-2">
+                        يُستخدم لاقتراح الأسعار وتنبيه الهامش المنخفض عند إنشاء المشاريع.
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <input type="range" name="target_margin_pct"
+                               min="1" max="99" step="1"
+                               value="{{ old('target_margin_pct', $user->target_margin_pct ?? 40) }}"
+                               class="flex-1 accent-indigo-600"
+                               x-data
+                               x-model.number="$el.value"
+                               @input="$el.nextElementSibling.textContent = $el.value + '%'"
+                               oninput="this.nextElementSibling.textContent = this.value + '%'">
+                        <span class="w-12 text-center text-sm font-bold text-indigo-700 bg-indigo-50 rounded-lg py-1">
+                            {{ old('target_margin_pct', $user->target_margin_pct ?? 40) }}%
+                        </span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1 px-0.5">
+                        <span>1%</span>
+                        <span>حرص متوسط (40%)</span>
+                        <span>99%</span>
+                    </div>
+                    @error('target_margin_pct')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="pt-2">
                     <button type="submit"
                             class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white

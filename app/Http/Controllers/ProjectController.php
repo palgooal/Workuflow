@@ -21,6 +21,7 @@ use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\ProjectType;
 use App\Support\Enums\TransactionType;
 use App\Models\Transaction;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -36,7 +37,7 @@ class ProjectController extends Controller
     public function index(): View
     {
         $projects = Project::withCount('transactions')
-            ->orderBy('is_active', 'desc')
+            ->orderByRaw("FIELD(status, 'active', 'completed', 'on_hold', 'cancelled')")
             ->orderBy('created_at', 'desc')
             ->get()
             ->groupBy(fn ($p) => $p->type->value);
@@ -56,7 +57,9 @@ class ProjectController extends Controller
         $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
         $teamMembers = TeamMember::where('user_id', auth()->id())->active()->orderBy('name')->get();
 
-        return view('projects.create', compact('currencies', 'colors', 'clients', 'services', 'teamMembers'));
+        $targetMarginPct = auth()->user()->target_margin_pct ?? 40;
+
+        return view('projects.create', compact('currencies', 'colors', 'clients', 'services', 'teamMembers', 'targetMarginPct'));
     }
 
     public function store(StoreProjectRequest $request): RedirectResponse
@@ -79,9 +82,11 @@ class ProjectController extends Controller
             $syncData = [];
             foreach ($validated['services'] as $svc) {
                 $syncData[$svc['service_id']] = [
-                    'amount' => $svc['amount'],
-                    'type'   => 'income',
-                    'notes'  => $svc['notes'] ?? null,
+                    'amount'            => $svc['amount'],
+                    'type'              => 'income',
+                    'notes'             => $svc['notes'] ?? null,
+                    'target_margin_pct' => isset($svc['target_margin_pct']) && $svc['target_margin_pct'] !== ''
+                                          ? (int) $svc['target_margin_pct'] : null,
                 ];
             }
             $project->services()->sync($syncData);
@@ -134,7 +139,9 @@ class ProjectController extends Controller
         $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
         $teamMembers = TeamMember::where('user_id', auth()->id())->active()->orderBy('name')->get();
 
-        return view('projects.edit', compact('project', 'currencies', 'colors', 'clients', 'services', 'teamMembers'));
+        $targetMarginPct = auth()->user()->target_margin_pct ?? 40;
+
+        return view('projects.edit', compact('project', 'currencies', 'colors', 'clients', 'services', 'teamMembers', 'targetMarginPct'));
     }
 
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
@@ -156,9 +163,11 @@ class ProjectController extends Controller
             $syncData = [];
             foreach ($validated['services'] as $svc) {
                 $syncData[$svc['service_id']] = [
-                    'amount' => $svc['amount'],
-                    'type'   => 'income',
-                    'notes'  => $svc['notes'] ?? null,
+                    'amount'            => $svc['amount'],
+                    'type'              => 'income',
+                    'notes'             => $svc['notes'] ?? null,
+                    'target_margin_pct' => isset($svc['target_margin_pct']) && $svc['target_margin_pct'] !== ''
+                                          ? (int) $svc['target_margin_pct'] : null,
                 ];
             }
             $project->services()->sync($syncData);
@@ -218,6 +227,22 @@ class ProjectController extends Controller
         $member->update(['team_cost_paid' => true]);
 
         return back()->with('success', 'تم تسجيل الدفعة كمصروف على المشروع.');
+    }
+
+    // ==================== Quick Status Update ====================
+
+    public function updateStatus(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('update', $project);
+
+        $request->validate([
+            'status' => ['required', 'in:active,completed,on_hold,cancelled'],
+        ]);
+
+        $newStatus = \App\Support\Enums\ProjectStatus::from($request->status);
+        $project->update(['status' => $newStatus]);
+
+        return back()->with('success', 'تم تغيير حالة "' . $project->name . '" إلى ' . $newStatus->icon() . ' ' . $newStatus->label());
     }
 
     // ==================== Smart Alerts ====================

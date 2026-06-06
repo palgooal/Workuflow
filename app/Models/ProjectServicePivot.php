@@ -19,6 +19,7 @@ class ProjectServicePivot extends Pivot
         'amount',
         'type',
         'notes',
+        'target_margin_pct',
     ];
 
     protected function casts(): array

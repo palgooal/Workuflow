@@ -24,6 +24,7 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
         'password',
         'currency',
         'timezone',
+        'target_margin_pct',
         'subscription_plan',
         'status',
         'onboarding_dismissed_at',

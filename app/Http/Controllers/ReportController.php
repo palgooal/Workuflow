@@ -25,11 +25,13 @@ class ReportController extends Controller
             [$from, $to] = [$to, $from];
         }
 
-        $summary    = $this->service->getSummary($from, $to);
-        $trend      = $this->service->getMonthlyTrend($from, $to);
-        $categories = $this->service->getCategoryBreakdown($from, $to, $catType);
-        $projects   = $this->service->getProjectProfitability($from, $to);
-        $bestWorst  = $this->service->getBestAndWorstMonths($trend); // يمرر trend بدل إعادة الحساب
+        $summary         = $this->service->getSummary($from, $to);
+        $trend           = $this->service->getMonthlyTrend($from, $to);
+        $categories      = $this->service->getCategoryBreakdown($from, $to, $catType);
+        $projects        = $this->service->getProjectProfitability($from, $to);
+        $bestWorst       = $this->service->getBestAndWorstMonths($trend);
+        $serviceMargins  = $this->service->getServiceProfitability();
+        $teamEfficiency  = $this->service->getTeamMemberEfficiency();
 
         // سنوات متاحة للفلتر (من أول معاملة حتى اليوم)
         $firstYear = \App\Models\Transaction::min('transaction_date')
@@ -39,6 +41,7 @@ class ReportController extends Controller
 
         return view('reports.index', compact(
             'summary', 'trend', 'categories', 'projects', 'bestWorst',
+            'serviceMargins', 'teamEfficiency',
             'from', 'to', 'catType', 'years', 'year'
         ));
     }

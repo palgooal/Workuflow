@@ -2,22 +2,18 @@
 ## دراهم | مال وأعمال
 
 > تاريخ التوثيق: يونيو 2026
-> الحالة: مخطط للتنفيذ بالترتيب
+> الحالة: ✅ مكتمل بالكامل — في انتظار `php artisan migrate` (3 migrations جديدة)
 
 ---
 
-## أولاً — القرارات المنفذة (ما تم تغييره)
+## أولاً — القرارات المنفذة (تبسيط الفورم)
 
 ### 1. حذف ميزانية التكاليف (expense_budget)
 
 **القرار:** حذف حقل `expense_budget` من نموذج إنشاء وتعديل المشروع.
 
-**السبب:**
-- الجمهور المستهدف (مستقلون وأصحاب أعمال صغيرة) لا يفكر بمنطق "سقف المصروفات"
-- يخلق تساؤلاً: أين أسجّل التكاليف — هنا أم في المعاملات؟
-- المعاملات هي المكان الصحيح لتسجيل المصروفات
+**السبب:** الجمهور المستهدف لا يفكر بمنطق "سقف المصروفات". المعاملات هي المكان الصحيح.
 
-**الملفات المعدّلة:**
 | الملف | التغيير |
 |-------|---------|
 | `resources/views/projects/_form.blade.php` | حذف حقل الإدخال |
@@ -27,100 +23,67 @@
 | `app/Modules/Projects/Actions/CreateProjectAction.php` | حذف من array الحفظ |
 | `app/Modules/Projects/Actions/UpdateProjectAction.php` | حذف من array التحديث |
 
-**ما تُرك كما هو:**
-- عمود `expense_budget` في الداتابيز — محفوظ لسلامة البيانات القديمة
-- `ProjectFinancialService` — لا يزال يقرأه لكنه يعود null لجميع المشاريع الجديدة
-- `show.blade.php` — العرض محاط بـ `@if($summary['expense_budget'])` فلن يظهر
+**ما تُرك:** عمود `expense_budget` في الداتابيز (حماية بيانات قديمة). العرض في `show.blade.php` محاط بـ `@if($summary['expense_budget'])`.
 
 ---
 
 ### 2. حذف نوع "مصروف" من الخدمات
 
-**القرار:** الخدمات دائماً من نوع `income` — حذف خيار `expense` من الـ UI تماماً.
+**القرار:** الخدمات دائماً `income`. حذف radio buttons، إضافة hidden input ثابت.
 
-**السبب:**
-- "الخدمات المقدمة" = ما تبيعه للعميل = دخل بطبيعته
-- إذا كان هناك مصروف (مورد خارجي) فمكانه في `team_cost` أو في المعاملات
-- خيار "مصروف" كان يُربك المستخدم في سياق الخدمات
-
-**الملفات المعدّلة:**
 | الملف | التغيير |
 |-------|---------|
-| `resources/views/projects/_form.blade.php` | حذف radio buttons، إضافة hidden input بقيمة `income` |
-| `app/Http/Requests/Projects/StoreProjectRequest.php` | `in:income,expense` → `in:income` |
-| `app/Http/Requests/Projects/UpdateProjectRequest.php` | `in:income,expense` → `in:income` |
-
-**ما تُرك كما هو:**
-- عمود `type` في جدول `project_service` — قيم `expense` القديمة تبقى صالحة
-- البيانات القديمة من نوع `expense` ستتحول لـ `income` عند أول تعديل للمشروع
+| `resources/views/projects/_form.blade.php` | حذف radio buttons، hidden input قيمته `income` |
+| `StoreProjectRequest` + `UpdateProjectRequest` | `in:income,expense` → `in:income` |
 
 ---
 
-## ثانياً — الحالة الراهنة لجدول project_service
+## ثانياً — البنية التقنية المنفذة
+
+### schema الفعلي بعد التنفيذ
 
 ```sql
+-- الجدول الرئيسي (project_service) — بعد حذف أعمدة الفريق القديمة وإضافة الجديدة
 project_service
 ├── id
-├── project_id          (ULID → projects)
-├── service_id          (→ services)
-├── client_id           (nullable → clients)
-├── amount              (decimal 12,2) — ما يدفعه العميل
-├── type                (income | expense) — الآن دائماً income
-├── notes               (nullable)
-├── team_member_id      (nullable → team_members) — منفذ واحد فقط ← القيد الحالي
-├── team_cost           (decimal 12,2, nullable) — ما تدفعه للمنفذ
-├── team_cost_paid      (boolean) — هل دُفعت تكلفة المنفذ؟
+├── project_id              (ULID → projects, cascadeOnDelete)
+├── service_id              (→ services)
+├── client_id               (nullable → clients)
+├── amount                  (decimal 12,2) — ما يدفعه العميل
+├── type                    (income) — دائماً income
+├── notes                   (nullable)
+├── target_margin_pct       (tinyInt nullable) ← جديد — هامش مستهدف مخصص لهذه الخدمة
 └── timestamps
-```
 
-### الفجوة الحالية
-`team_cost` **موجود في البيانات لكنه غير مرتبط بحسابات الربحية** في `ProjectFinancialService`.
-الخدمة تُحسب كدخل كامل بدون طرح تكلفة المنفذ = هامش خاطئ.
-
----
-
-## ثالثاً — التصميم الجديد
-
-### المبدأ الأساسي
-
-```
-هامش الخدمة = قيمة الخدمة (من العميل) − مجموع تكاليف المنفذين
-```
-
-### القيد الحالي والحل المطلوب
-
-**حالياً:** خدمة → منفذ واحد
-**المطلوب:** خدمة → منفذون متعددون (each with their own cost)
-
-```
-الخدمة: تطوير موقع         10,000 ر.س
-├── أحمد  (frontend)         2,000 ر.س
-├── سارة  (backend)          3,000 ر.س
-└── ─────────────────────────────────
-    إجمالي التكلفة:          5,000 ر.س
-    هامش الخدمة:             5,000 ر.س (50%)
-```
-
----
-
-## رابعاً — البنية التقنية المخططة
-
-### الجدول الجديد: project_service_members
-
-```sql
+-- جدول المنفذين (جديد بالكامل — يستبدل team_member_id القديم)
 project_service_members
 ├── id
-├── project_service_id   (→ project_service, cascadeOnDelete)
-├── team_member_id       (→ team_members, nullOnDelete)
-├── team_cost            (decimal 12,2, nullable)
-├── team_cost_paid       (boolean, default: false)
+├── project_service_id      (→ project_service, cascadeOnDelete)
+├── team_member_id          (nullable → team_members, nullOnDelete)
+├── team_cost               (decimal 12,2, nullable)
+├── team_cost_paid          (boolean, default: false)
 └── timestamps
+
+-- عمود جديد على users
+users.target_margin_pct     (tinyInt, default: 40) — الهامش العام للمستخدم
 ```
 
-**ملاحظة:** هذا الجدول يستبدل أعمدة `team_member_id` و`team_cost` و`team_cost_paid` الموجودة في `project_service`.
-البيانات الحالية ستُرحَّل في الـ migration.
+### Migrations المضافة
 
-### نموذج البيانات المُرسَلة من الفورم
+| الملف | المحتوى |
+|-------|---------|
+| `2026_06_06_000001` | إنشاء `project_service_members` + ترحيل البيانات + حذف أعمدة `team_member_id/team_cost/team_cost_paid` من `project_service` |
+| `2026_06_06_000002` | إضافة `target_margin_pct` لـ `users` (default: 40) |
+| `2026_06_06_000003` | إضافة `target_margin_pct` nullable لـ `project_service` |
+
+### Models المضافة
+
+| الملف | الوصف |
+|-------|-------|
+| `app/Models/ProjectServicePivot.php` | Pivot model يرث من `Pivot`، يحتوي على `members()` hasMany |
+| `app/Models/ProjectServiceMember.php` | Model لمنفذي الخدمة مع علاقات `teamMember()` و`projectService()` |
+
+### نموذج البيانات المُرسَلة (الشكل النهائي)
 
 ```json
 {
@@ -130,6 +93,7 @@ project_service_members
       "amount": 10000,
       "type": "income",
       "notes": "تصميم وتطوير كامل",
+      "target_margin_pct": 45,
       "members": [
         { "team_member_id": "01J...", "team_cost": 2000 },
         { "team_member_id": "01J...", "team_cost": 3000 }
@@ -139,97 +103,138 @@ project_service_members
 }
 ```
 
-### قواعد التحقق الجديدة
+---
 
-```php
-'services.*.members'                => ['nullable', 'array'],
-'services.*.members.*.team_member_id' => ['required_with:services.*.members', 'string', 'exists:team_members,id'],
-'services.*.members.*.team_cost'      => ['nullable', 'numeric', 'min:0'],
-```
+## ثالثاً — المراحل المنفذة
+
+### ✅ المرحلة 1 — البنية التحتية
+
+| الملف | ما تم |
+|-------|-------|
+| `ProjectServicePivot` | Pivot model + `members()` hasMany |
+| `ProjectServiceMember` | Model جديد |
+| `Project::services()` | `using(ProjectServicePivot)` + `withPivot(['id', ..., 'target_margin_pct'])` |
+| `StoreProjectRequest` | Validation لـ `services.*.members` nested + `target_margin_pct` |
+| `UpdateProjectRequest` | نفس التغيير |
+| `ProjectController` | `store()`, `update()`, `payTeamMember()`, `syncServiceMembers()` helper |
+| `ProjectFinancialService` | `calcServicesMargin()` — هامش كل خدمة مستقل |
+| `routes/web.php` | Route يستقبل `memberId` لا `serviceId` |
 
 ---
 
-## خامساً — خطة التنفيذ (بالترتيب)
+### ✅ المرحلة 2 — الـ UI
 
-### المرحلة 1 — البنية التحتية
-**المهام:**
-- [ ] إنشاء migration جديد لجدول `project_service_members`
-- [ ] ترحيل البيانات الحالية من `project_service.team_member_id/team_cost`
-- [ ] تحديث Model `ProjectService` / `Project` للعلاقات الجديدة
-- [ ] تحديث `StoreProjectRequest` و`UpdateProjectRequest` بقواعد التحقق الجديدة
-- [ ] تحديث `ProjectController` لحفظ المنفذين المتعددين
-- [ ] تحديث `ProjectFinancialService` لحساب الهامش الصحيح
+**`_form.blade.php` (Alpine.js):**
 
-**نتيجة البيانات في ProjectFinancialService:**
-```php
-// per service:
-'service_margin'       => $service->amount - $service->members->sum('team_cost'),
-'service_margin_pct'   => ($service->amount > 0)
-                          ? round((($service->amount - $totalCost) / $service->amount) * 100, 1)
-                          : null,
-'members_total_cost'   => $service->members->sum('team_cost'),
+الدوال المضافة:
+```js
+addMember(svcIndex)         // إضافة منفذ لخدمة
+removeMember(idx, mIdx)     // حذف منفذ
+serviceMargin(svc)          // { revenue, cost, margin, pct }
+marginColor(pct)            // class CSS حسب الهامش
+costPct(svc)                // نسبة التكلفة من الإيراد
+projectMarginSummary()      // إجمالي الهامش لكل الخدمات
+effectiveMarginPct(svc)     // هامش الخدمة المخصص ?? إعداد المستخدم
+suggestedPrice(svc)         // السعر الموصى به = تكلفة ÷ (1 - هامش_مستهدف)
+fetchServiceHistory(svc)    // جلب متوسط الهامش التاريخي للخدمة
 ```
+
+**`show.blade.php`:**
+- قسم "Team Assignments" القديم → "هامش الخدمات" الجديد
+- لكل خدمة: اسم + إيراد + تكلفة الفريق + هامش + progress bar ملون
+- لكل منفذ: اسم + تكلفة + زر "دفع" يستخدم `project_service_members.id`
 
 ---
 
-### المرحلة 2 — تحديث الـ UI
-**المهام:**
-- [ ] تحديث `_form.blade.php`: قسم الفريق داخل كل خدمة يصبح قائمة قابلة للإضافة والحذف
-- [ ] إضافة مؤشر الهامش الحي (Alpine.js — حساب frontend في اللحظة)
-- [ ] تصميم مؤشر الهامش مع ألوان تدريجية:
+### ✅ المرحلة 3 — التنبيهات
 
-```
-> 40%   🟢 هامش ممتاز
-20-40%  🟡 هامش مقبول — راقب التكاليف
-< 20%   🟠 هامش منخفض — تحذير
-< 0%    🔴 خسارة — مراجعة فورية
-```
+| التنبيه | الحالة | التفعيل |
+|---------|--------|---------|
+| تكلفة الخدمة ≥ 80% من إيرادها | لحظي (Alpine.js) | دائماً |
+| الخدمة بخسارة | لحظي (Alpine.js) | دائماً |
+| إجمالي المشروع < 20% | لحظي (Alpine.js) | عند وجود خدمتين+ |
+| إجمالي المشروع بخسارة | لحظي (Alpine.js) | دائماً |
+| الهامش أقل من المتوسط التاريخي بـ 50% | تاريخي (AJAX) | بعد 1+ مشروع سابق |
+| عرض متوسط الهامش التاريخي عند اختيار الخدمة | تاريخي (AJAX) | بعد 1+ مشروع سابق |
 
-- [ ] إظهار إجمالي هامش المشروع أسفل قائمة الخدمات قبل الحفظ
+**Endpoint:** `GET /projects/service-margin-history/{serviceId}` → يعيد `avg_margin`, `times_used`, `label`
 
 ---
 
-### المرحلة 3 — نظام التنبيهات (بعد تراكم البيانات)
-
-**التنبيهات اللحظية (لا تحتاج تاريخ):**
-- تكلفة المنفذين تجاوزت 80% من قيمة الخدمة
-- مجموع تكاليف المشروع يتجاوز إيراده الكلي
-
-**التنبيهات المبنية على التاريخ (بعد 10+ مشاريع):**
-- "خدمة [التصميم] متوسط هامشها في مشاريعك 45% — هذا المشروع 15% فقط"
-- "هذه الخدمة تاريخياً ذات هامش منخفض — هل تريد مراجعة السعر؟"
-
----
-
-### المرحلة 4 — اقتراح السعر الذكي
-
-**الميزة:**
-> "بناءً على تكاليف فريقك، لتحقيق هامش 40% يجب أن تكون قيمة هذه الخدمة على الأقل: 8,333 ر.س"
+### ✅ المرحلة 4 — اقتراح السعر الذكي
 
 **المعادلة:**
 ```
-السعر الموصى به = إجمالي تكاليف المنفذين ÷ (1 - نسبة الهامش المستهدفة)
-مثال: 5,000 ÷ (1 - 0.40) = 8,333 ر.س
+السعر الموصى به = إجمالي تكاليف المنفذين ÷ (1 − effectiveMarginPct / 100)
+مثال: 5,000 ÷ (1 − 0.40) = 8,333 ر.س
 ```
 
-**المتطلب:** بيانات تاريخية كافية + إعداد المستخدم لنسبة الهامش المستهدفة.
+**UX:**
+- زر 💡 فوق حقل القيمة عند وجود تكاليف وغياب سعر — ضغطة واحدة تُطبق السعر
+- بانر "تطبيق" عندما يكون السعر المدخل أقل من الهامش المستهدف
 
 ---
 
-## سادساً — تأثير كل مرحلة على التقارير
+### ✅ الإعداد العام + المخصص للخدمة
 
-| المرحلة | ما يُضاف للتقارير |
-|---------|-------------------|
-| 1 | هامش كل خدمة + إجمالي تكاليف المنفذين |
-| 2 | عرض الهامش بصرياً في صفحة المشروع |
-| 3 | تنبيهات ربحية في dashboard |
-| 4 | توصيات تسعير في نموذج الإنشاء |
+**منطق الأولوية:**
+```
+effectiveMarginPct(svc):
+  سvc.target_margin_pct (1-99)  →  إذا محدد لهذه الخدمة
+  user.target_margin_pct        →  الإعداد العام للمستخدم (default: 40%)
+```
+
+**في الفورم:**
+- زر صغير بجانب الملاحظات يعرض نسبة الهامش العام
+- ضغطة عليه → حقل إدخال أزرق لتخصيص هامش مخصص لهذه الخدمة فقط
+- زر × لإزالة التخصيص والرجوع للعام
+
+**في الإعدادات (`settings/index.blade.php`):**
+- Slider تفاعلي (1-99%) يحفظ في `users.target_margin_pct`
 
 ---
 
-## سابعاً — ملاحظات التنفيذ
+### ✅ تقارير ربحية الخدمات
 
-1. **الترحيل آمن:** البيانات القديمة في `project_service.team_member_id` ستُنسخ لـ `project_service_members` في نفس الـ migration
-2. **الأعمدة القديمة:** بعد الترحيل تُحذف `team_member_id`, `team_cost`, `team_cost_paid` من `project_service`
-3. **الأثر الصفري على التقارير الحالية:** لأن `team_cost` لم يكن مرتبطاً بالحسابات أصلاً
-4. **team_cost_paid:** ينتقل للجدول الجديد — منطق الدفع يبقى per-member لا per-service
+**Methods مضافة لـ `ReportService`:**
+
+| الدالة | المخرج |
+|--------|--------|
+| `getServiceProfitability()` | ربحية كل خدمة (revenue, cost, margin, margin_pct, project_count) |
+| `getTeamMemberEfficiency()` | تكاليف كل منفذ + نسبته من إيراد خدماته |
+
+**في `reports/index.blade.php`:**
+- جدول ربحية الخدمات مرتب تنازلياً بالهامش — الخاسر باللون الأحمر
+- قسم كفاءة الفريق: بار يمتد حسب نسبة التكلفة من الإيراد (أحمر >80%)
+
+---
+
+## رابعاً — المعادلة المالية الكاملة
+
+```
+هامش الخدمة    = amount - Σ(members.team_cost)
+هامش المشروع   = Σ(services.amount) - Σ(project_service_members.team_cost)
+ربح المشروع    = معاملات الدخل - معاملات المصروف  (transactions)
+```
+
+> **ملاحظة:** هامش الخدمة مبني على تكاليف الفريق المباشرة.
+> ربح المشروع الكلي مبني على المعاملات المسجّلة.
+> الاثنان مكملان لبعض.
+
+---
+
+## خامساً — ملاحظات التشغيل
+
+```bash
+# تشغيل الـ migrations الثلاثة بالترتيب
+php artisan migrate
+
+# Migrations تُنفَّذ:
+# 1. 2026_06_06_000001 — project_service_members (إنشاء + ترحيل + حذف أعمدة قديمة)
+# 2. 2026_06_06_000002 — users.target_margin_pct
+# 3. 2026_06_06_000003 — project_service.target_margin_pct
+```
+
+**تحذيرات:**
+- الـ migration الأول يحذف `team_member_id`, `team_cost`, `team_cost_paid` من `project_service` بعد نسخها — لا رجعة بدون `migrate:rollback`
+- البيانات القديمة (منفذ واحد لكل خدمة) تُرحَّل تلقائياً لـ `project_service_members`

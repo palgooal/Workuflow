@@ -77,6 +77,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Pay team member for a service
     Route::post('projects/{project}/pay-team/{memberId}', [ProjectController::class, 'payTeamMember'])->name('projects.pay-team');
+    Route::patch('projects/{project}/status', [ProjectController::class, 'updateStatus'])->name('projects.update-status');
 
     // متوسط هامش الخدمة تاريخياً (للتنبيهات الذكية)
     Route::get('projects/service-margin-history/{serviceId}', [ProjectController::class, 'serviceMarginHistory'])->name('projects.service-margin-history');

@@ -24,8 +24,8 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-bold text-gray-900">{{ $project->name }}</h1>
-                        <x-badge :color="$project->is_active ? 'green' : 'gray'">
-                            {{ $project->is_active ? 'نشط' : 'متوقف' }}
+                        <x-badge :color="$project->status->color()">
+                            {{ $project->status->icon() }} {{ $project->status->label() }}
                         </x-badge>
                         <x-badge color="blue">{{ $project->type->label() }}</x-badge>
                     </div>

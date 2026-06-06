@@ -339,6 +339,114 @@
 
 </div>
 
+{{-- ==================== ربحية الخدمات ==================== --}}
+@if($serviceMargins->isNotEmpty())
+<div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="font-semibold text-gray-900 flex items-center gap-2">
+            <span>📊</span> ربحية الخدمات
+        </h2>
+        <span class="text-xs text-gray-400">جميع المشاريع — بدون فلتر زمني</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-right text-sm">
+            <thead class="bg-gray-50 text-xs font-semibold text-gray-500">
+                <tr>
+                    <th class="px-6 py-3">الخدمة</th>
+                    <th class="px-6 py-3 text-center">المشاريع</th>
+                    <th class="px-6 py-3">الإيراد</th>
+                    <th class="px-6 py-3">تكلفة الفريق</th>
+                    <th class="px-6 py-3">الهامش</th>
+                    <th class="px-6 py-3 text-center">النسبة</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                @foreach($serviceMargins as $svc)
+                @php
+                    $pct = $svc['margin_pct'];
+                    $badgeClass = match(true) {
+                        $svc['is_loss']            => 'bg-red-100 text-red-700',
+                        $pct !== null && $pct < 20  => 'bg-orange-100 text-orange-700',
+                        $pct !== null && $pct < 40  => 'bg-amber-100 text-amber-700',
+                        default                     => 'bg-emerald-100 text-emerald-700',
+                    };
+                @endphp
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-3.5 font-medium text-gray-900">{{ $svc['name'] }}</td>
+                    <td class="px-6 py-3.5 text-center text-gray-500">{{ $svc['project_count'] }}</td>
+                    <td class="px-6 py-3.5 text-gray-700">{{ number_format($svc['revenue'], 2) }}</td>
+                    <td class="px-6 py-3.5 text-gray-700">
+                        {{ $svc['cost'] > 0 ? number_format($svc['cost'], 2) : '—' }}
+                    </td>
+                    <td class="px-6 py-3.5 font-semibold {{ $svc['is_loss'] ? 'text-red-600' : 'text-gray-900' }}">
+                        {{ number_format($svc['margin'], 2) }}
+                    </td>
+                    <td class="px-6 py-3.5 text-center">
+                        @if($pct !== null)
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {{ $badgeClass }}">
+                            {{ $svc['is_loss'] ? 'خسارة' : $pct . '%' }}
+                        </span>
+                        @else
+                        <span class="text-gray-400 text-xs">—</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+{{-- ==================== كفاءة الفريق ==================== --}}
+@if($teamEfficiency->isNotEmpty())
+<div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-900 flex items-center gap-2">
+            <span>👥</span> تكاليف الفريق على الخدمات
+        </h2>
+    </div>
+    <div class="divide-y divide-gray-50">
+        @foreach($teamEfficiency as $member)
+        @php
+            $share = $member['cost_share_pct'];
+            $barColor = match(true) {
+                $share !== null && $share > 80 => 'bg-red-500',
+                $share !== null && $share > 60 => 'bg-amber-400',
+                default                        => 'bg-emerald-500',
+            };
+        @endphp
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center
+                                text-indigo-700 font-bold text-sm flex-shrink-0">
+                        {{ mb_substr($member['name'], 0, 1) }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">{{ $member['name'] }}</p>
+                        <p class="text-xs text-gray-400">{{ $member['services_count'] }} خدمة</p>
+                    </div>
+                </div>
+                <div class="text-left">
+                    <p class="text-sm font-bold text-gray-800">{{ number_format($member['total_cost'], 2) }}</p>
+                    @if($share !== null)
+                    <p class="text-xs text-gray-400">{{ $share }}% من إيراد خدماته</p>
+                    @endif
+                </div>
+            </div>
+            @if($share !== null)
+            <div class="h-1.5 rounded-full bg-gray-100">
+                <div class="{{ $barColor }} h-1.5 rounded-full transition-all"
+                     style="width: {{ min($share, 100) }}%"></div>
+            </div>
+            @endif
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 {{-- ==================== Chart.js Scripts ==================== --}}
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

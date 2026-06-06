@@ -4,6 +4,7 @@ namespace App\Modules\Projects\Services;
 
 use App\Models\Project;
 use App\Models\ProjectServiceMember;
+use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\TransactionType;
 
 class ProjectFinancialService
@@ -151,7 +152,7 @@ class ProjectFinancialService
         $byCurrency  = [];
 
         foreach ($projects as $project) {
-            if ($project->is_active) {
+            if ($project->status === ProjectStatus::Active) {
                 $activeCount++;
             }
 

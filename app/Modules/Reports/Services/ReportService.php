@@ -5,6 +5,7 @@ namespace App\Modules\Reports\Services;
 use App\Models\Project;
 use App\Models\Transaction;
 use App\Support\Enums\TransactionType;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -166,6 +167,96 @@ class ReportService
             ];
         })
         ->sortByDesc('net')
+        ->values();
+    }
+
+    /**
+     * ربحية الخدمات — أي خدمة الأعلى هامشاً؟
+     * تشمل جميع الخدمات بغض النظر عن الفترة الزمنية
+     */
+    public function getServiceProfitability(): Collection
+    {
+        $userId = Auth::id();
+
+        $rows = DB::table('project_service as ps')
+            ->join('projects as p', function ($j) use ($userId) {
+                $j->on('p.id', '=', 'ps.project_id')
+                  ->where('p.user_id', $userId)
+                  ->whereNull('p.deleted_at');
+            })
+            ->join('services as s', 's.id', '=', 'ps.service_id')
+            ->leftJoin('project_service_members as psm', 'psm.project_service_id', '=', 'ps.id')
+            ->select(
+                'ps.service_id',
+                's.name_ar as name',
+                DB::raw('COUNT(DISTINCT ps.project_id) as project_count'),
+                DB::raw('SUM(ps.amount) as total_revenue'),
+                DB::raw('COALESCE(SUM(psm.team_cost), 0) as total_cost')
+            )
+            ->groupBy('ps.service_id', 's.name_ar')
+            ->get();
+
+        return $rows->map(function ($row) {
+            $revenue = (float) $row->total_revenue;
+            $cost    = (float) $row->total_cost;
+            $margin  = $revenue - $cost;
+            $pct     = $revenue > 0 ? round(($margin / $revenue) * 100, 1) : null;
+
+            return [
+                'service_id'    => $row->service_id,
+                'name'          => $row->name ?? 'خدمة محذوفة',
+                'project_count' => (int) $row->project_count,
+                'revenue'       => $revenue,
+                'cost'          => $cost,
+                'margin'        => $margin,
+                'margin_pct'    => $pct,
+                'is_loss'       => $margin < 0,
+            ];
+        })
+        ->sortByDesc('margin_pct')
+        ->values();
+    }
+
+    /**
+     * كفاءة أعضاء الفريق — من الأعلى تكلفة؟ من الأكثر استخداماً؟
+     */
+    public function getTeamMemberEfficiency(): Collection
+    {
+        $userId = Auth::id();
+
+        $rows = DB::table('project_service_members as psm')
+            ->join('project_service as ps', 'ps.id', '=', 'psm.project_service_id')
+            ->join('projects as p', function ($j) use ($userId) {
+                $j->on('p.id', '=', 'ps.project_id')
+                  ->where('p.user_id', $userId)
+                  ->whereNull('p.deleted_at');
+            })
+            ->join('team_members as tm', 'tm.id', '=', 'psm.team_member_id')
+            ->select(
+                'psm.team_member_id',
+                'tm.name',
+                DB::raw('COUNT(psm.id) as services_count'),
+                DB::raw('COALESCE(SUM(psm.team_cost), 0) as total_cost'),
+                DB::raw('SUM(ps.amount) as services_revenue')
+            )
+            ->groupBy('psm.team_member_id', 'tm.name')
+            ->get();
+
+        return $rows->map(function ($row) {
+            $revenue = (float) $row->services_revenue;
+            $cost    = (float) $row->total_cost;
+            // حصة التكلفة من إيراد الخدمات التي عمل عليها
+            $costShare = $revenue > 0 ? round(($cost / $revenue) * 100, 1) : null;
+
+            return [
+                'id'             => $row->team_member_id,
+                'name'           => $row->name,
+                'services_count' => (int) $row->services_count,
+                'total_cost'     => $cost,
+                'cost_share_pct' => $costShare,
+            ];
+        })
+        ->sortByDesc('total_cost')
         ->values();
     }
 

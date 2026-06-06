@@ -13,9 +13,9 @@ class CreateProjectAction
             'name'        => $data->name,
             'type'        => $data->type,
             'currency'    => $data->currency,
-            'color'       => $data->color,
+            'color'          => $data->color,
             'description'    => $data->description,
-            'is_active'      => $data->is_active,
+            'status'         => $data->status,
             'client_id'      => $data->client_id,
             'contract_value' => $data->contract_value,
         ]);
