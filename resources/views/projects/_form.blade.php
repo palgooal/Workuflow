@@ -189,27 +189,6 @@
                 @error('contract_value') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                    ميزانية التكاليف
-                    <span class="text-gray-400 font-normal">(سقف المصروفات)</span>
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <input type="number" name="expense_budget" step="0.01" min="0"
-                           value="{{ old('expense_budget', $project->expense_budget ?? '') }}"
-                           placeholder="0.00"
-                           class="w-full pr-9 pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm
-                                  focus:outline-none focus:ring-2 focus:ring-indigo-500
-                                  @error('expense_budget') border-red-300 @enderror">
-                </div>
-                @error('expense_budget') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-            </div>
         </div>
 
         {{-- Client --}}
@@ -324,53 +303,17 @@
                             </button>
                         </div>
 
-                        {{-- Row 2: Amount + Type --}}
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1.5">القيمة</label>
-                                <input type="number"
-                                       :name="`services[${index}][amount]`"
-                                       x-model="svc.amount"
-                                       min="0" step="0.01"
-                                       placeholder="0.00"
-                                       class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm
-                                              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1.5">النوع</label>
-                                <div class="flex gap-2">
-                                    <label class="flex-1 cursor-pointer">
-                                        <input type="radio" :name="`services[${index}][type]`"
-                                               value="income" x-model="svc.type" class="sr-only">
-                                        <div class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2
-                                                    text-xs font-medium transition cursor-pointer"
-                                             :class="svc.type === 'income'
-                                                 ? 'border-green-500 bg-green-50 text-green-700'
-                                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                                      d="M7 11l5-5m0 0l5 5m-5-5v12"/>
-                                            </svg>
-                                            دخل
-                                        </div>
-                                    </label>
-                                    <label class="flex-1 cursor-pointer">
-                                        <input type="radio" :name="`services[${index}][type]`"
-                                               value="expense" x-model="svc.type" class="sr-only">
-                                        <div class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2
-                                                    text-xs font-medium transition cursor-pointer"
-                                             :class="svc.type === 'expense'
-                                                 ? 'border-red-500 bg-red-50 text-red-700'
-                                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                                      d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
-                                            </svg>
-                                            مصروف
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
+                        {{-- Row 2: Amount --}}
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">القيمة</label>
+                            <input type="number"
+                                   :name="`services[${index}][amount]`"
+                                   x-model="svc.amount"
+                                   min="0" step="0.01"
+                                   placeholder="0.00"
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm
+                                          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <input type="hidden" :name="`services[${index}][type]`" value="income">
                         </div>
 
                         {{-- Row 3: Notes --}}

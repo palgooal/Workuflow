@@ -24,12 +24,11 @@ class StoreProjectRequest extends FormRequest
             'is_active'      => ['nullable', 'boolean'],
             'client_id'      => ['nullable', 'integer', 'exists:clients,id'],
             'contract_value' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
-            'expense_budget' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
             // services[]: [{service_id, amount, type, notes}]
             'services'              => ['nullable', 'array'],
             'services.*.service_id' => ['required_with:services', 'integer', 'exists:services,id'],
             'services.*.amount'     => ['required_with:services', 'numeric', 'min:0'],
-            'services.*.type'       => ['required_with:services', 'in:income,expense'],
+            'services.*.type'       => ['required_with:services', 'in:income'],
             'services.*.notes'          => ['nullable', 'string', 'max:255'],
             'services.*.team_member_id' => ['nullable', 'string', 'exists:team_members,id'],
             'services.*.team_cost'      => ['nullable', 'numeric', 'min:0'],

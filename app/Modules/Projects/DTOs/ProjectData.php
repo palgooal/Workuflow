@@ -15,7 +15,6 @@ class ProjectData
         public readonly bool        $is_active      = true,
         public readonly ?int        $client_id      = null,
         public readonly ?float      $contract_value = null,
-        public readonly ?float      $expense_budget = null,
     ) {}
 
     public static function fromRequest(array $data): self
@@ -30,8 +29,6 @@ class ProjectData
             client_id:      isset($data['client_id']) ? (int) $data['client_id'] : null,
             contract_value: isset($data['contract_value']) && $data['contract_value'] !== ''
                                 ? (float) $data['contract_value'] : null,
-            expense_budget: isset($data['expense_budget']) && $data['expense_budget'] !== ''
-                                ? (float) $data['expense_budget'] : null,
         );
     }
 }
