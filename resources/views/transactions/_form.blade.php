@@ -141,23 +141,38 @@
             </div>
         </div>
 
-        {{-- الصندوق --}}
-        @if(!empty($wallets) && $wallets->isNotEmpty())
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">الصندوق / الخزينة</label>
-            <select name="wallet_id"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white
-                           focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="">بدون صندوق</option>
-                @foreach($wallets as $wallet)
-                    <option value="{{ $wallet->id }}"
-                            {{ old('wallet_id', $transaction->wallet_id ?? request('wallet_id') ?? '') === $wallet->id ? 'selected' : '' }}>
-                        {{ $wallet->icon ?: $wallet->type->icon() }} {{ $wallet->name }} ({{ $wallet->currency }})
-                    </option>
-                @endforeach
-            </select>
+        {{-- الصندوق (إجباري) --}}
+        <div class="rounded-xl border-2 {{ $errors->has('wallet_id') ? 'border-red-400 bg-red-50' : 'border-indigo-100 bg-indigo-50' }} p-4">
+            <label class="block text-sm font-semibold text-indigo-800 mb-2">
+                🏦 الصندوق / الخزينة <span class="text-red-500">*</span>
+                <span class="text-xs font-normal text-indigo-500 mr-1">— إلى أين ستذهب الأموال؟</span>
+            </label>
+            @if(!empty($wallets) && $wallets->isNotEmpty())
+                <select name="wallet_id" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border text-sm bg-white
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500
+                               {{ $errors->has('wallet_id') ? 'border-red-400' : 'border-indigo-200' }}">
+                    <option value="">— اختر الصندوق —</option>
+                    @foreach($wallets as $wallet)
+                        <option value="{{ $wallet->id }}"
+                                {{ old('wallet_id', $transaction->wallet_id ?? request('wallet_id') ?? '') === $wallet->id ? 'selected' : '' }}>
+                            {{ $wallet->icon ?: $wallet->type->icon() }} {{ $wallet->name }} ({{ $wallet->currency }})
+                        </option>
+                    @endforeach
+                </select>
+                @error('wallet_id')
+                    <p class="mt-1.5 text-xs text-red-600 font-medium">⚠️ {{ $message }}</p>
+                @enderror
+            @else
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-amber-700">⚠️ لا يوجد صناديق — يجب إنشاء صندوق أولاً قبل تسجيل معاملة.</p>
+                    <a href="{{ route('wallets.create') }}" target="_blank"
+                       class="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                        + صندوق جديد
+                    </a>
+                </div>
+            @endif
         </div>
-        @endif
 
         {{-- Category (dynamic by type) --}}
         <div>

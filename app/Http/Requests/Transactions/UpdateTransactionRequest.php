@@ -23,7 +23,7 @@ class UpdateTransactionRequest extends FormRequest
             'payee'            => ['nullable', 'string', 'max:255'],
             'transaction_date' => ['required', 'date'],
             'project_id'       => ['nullable', 'string', 'exists:projects,id'],
-            'wallet_id'        => ['nullable', 'string', 'exists:wallets,id'],
+            'wallet_id'        => ['required', 'string', 'exists:wallets,id'],
             'category_id'      => ['nullable', 'string', 'exists:categories,id'],
             'notes'            => ['nullable', 'string', 'max:1000'],
             'reference'        => ['nullable', 'string', 'max:100'],
@@ -41,6 +41,8 @@ class UpdateTransactionRequest extends FormRequest
             'description.required'      => 'وصف المعاملة مطلوب.',
             'transaction_date.required' => 'تاريخ المعاملة مطلوب.',
             'transaction_date.date'     => 'تاريخ المعاملة غير صالح.',
+            'wallet_id.required'        => 'يجب تحديد الصندوق الذي ستذهب إليه الأموال.',
+            'wallet_id.exists'          => 'الصندوق المحدد غير موجود.',
         ];
     }
 }

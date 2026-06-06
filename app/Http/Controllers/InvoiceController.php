@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Modules\CRM\Jobs\RecalculateClientHealthScoreJob;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Wallet;
 use App\Models\Project;
 use App\Models\Transaction;
 use Mpdf\Mpdf;
@@ -41,8 +42,7 @@ class InvoiceController extends Controller
     {
         $clients  = Client::where('user_id', $request->user()->id)
             ->where('is_archived', false)->orderBy('name')->get();
-        $projects = Project::where('user_id', $request->user()->id)
-            ->where('is_active', true)->orderBy('name')->get();
+        $projects = Project::active()->orderBy('name')->get();
         $statuses = InvoiceStatus::cases();
 
         // pre-fill client if passed via query string
@@ -122,7 +122,9 @@ class InvoiceController extends Controller
             ->with(['client', 'project', 'items'])
             ->firstOrFail();
 
-        return view('invoices.show', compact('invoice'));
+        $wallets = Wallet::active()->orderBy('name')->get();
+
+        return view('invoices.show', compact('invoice', 'wallets'));
     }
 
     // ==================== PDF ====================
@@ -181,8 +183,7 @@ class InvoiceController extends Controller
 
         $clients  = Client::where('user_id', $request->user()->id)
             ->where('is_archived', false)->orderBy('name')->get();
-        $projects = Project::where('user_id', $request->user()->id)
-            ->where('is_active', true)->orderBy('name')->get();
+        $projects = Project::active()->orderBy('name')->get();
 
         return view('invoices.edit', compact('invoice', 'clients', 'projects'));
     }
@@ -255,6 +256,13 @@ class InvoiceController extends Controller
 
     public function markPaid(Request $request, string $ulid): RedirectResponse
     {
+        $request->validate([
+            'wallet_id' => ['required', 'string', 'exists:wallets,id'],
+        ], [
+            'wallet_id.required' => 'يجب تحديد الصندوق الذي ستُودَع فيه مبالغ الفاتورة.',
+            'wallet_id.exists'   => 'الصندوق المحدد غير موجود.',
+        ]);
+
         $invoice = Invoice::where('ulid', $ulid)
             ->where('user_id', $request->user()->id)
             ->with('client')
@@ -273,8 +281,6 @@ class InvoiceController extends Controller
         ]);
 
         // ── تسجيل معاملة دخل تلقائياً ──────────────────────────────
-        // لا نُرسل project_id عندما يكون null تفادياً لـ "Column cannot be null"
-        // (إرسال null صراحةً يتعارض مع قيد DB، أما حذف العمود يتركه للـ DEFAULT)
         $txData = [
             'user_id'          => $invoice->user_id,
             'type'             => TransactionType::Income,
@@ -285,6 +291,7 @@ class InvoiceController extends Controller
             'payee'            => $invoice->client->name,
             'transaction_date' => $paidAt->toDateString(),
             'reference'        => $invoice->number,
+            'wallet_id'        => $request->wallet_id,
             'notes'            => 'تم الإنشاء تلقائياً عند تسجيل دفع الفاتورة.',
         ];
 

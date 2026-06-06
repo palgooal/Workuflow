@@ -128,12 +128,13 @@
                 </button>
             </form>
             @endif
-            <form method="POST" action="{{ route('invoices.mark-paid', $invoice->ulid) }}">
-                @csrf
-                <button class="px-3 py-2 text-sm text-teal-600 bg-teal-50 border border-teal-200 rounded-xl hover:bg-teal-100 transition">
-                    ✅ تسجيل الدفع
-                </button>
-            </form>
+            {{-- زر يفتح modal اختيار الصندوق --}}
+            <button type="button"
+                    x-data
+                    @click="$dispatch('open-pay-modal')"
+                    class="px-3 py-2 text-sm text-teal-600 bg-teal-50 border border-teal-200 rounded-xl hover:bg-teal-100 transition">
+                ✅ تسجيل الدفع
+            </button>
             @endif
 
             {{-- طباعة --}}
@@ -283,6 +284,81 @@
         </div>
         @endif
 
+    </div>
+</div>
+
+{{-- ══ Modal: اختيار الصندوق عند تسجيل الدفع ══ --}}
+<div x-data="{ open: false }"
+     @open-pay-modal.window="open = true"
+     x-show="open"
+     x-transition.opacity
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="display: none;">
+
+    {{-- Overlay --}}
+    <div class="absolute inset-0 bg-black/40" @click="open = false"></div>
+
+    {{-- Modal box --}}
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 z-10"
+         @click.outside="open = false">
+
+        <h3 class="text-lg font-bold text-gray-900 mb-1">تسجيل الدفع</h3>
+        <p class="text-sm text-gray-500 mb-5">
+            الفاتورة: <span class="font-semibold text-gray-800">{{ $invoice->number }}</span>
+            — المبلغ: <span class="font-bold text-teal-700">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
+        </p>
+
+        <form method="POST" action="{{ route('invoices.mark-paid', $invoice->ulid) }}">
+            @csrf
+
+            <div class="mb-5">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    🏦 إلى أي صندوق ستُودَع هذه المبالغ؟ <span class="text-red-500">*</span>
+                </label>
+
+                @if($wallets->isEmpty())
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+                        ⚠️ لا يوجد صناديق — <a href="{{ route('wallets.create') }}" class="underline font-medium">أنشئ صندوقاً أولاً</a>
+                    </div>
+                @else
+                    <div class="space-y-2">
+                        @foreach($wallets as $wallet)
+                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100
+                                      hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition
+                                      has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                            <input type="radio" name="wallet_id" value="{{ $wallet->id }}"
+                                   class="text-indigo-600" required
+                                   {{ $loop->first ? 'checked' : '' }}>
+                            <span class="text-xl">{{ $wallet->icon ?: $wallet->type->icon() }}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-gray-800">{{ $wallet->name }}</p>
+                                <p class="text-xs text-gray-400">
+                                    {{ $wallet->type->label() }} · {{ $wallet->currency }}
+                                    · الرصيد: {{ number_format($wallet->balance(), 2) }}
+                                </p>
+                            </div>
+                        </label>
+                        @endforeach
+                    </div>
+                    @error('wallet_id')
+                        <p class="mt-2 text-xs text-red-600">⚠️ {{ $message }}</p>
+                    @enderror
+                @endif
+            </div>
+
+            <div class="flex gap-3">
+                @if($wallets->isNotEmpty())
+                <button type="submit"
+                        class="flex-1 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 transition">
+                    ✅ تأكيد الدفع
+                </button>
+                @endif
+                <button type="button" @click="open = false"
+                        class="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition">
+                    إلغاء
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
