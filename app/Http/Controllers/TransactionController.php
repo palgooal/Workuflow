@@ -7,6 +7,7 @@ use App\Http\Requests\Transactions\UpdateTransactionRequest;
 use App\Models\Category;
 use App\Models\Project;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use App\Modules\Transactions\Actions\CreateTransactionAction;
 use App\Modules\Transactions\Actions\DeleteTransactionAction;
 use App\Modules\Transactions\Actions\UpdateTransactionAction;
@@ -41,10 +42,11 @@ class TransactionController extends Controller
     {
         $projects   = Project::active()->orderBy('name')->get();
         $categories = Category::orderBy('type')->orderBy('name')->get();
+        $wallets    = Wallet::active()->orderBy('name')->get();
         $currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
         $preProject = $request->query('project');
 
-        return view('transactions.create', compact('projects', 'categories', 'currencies', 'preProject'));
+        return view('transactions.create', compact('projects', 'categories', 'wallets', 'currencies', 'preProject'));
     }
 
     public function store(StoreTransactionRequest $request): RedirectResponse
@@ -74,9 +76,10 @@ class TransactionController extends Controller
         $this->authorize('update', $transaction);
         $projects   = Project::active()->orderBy('name')->get();
         $categories = Category::orderBy('type')->orderBy('name')->get();
+        $wallets    = Wallet::active()->orderBy('name')->get();
         $currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
 
-        return view('transactions.edit', compact('transaction', 'projects', 'categories', 'currencies'));
+        return view('transactions.edit', compact('transaction', 'projects', 'categories', 'wallets', 'currencies'));
     }
 
     public function update(UpdateTransactionRequest $request, Transaction $transaction): RedirectResponse

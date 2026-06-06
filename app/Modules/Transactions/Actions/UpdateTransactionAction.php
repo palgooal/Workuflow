@@ -16,6 +16,7 @@ class UpdateTransactionAction
             'description'      => $data->description,
             'transaction_date' => $data->transaction_date,
             'project_id'       => $data->project_id,
+            'wallet_id'        => $data->wallet_id,
             'category_id'      => $data->category_id,
             'notes'            => $data->notes,
             'reference'        => $data->reference,

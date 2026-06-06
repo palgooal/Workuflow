@@ -1,6 +1,6 @@
 # موديول المشاريع (Projects)
 
-> آخر تحديث: 29 مايو 2026 | الإصدار: 2.1.0
+> آخر تحديث: 7 يونيو 2026 | الإصدار: 2.2.0
 
 ---
 
@@ -41,11 +41,13 @@
 | color | varchar(7) | | HEX |
 | currency | varchar(3) | | |
 | type | varchar(20) | | ProjectType enum |
-| is_active | boolean | | true |
+| status | varchar(20) | | ProjectStatus enum (default: active) |
 | contract_value | decimal(12,2) | ✓ | قيمة العقد |
 | expense_budget | decimal(12,2) | ✓ | ميزانية التكاليف |
 | deleted_at | timestamp | ✓ | SoftDeletes |
 | created_at / updated_at | timestamps | | |
+
+> **ملاحظة:** `is_active` ليست عمود حقيقي — هو accessor `getIsActiveAttribute()` للتوافق مع الكود القديم، يُرجع `true` إذا كان `status === ProjectStatus::Active`.
 
 #### project_service (pivot)
 
@@ -72,6 +74,29 @@
 | `business` | تجاري | 💼 |
 | `personal` | شخصي | 🏠 |
 
+### ProjectStatus
+
+**الموقع:** `app/Support/Enums/ProjectStatus.php`
+
+| Value | Label | Icon | Badge (Tailwind) |
+|-------|-------|------|-----------------|
+| `active` | نشط | 🟢 | `bg-emerald-100 text-emerald-700` |
+| `completed` | مكتمل | ✅ | `bg-blue-100 text-blue-700` |
+| `on_hold` | متوقف | ⏸ | `bg-amber-100 text-amber-700` |
+| `cancelled` | ملغي | ❌ | `bg-red-100 text-red-700` |
+
+**Methods:**
+```php
+->label()        // النص العربي
+->icon()         // Emoji
+->color()        // green | blue | amber | red
+->tailwindBadge()// CSS classes للـ badge
+->isActive()     // bool — هل الحالة نشطة؟
+->sortOrder()    // ترتيب للعرض (1..4)
+```
+
+**تغيير الحالة من الواجهة:** كل بطاقة مشروع تحتوي على sub-menu يُرسل `PATCH /projects/{id}/status` مع `status` المختارة.
+
 ---
 
 ## Models
@@ -95,7 +120,7 @@ services()    → belongsToMany(Service::class, 'project_service')
 #### Scopes
 
 ```php
-scopeActive($query)   → where('is_active', true)
+scopeActive($query)   → where('status', ProjectStatus::Active)
 scopeBusiness($query) → where('type', ProjectType::Business)
 scopePersonal($query) → where('type', ProjectType::Personal)
 ```
@@ -164,7 +189,22 @@ totalExpenses(): float  → transactions Expense sum
 | GET | /projects/{id}/edit | نموذج التعديل |
 | PUT | /projects/{id} | حفظ التعديلات |
 | DELETE | /projects/{id} | حذف ناعم |
+| PATCH | /projects/{id}/status | تغيير حالة المشروع |
 | POST | /projects/{id}/pay-team/{service} | دفع تكلفة عضو الفريق |
+
+#### updateStatus — تفاصيل
+
+```php
+// Validation
+'status' => ['required', 'in:active,completed,on_hold,cancelled']
+
+// Logic
+$newStatus = ProjectStatus::from($request->status);
+$project->update(['status' => $newStatus]);
+return back()->with('success', '...');
+```
+
+> **تنبيه:** يتطلب `use Illuminate\Http\Request` في أعلى الـ controller. غيابه يُسبب `ReflectionException: Class "App\Http\Controllers\Request" does not exist`.
 
 ---
 
@@ -178,6 +218,34 @@ totalExpenses(): float  → transactions Expense sum
 | `projects/show.blade.php` | KPIs + progress bars + معاملات + عروض |
 | `projects/create.blade.php` | نموذج الإنشاء |
 | `projects/edit.blade.php` | نموذج التعديل |
+| `projects/_card.blade.php` | بطاقة المشروع — Alpine.js dropdown لتغيير الحالة |
+
+### بطاقة المشروع — `_card.blade.php`
+
+كل بطاقة تستخدم Alpine.js بمتغيرين:
+
+```js
+x-data="{ menuOpen: false, statusOpen: false }"
+```
+
+**هيكل القائمة:**
+```
+⋮ (زر النقاط) → menuOpen toggle
+  └── عرض التفاصيل
+  └── تعديل
+  └── [اسم الحالة الحالية] → statusOpen toggle
+        └── [الحالات الأخرى] — كل حالة داخل <form method="POST" PATCH>
+  └── حذف
+```
+
+**قرارات تصميمية مهمة:**
+
+| القرار | السبب |
+|--------|-------|
+| `@click.outside` على `div.relative` (الحاوي) لا على زر النقاط | وضعه على الزر يُغلق القائمة عند الضغط على أي عنصر داخلها لأن الضغط يقع خارج الزر نفسه |
+| `overflow: visible` على البطاقة (بدون `overflow-hidden`) | `overflow-hidden` يقطع الـ dropdown ويخفي خيارات الحالة |
+| `rounded-t-2xl` على شريط اللون العلوي | بديل `overflow-hidden` للحفاظ على الشكل الدائري للزوايا |
+| الـ dropdown يفتح لأعلى (`bottom-full mb-1`) | فتحه لأسفل يتجاوز حدود الـ viewport ويقطع خيار "ملغي" |
 
 ### Multi-Currency Display
 
@@ -186,6 +254,20 @@ totalExpenses(): float  → transactions Expense sum
 عملات متعددة → جدول 5 أعمدة (العملة | الدخل | المصروف | الصافي | الهامش)
               + بانر: "مقارنة العقد والميزانية بعملة المشروع (ILS) فقط"
 ```
+
+---
+
+---
+
+## Bug Fixes History
+
+### v2.2.0 — 7 يونيو 2026
+
+| Bug | Root Cause | Fix |
+|-----|-----------|-----|
+| تغيير الحالة يُغلق القائمة فوراً | `@click.outside` على زر ⋮ يُطلق عند الضغط داخل الـ dropdown | نقل `@click.outside` إلى `div.relative` الحاوي |
+| خيار "ملغي" غير مرئي في sub-menu | `overflow-hidden` على البطاقة + dropdown يفتح لأسفل خارج الـ viewport | إزالة `overflow-hidden`، إضافة `rounded-t-2xl` لشريط اللون، تغيير فتح الـ dropdown لأعلى |
+| 500 عند إرسال تغيير الحالة | `use Illuminate\Http\Request` مفقود في `ProjectController` | إضافة الـ import |
 
 ---
 

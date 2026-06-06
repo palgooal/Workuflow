@@ -23,6 +23,7 @@ class StoreTransactionRequest extends FormRequest
             'payee'            => ['nullable', 'string', 'max:255'],
             'transaction_date' => ['required', 'date'],
             'project_id'       => ['nullable', 'string', 'exists:projects,id'],
+            'wallet_id'        => ['nullable', 'string', 'exists:wallets,id'],
             'category_id'      => ['nullable', 'string', 'exists:categories,id'],
             'notes'            => ['nullable', 'string', 'max:1000'],
             'reference'        => ['nullable', 'string', 'max:100'],

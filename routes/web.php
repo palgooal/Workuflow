@@ -16,6 +16,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecurringController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\WalletController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReportExportController;
@@ -78,6 +79,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Pay team member for a service
     Route::post('projects/{project}/pay-team/{memberId}', [ProjectController::class, 'payTeamMember'])->name('projects.pay-team');
     Route::patch('projects/{project}/status', [ProjectController::class, 'updateStatus'])->name('projects.update-status');
+
+    // ── الصناديق / الخزائن ──────────────────────────────────────────────
+    Route::resource('wallets', WalletController::class);
+    Route::get('wallets-transfer', [WalletController::class, 'transferCreate'])->name('wallets.transfer.create');
+    Route::post('wallets-transfer', [WalletController::class, 'transferStore'])->name('wallets.transfer.store');
 
     // متوسط هامش الخدمة تاريخياً (للتنبيهات الذكية)
     Route::get('projects/service-margin-history/{serviceId}', [ProjectController::class, 'serviceMarginHistory'])->name('projects.service-margin-history');

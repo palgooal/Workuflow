@@ -8,12 +8,14 @@ use App\Models\Debt;
 use App\Models\Project;
 use App\Models\RecurringTransaction;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use App\Policies\BudgetPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\DebtPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\RecurringPolicy;
 use App\Policies\TransactionPolicy;
+use App\Policies\WalletPolicy;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
@@ -40,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Transaction::class, TransactionPolicy::class);
         Gate::policy(Debt::class, DebtPolicy::class);
         Gate::policy(RecurringTransaction::class, RecurringPolicy::class);
+        Gate::policy(Wallet::class, WalletPolicy::class);
 
         // ── تطبيق إعدادات البريد من قاعدة البيانات ──────────────────────
         $this->applyMailSettings();

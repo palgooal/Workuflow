@@ -18,6 +18,7 @@ class Transaction extends Model
     protected $fillable = [
         'user_id',
         'project_id',
+        'wallet_id',
         'category_id',
         'type',
         'amount',
@@ -53,6 +54,11 @@ class Transaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function wallet(): BelongsTo
+    {
+        return $this->belongsTo(Wallet::class);
     }
 
     // ==================== Scopes ====================
