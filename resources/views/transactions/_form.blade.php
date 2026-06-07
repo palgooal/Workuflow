@@ -142,6 +142,15 @@
         </div>
 
         {{-- الصندوق (إجباري) --}}
+        @if(isset($transaction) && !$transaction->wallet_id)
+        <div class="rounded-xl border-2 border-amber-300 bg-amber-50 p-3 flex items-start gap-2">
+            <span class="text-amber-500 text-lg leading-none mt-0.5">⚠️</span>
+            <div>
+                <p class="text-sm font-semibold text-amber-800">هذه المعاملة لا تنتمي لأي صندوق</p>
+                <p class="text-xs text-amber-600 mt-0.5">يجب تحديد صندوق لحفظ التعديلات — الأموال لا تُسجَّل بدون صندوق.</p>
+            </div>
+        </div>
+        @endif
         <div class="rounded-xl border-2 {{ $errors->has('wallet_id') ? 'border-red-400 bg-red-50' : 'border-indigo-100 bg-indigo-50' }} p-4">
             <label class="block text-sm font-semibold text-indigo-800 mb-2">
                 🏦 الصندوق / الخزينة <span class="text-red-500">*</span>

@@ -222,6 +222,32 @@ php artisan migrate
 2. `2026_06_07_000002_add_wallet_id_to_transactions_table`
 3. `2026_06_07_000003_create_wallet_transfers_table`
 
+### معالجة المعاملات القديمة بعد الـ Migration
+
+`wallet_id` **nullable** في قاعدة البيانات، لكن **required** في الـ validation. المعاملات القديمة (قبل إضافة الصناديق) لن يمكن تعديلها حتى يُعيَّن لها صندوق.
+
+**الحل الآلي — أمر artisan:**
+
+```bash
+# معاينة بدون تعديل
+php artisan wallets:assign-default --dry-run
+
+# تطبيق على جميع المستخدمين
+php artisan wallets:assign-default
+
+# تطبيق على مستخدم محدد
+php artisan wallets:assign-default --user=USER_ID
+```
+
+**ما يفعله الأمر:**
+- يبحث عن كل مستخدم لديه معاملات بدون `wallet_id`
+- إذا كان لديه صناديق → يعيّن للصندوق الأقدم
+- إذا لم يكن لديه صناديق → ينشئ «الصندوق العام» تلقائياً ثم يعيّن
+
+**الملف:** `app/Console/Commands/AssignDefaultWallet.php`
+
+> **ملاحظة UX:** عند فتح تعديل معاملة قديمة بدون صندوق، يظهر تنبيه أصفر يطلب من المستخدم تحديد صندوق قبل الحفظ.
+
 ---
 
 ## Bug Fixes History
