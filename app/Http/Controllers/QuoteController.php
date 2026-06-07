@@ -88,7 +88,7 @@ class QuoteController extends Controller
         $quote = Quote::create([
             'user_id'     => $request->user()->id,
             'client_id'   => $client->id,
-            'project_id'  => $validated['project_id'] ?: null,
+            'project_id'  => $validated['project_id'] ?? null,
             'title'       => $validated['title'] ?? null,
             'status'      => QuoteStatus::Draft,
             'issue_date'  => $validated['issue_date'],
@@ -184,7 +184,7 @@ class QuoteController extends Controller
 
         $quote->update([
             'client_id'   => $validated['client_id'],
-            'project_id'  => $validated['project_id'] ?: null,
+            'project_id'  => $validated['project_id'] ?? null,
             'title'       => $validated['title'] ?? null,
             'issue_date'  => $validated['issue_date'],
             'valid_until' => $validated['valid_until'] ?? null,

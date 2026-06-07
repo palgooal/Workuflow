@@ -46,17 +46,24 @@ class ReportService
      */
     public function getMonthlyTrend(string $from, string $to): array
     {
-        // استعلام واحد: اجمع حسب (سنة، شهر، نوع)
+        // استعلام واحد: اجمع حسب (سنة، شهر، نوع) — متوافق مع MySQL و SQLite
+        $driver = DB::getDriverName();
+        $yrExpr = $driver === 'sqlite'
+            ? "CAST(strftime('%Y', transaction_date) AS INTEGER)"
+            : 'YEAR(transaction_date)';
+        $moExpr = $driver === 'sqlite'
+            ? "CAST(strftime('%m', transaction_date) AS INTEGER)"
+            : 'MONTH(transaction_date)';
+
         $rows = Transaction::dateBetween($from, $to)
             ->select(
-                DB::raw('YEAR(transaction_date) as yr'),
-                DB::raw('MONTH(transaction_date) as mo'),
+                DB::raw("$yrExpr as yr"),
+                DB::raw("$moExpr as mo"),
                 'type',
                 DB::raw('SUM(amount) as total')
             )
-            ->groupBy('yr', 'mo', 'type')
-            ->orderBy('yr')
-            ->orderBy('mo')
+            ->groupByRaw("$yrExpr, $moExpr, type")
+            ->orderByRaw("$yrExpr, $moExpr")
             ->get();
 
         // بناء خريطة (yr-mo) => [income, expense]
