@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\ProjectType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,7 +18,7 @@ class ProjectFactory extends Factory
             'color'       => fake()->hexColor(),
             'currency'    => 'SAR',
             'type'        => fake()->randomElement(ProjectType::cases())->value,
-            'is_active'   => true,
+            'status'      => ProjectStatus::Active->value,
         ];
     }
 }

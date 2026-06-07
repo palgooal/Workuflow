@@ -79,8 +79,9 @@ test('user can update preferences', function () {
 
     $this->actingAs($user)
         ->patch(route('settings.preferences'), [
-            'currency' => 'USD',
-            'timezone' => 'Africa/Cairo',
+            'currency'          => 'USD',
+            'timezone'          => 'Africa/Cairo',
+            'target_margin_pct' => 30,
         ])
         ->assertRedirect();
 

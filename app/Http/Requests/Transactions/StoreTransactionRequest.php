@@ -4,6 +4,7 @@ namespace App\Http\Requests\Transactions;
 
 use App\Support\Enums\TransactionType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class StoreTransactionRequest extends FormRequest
@@ -23,7 +24,7 @@ class StoreTransactionRequest extends FormRequest
             'payee'            => ['nullable', 'string', 'max:255'],
             'transaction_date' => ['required', 'date'],
             'project_id'       => ['nullable', 'string', 'exists:projects,id'],
-            'wallet_id'        => ['required', 'string', 'exists:wallets,id'],
+            'wallet_id'        => ['required', 'string', Rule::exists('wallets', 'id')->where('user_id', auth()->id())],
             'category_id'      => ['nullable', 'string', 'exists:categories,id'],
             'notes'            => ['nullable', 'string', 'max:1000'],
             'reference'        => ['nullable', 'string', 'max:100'],

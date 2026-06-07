@@ -21,6 +21,7 @@ return new class extends Migration
         DB::table('projects')->where('is_active', false)->update(['status' => 'on_hold']);
 
         Schema::table('projects', function (Blueprint $table) {
+            $table->dropIndex(['user_id', 'is_active']); // يجب حذف الـ index قبل حذف العمود (SQLite)
             $table->dropColumn('is_active');
         });
     }
@@ -29,6 +30,7 @@ return new class extends Migration
     {
         Schema::table('projects', function (Blueprint $table) {
             $table->boolean('is_active')->default(true)->after('type');
+            $table->index(['user_id', 'is_active']); // إعادة الـ index عند rollback
         });
 
         DB::table('projects')->where('status', 'active')->update(['is_active' => true]);

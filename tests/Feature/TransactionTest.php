@@ -3,6 +3,7 @@
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Support\Enums\TransactionType;
 
 // ==================== الوصول ====================
@@ -22,7 +23,8 @@ test('user can view transactions page', function () {
 // ==================== الإنشاء ====================
 
 test('user can create income transaction', function () {
-    $user = User::factory()->create();
+    $user   = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
 
     $this->actingAs($user)
         ->post(route('transactions.store'), [
@@ -31,6 +33,7 @@ test('user can create income transaction', function () {
             'currency'         => 'SAR',
             'description'      => 'راتب شهر مايو',
             'transaction_date' => now()->toDateString(),
+            'wallet_id'        => $wallet->id,
         ])
         ->assertRedirect();
 

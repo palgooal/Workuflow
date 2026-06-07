@@ -37,7 +37,12 @@ class ProjectController extends Controller
     public function index(): View
     {
         $projects = Project::withCount('transactions')
-            ->orderByRaw("FIELD(status, 'active', 'completed', 'on_hold', 'cancelled')")
+            ->orderByRaw("CASE status
+                WHEN 'active'    THEN 1
+                WHEN 'completed' THEN 2
+                WHEN 'on_hold'   THEN 3
+                WHEN 'cancelled' THEN 4
+                ELSE 5 END")
             ->orderBy('created_at', 'desc')
             ->get()
             ->groupBy(fn ($p) => $p->type->value);
