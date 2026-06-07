@@ -33,6 +33,13 @@ class TeamMember extends Model
         ];
     }
 
+    // ==================== Relations ====================
+
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     // ==================== Scopes ====================
 
     public function scopeActive($query)

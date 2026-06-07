@@ -43,18 +43,22 @@ class DashboardService
         $now       = Carbon::now();
         $lastMonth = $now->copy()->subMonth();
 
+        $driver  = DB::getDriverName();
+        $yrExpr  = $driver === 'sqlite' ? "CAST(strftime('%Y', transaction_date) AS INTEGER)" : 'YEAR(transaction_date)';
+        $moExpr  = $driver === 'sqlite' ? "CAST(strftime('%m', transaction_date) AS INTEGER)" : 'MONTH(transaction_date)';
+
         // استعلام واحد لشهرين بدل استعلامين + filter في PHP
         $rows = Transaction::dateBetween(
                 $lastMonth->startOfMonth()->toDateString(),
                 $now->endOfMonth()->toDateString()
             )
             ->select(
-                DB::raw('YEAR(transaction_date) as yr'),
-                DB::raw('MONTH(transaction_date) as mo'),
+                DB::raw("$yrExpr as yr"),
+                DB::raw("$moExpr as mo"),
                 'type',
                 DB::raw('SUM(amount) as total')
             )
-            ->groupBy('yr', 'mo', 'type')
+            ->groupByRaw("$yrExpr, $moExpr, type")
             ->get();
 
         $now       = Carbon::now();
@@ -90,15 +94,19 @@ class DashboardService
         $from = Carbon::now()->subMonths(5)->startOfMonth()->toDateString();
         $to   = Carbon::now()->endOfMonth()->toDateString();
 
+        $driver  = DB::getDriverName();
+        $yrExpr  = $driver === 'sqlite' ? "CAST(strftime('%Y', transaction_date) AS INTEGER)" : 'YEAR(transaction_date)';
+        $moExpr  = $driver === 'sqlite' ? "CAST(strftime('%m', transaction_date) AS INTEGER)" : 'MONTH(transaction_date)';
+
         // استعلام واحد بدل 6 استعلامات
         $rows = Transaction::dateBetween($from, $to)
             ->select(
-                DB::raw('YEAR(transaction_date) as yr'),
-                DB::raw('MONTH(transaction_date) as mo'),
+                DB::raw("$yrExpr as yr"),
+                DB::raw("$moExpr as mo"),
                 'type',
                 DB::raw('SUM(amount) as total')
             )
-            ->groupBy('yr', 'mo', 'type')
+            ->groupByRaw("$yrExpr, $moExpr, type")
             ->get()
             ->groupBy(fn ($r) => "{$r->yr}-{$r->mo}");
 
