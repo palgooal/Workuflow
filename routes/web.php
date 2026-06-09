@@ -151,6 +151,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Billing — Phase 11
     Route::prefix('billing')->name('billing.')->group(function () {
         Route::get('/',          [BillingController::class, 'index'])->name('index');
+        Route::get('/upgrade',   [BillingController::class, 'upgrade'])->name('upgrade');
         Route::post('/checkout', [BillingController::class, 'checkout'])->name('checkout');
         Route::get('/success',   [BillingController::class, 'success'])->name('success');
         Route::post('/portal',   [BillingController::class, 'portal'])->name('portal');

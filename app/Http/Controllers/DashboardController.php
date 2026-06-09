@@ -31,6 +31,8 @@ class DashboardController extends Controller
             'recent'              => $data['recent'],
             'projects'            => $data['projects'],
             'debtsDue'            => $data['debts_due'],
+            'walletsSummary'      => $data['wallets_summary'],
+            'pendingInvoices'     => $data['pending_invoices'],
             'showOnboarding'      => $showOnboarding,
             'onboardingSteps'     => $onboardingSteps,
             'onboardingProgress'  => $onboardingProgress,

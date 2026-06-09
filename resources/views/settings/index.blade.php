@@ -281,87 +281,164 @@
         <div class="space-y-4">
 
             {{-- Current Plan --}}
+            @php
+                $plan         = $user->currentPlan();
+                $projectsUsed = $user->projects()->count();
+                $projectsMax  = $plan->maxProjects();
+                $txThisMonth  = $user->transactions()->whereMonth('transaction_date', now()->month)->count();
+                $txMax        = $plan->maxTransactionsPerMonth();
+                $invoicesCount = \App\Models\Invoice::where('user_id', $user->id)->count();
+                $clientsCount  = \App\Models\Client::where('user_id', $user->id)->count();
+
+                $projPct  = $projectsMax !== PHP_INT_MAX ? min(round(($projectsUsed / $projectsMax) * 100), 100) : 0;
+                $txPct    = $txMax       !== PHP_INT_MAX ? min(round(($txThisMonth  / $txMax)       * 100), 100) : 0;
+                $nearLimit = ($projPct >= 80 || $txPct >= 80);
+                $atLimit   = ($projPct >= 100 || $txPct >= 100);
+            @endphp
+
             <div class="bg-white rounded-2xl border border-gray-100 p-6">
                 <h2 class="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <span class="text-xl">💼</span> خطتك الحالية
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                    خطتك الحالية
                 </h2>
 
                 <div class="flex items-center gap-4 p-4 rounded-xl
-                    {{ $user->currentPlan()->value === 'free' ? 'bg-gray-50 border border-gray-200' : 'bg-indigo-50 border border-indigo-200' }}">
-                    <div class="text-3xl">
-                        {{ $user->currentPlan()->value === 'free' ? '🆓' : ($user->currentPlan()->value === 'pro' ? '⭐' : '🏢') }}
+                    {{ $plan->value === 'free' ? 'bg-gray-50 border border-gray-200' : 'bg-indigo-50 border border-indigo-200' }}">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0
+                        {{ $plan->value === 'free' ? 'bg-gray-200' : 'bg-indigo-600' }}">
+                        <svg class="w-6 h-6 {{ $plan->value === 'free' ? 'text-gray-500' : 'text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            @if($plan->value === 'free')
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            @else
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            @endif
+                        </svg>
                     </div>
                     <div>
-                        <p class="font-bold text-gray-900">خطة {{ $user->currentPlan()->label() }}</p>
+                        <p class="font-bold text-gray-900">{{ $plan->label() }}</p>
                         <p class="text-sm text-gray-500 mt-0.5">
-                            @if($user->currentPlan()->value === 'free')
-                                الخطة المجانية — محدودة المميزات
-                            @elseif($user->currentPlan()->value === 'pro')
-                                خطة Pro — للمستقلين والعمل الاحترافي
+                            @if($plan->value === 'free')
+                                ابدأ مجاناً — يمكنك الترقية في أي وقت
+                            @elseif($plan->value === 'pro')
+                                خطة Pro — للمستقلين المحترفين
                             @else
-                                خطة Business — للشركات والمؤسسات
+                                Business — للشركات والفرق
                             @endif
                         </p>
                     </div>
                 </div>
             </div>
 
+            {{-- تحذير الاقتراب من الحد --}}
+            @if($atLimit)
+            <div class="bg-red-50 border border-red-200 rounded-2xl px-5 py-3 flex items-center gap-3">
+                <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+                <div class="text-sm">
+                    <span class="font-semibold text-red-700">وصلت للحد الأقصى</span>
+                    <span class="text-red-600"> — لن تتمكن من إضافة المزيد حتى الترقية.</span>
+                </div>
+            </div>
+            @elseif($nearLimit)
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 flex items-center gap-3">
+                <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+                <div class="text-sm">
+                    <span class="font-semibold text-amber-700">اقتربت من الحد</span>
+                    <span class="text-amber-600"> — فكّر في الترقية قبل أن تتوقف.</span>
+                </div>
+            </div>
+            @endif
+
             {{-- Plan Limits --}}
             <div class="bg-white rounded-2xl border border-gray-100 p-6">
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">حدود استخدامك الحالية</h3>
-                <div class="space-y-3">
-                    @php
-                        $plan          = $user->currentPlan();
-                        $projectsUsed  = $user->projects()->count();
-                        $projectsMax   = $plan->maxProjects();
-                        $txThisMonth   = $user->transactions()->whereMonth('transaction_date', now()->month)->count();
-                        $txMax         = $plan->maxTransactionsPerMonth();
-                    @endphp
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">استخدامك الحالي</h3>
+                <div class="space-y-4">
 
                     {{-- Projects --}}
                     <div>
-                        <div class="flex justify-between text-xs text-gray-500 mb-1">
-                            <span>المشاريع</span>
-                            <span>{{ $projectsUsed }} / {{ $projectsMax === PHP_INT_MAX ? '∞' : $projectsMax }}</span>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-gray-600">المشاريع</span>
+                            <span class="{{ $projPct >= 90 ? 'text-red-600 font-semibold' : ($projPct >= 80 ? 'text-amber-600 font-medium' : 'text-gray-500') }}">
+                                {{ $projectsUsed }} / {{ $projectsMax === PHP_INT_MAX ? '∞' : $projectsMax }}
+                                @if($projectsMax !== PHP_INT_MAX && $projPct < 100)
+                                    <span class="text-xs font-normal text-gray-400">(تبقّى {{ $projectsMax - $projectsUsed }})</span>
+                                @endif
+                            </span>
                         </div>
                         @if($projectsMax !== PHP_INT_MAX)
-                            @php $pct = min(round(($projectsUsed / $projectsMax) * 100), 100); @endphp
-                            <div class="w-full bg-gray-100 rounded-full h-1.5">
-                                <div class="h-1.5 rounded-full {{ $pct >= 90 ? 'bg-red-400' : 'bg-indigo-400' }}"
-                                     style="width:{{ $pct }}%"></div>
-                            </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all
+                                {{ $projPct >= 100 ? 'bg-red-500' : ($projPct >= 80 ? 'bg-amber-400' : 'bg-indigo-400') }}"
+                                 style="width:{{ $projPct }}%"></div>
+                        </div>
+                        @else
+                        <div class="w-full bg-indigo-100 rounded-full h-2">
+                            <div class="h-2 rounded-full bg-indigo-400 w-full opacity-30"></div>
+                        </div>
                         @endif
                     </div>
 
-                    {{-- Transactions this month --}}
+                    {{-- Transactions --}}
                     <div>
-                        <div class="flex justify-between text-xs text-gray-500 mb-1">
-                            <span>معاملات هذا الشهر</span>
-                            <span>{{ $txThisMonth }} / {{ $txMax === PHP_INT_MAX ? '∞' : $txMax }}</span>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-gray-600">معاملات هذا الشهر</span>
+                            <span class="{{ $txPct >= 90 ? 'text-red-600 font-semibold' : ($txPct >= 80 ? 'text-amber-600 font-medium' : 'text-gray-500') }}">
+                                {{ $txThisMonth }} / {{ $txMax === PHP_INT_MAX ? '∞' : $txMax }}
+                                @if($txMax !== PHP_INT_MAX && $txPct < 100)
+                                    <span class="text-xs font-normal text-gray-400">(تبقّى {{ $txMax - $txThisMonth }})</span>
+                                @endif
+                            </span>
                         </div>
                         @if($txMax !== PHP_INT_MAX)
-                            @php $pct = min(round(($txThisMonth / $txMax) * 100), 100); @endphp
-                            <div class="w-full bg-gray-100 rounded-full h-1.5">
-                                <div class="h-1.5 rounded-full {{ $pct >= 90 ? 'bg-red-400' : 'bg-indigo-400' }}"
-                                     style="width:{{ $pct }}%"></div>
-                            </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all
+                                {{ $txPct >= 100 ? 'bg-red-500' : ($txPct >= 80 ? 'bg-amber-400' : 'bg-indigo-400') }}"
+                                 style="width:{{ $txPct }}%"></div>
+                        </div>
+                        @else
+                        <div class="w-full bg-indigo-100 rounded-full h-2">
+                            <div class="h-2 rounded-full bg-indigo-400 w-full opacity-30"></div>
+                        </div>
                         @endif
+                    </div>
+
+                    {{-- إحصائيات إضافية (بدون حدود) --}}
+                    <div class="pt-2 grid grid-cols-2 gap-3 border-t border-gray-100">
+                        <div class="bg-gray-50 rounded-xl px-4 py-3 text-center">
+                            <p class="text-xl font-bold text-gray-800">{{ $invoicesCount }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">فاتورة</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl px-4 py-3 text-center">
+                            <p class="text-xl font-bold text-gray-800">{{ $clientsCount }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">عميل</p>
+                        </div>
                     </div>
 
                     {{-- Features --}}
-                    <div class="pt-2 space-y-2">
+                    <div class="pt-1 space-y-2 border-t border-gray-100">
+                        <p class="text-xs font-medium text-gray-400 pt-1">الميزات المتاحة</p>
                         @foreach([
-                            ['label' => 'تصدير البيانات', 'enabled' => $plan->canExport()],
+                            ['label' => 'تصدير البيانات',   'enabled' => $plan->canExport()],
                             ['label' => 'التقارير المتقدمة', 'enabled' => $plan->hasAdvancedReports()],
-                            ['label' => 'الوصول للـ API',   'enabled' => $plan->canAccessApi()],
+                            ['label' => 'الوصول للـ API',    'enabled' => $plan->canAccessApi()],
                         ] as $feature)
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="{{ $feature['enabled'] ? 'text-green-500' : 'text-gray-300' }}">
-                                {{ $feature['enabled'] ? '✓' : '✗' }}
-                            </span>
-                            <span class="{{ $feature['enabled'] ? 'text-gray-700' : 'text-gray-400' }}">
-                                {{ $feature['label'] }}
-                            </span>
+                        <div class="flex items-center gap-2.5 text-sm">
+                            @if($feature['enabled'])
+                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span class="text-gray-700">{{ $feature['label'] }}</span>
+                            @else
+                                <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                </svg>
+                                <span class="text-gray-400 line-through decoration-gray-200">{{ $feature['label'] }}</span>
+                            @endif
                         </div>
                         @endforeach
                     </div>
@@ -369,19 +446,40 @@
             </div>
 
             {{-- Upgrade CTA --}}
-            @if($user->currentPlan()->value !== 'business')
+            @if($plan->value !== 'business')
             <div class="bg-gradient-to-l from-indigo-600 to-violet-600 rounded-2xl p-6 text-white">
-                <p class="font-bold text-lg mb-1">🚀 ارتقِ بتجربتك</p>
-                <p class="text-sm text-indigo-100 mb-4">
-                    ترقية للـ Pro تمنحك مشاريع غير محدودة، 500 معاملة شهرياً، وتقارير متقدمة.
-                </p>
-                <a href="{{ route('settings.index') }}"
-                   class="inline-flex items-center gap-2 px-5 py-2 bg-white text-indigo-700
-                          font-semibold text-sm rounded-xl hover:bg-indigo-50 transition">
-                    عرض الخطط
-                    <span>←</span>
-                </a>
-                <p class="text-xs text-indigo-200 mt-3">سيتوفر نظام الاشتراكات قريباً (Phase 11)</p>
+                @if($atLimit)
+                    <p class="font-bold text-lg mb-1">وصلت للحد — حان وقت الترقية</p>
+                    <p class="text-sm text-indigo-100 mb-4">
+                        @if($projPct >= 100) لا يمكنك إضافة مشاريع جديدة. @endif
+                        @if($txPct  >= 100) لا يمكنك تسجيل معاملات هذا الشهر. @endif
+                        الترقية إلى Pro تحل المشكلة فوراً.
+                    </p>
+                @elseif($nearLimit)
+                    <p class="font-bold text-lg mb-1">اقتربت من الحد 🔔</p>
+                    <p class="text-sm text-indigo-100 mb-4">
+                        @if($projPct >= 80) تبقّى لك {{ $projectsMax - $projectsUsed }} مشروع فقط. @endif
+                        @if($txPct  >= 80) تبقّى لك {{ $txMax - $txThisMonth }} معاملة هذا الشهر. @endif
+                        الترقية إلى Pro تمنحك مساحة أكبر بكثير.
+                    </p>
+                @else
+                    <p class="font-bold text-lg mb-1">🚀 ارتقِ بتجربتك</p>
+                    <p class="text-sm text-indigo-100 mb-4">
+                        ترقية للـ Pro: 10 مشاريع، 500 معاملة شهرياً، تقارير متقدمة، وتصدير البيانات.
+                    </p>
+                @endif
+                <div class="flex items-center gap-3 flex-wrap">
+                    <a href="{{ route('billing.upgrade') }}"
+                       class="inline-flex items-center gap-2 px-5 py-2 bg-white text-indigo-700
+                              font-semibold text-sm rounded-xl hover:bg-indigo-50 transition">
+                        ترقية الخطة
+                        <span>←</span>
+                    </a>
+                    <a href="{{ route('billing.index') }}"
+                       class="text-sm text-indigo-200 hover:text-white transition">
+                        عرض جميع الخطط
+                    </a>
+                </div>
             </div>
             @endif
 

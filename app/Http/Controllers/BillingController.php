@@ -76,6 +76,18 @@ class BillingController extends Controller
     }
 
     /**
+     * صفحة الترقية اليدوية — تواصل معنا على واتساب
+     */
+    public function upgrade(): View
+    {
+        $currentPlan   = auth()->user()->currentPlan();
+        $ownerWhatsapp = config('billing.owner_whatsapp');
+        $planPrices    = $this->billing->getPlanPrices();
+
+        return view('billing.upgrade', compact('currentPlan', 'ownerWhatsapp', 'planPrices'));
+    }
+
+    /**
      * Webhook Handler
      * TODO: عند إضافة المزود: parse الحدث واستدعِ billing->activatePlan() أو cancelPlan()
      */

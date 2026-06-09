@@ -37,7 +37,14 @@ class CheckSubscriptionLimits
         $count = $user->projects()->count();
 
         if ($count >= $max) {
-            abort(403, "وصلت للحد الأقصى من المشاريع ({$max}) في خطتك الحالية. يرجى الترقية للمزيد.");
+            session()->flash('upgrade_prompt', [
+                'resource' => 'projects',
+                'message'  => "وصلت للحد الأقصى ({$max} مشاريع) في خطتك الحالية.",
+                'hint'     => 'الترقية إلى Pro تتيح لك حتى 10 مشاريع.',
+            ]);
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                redirect()->back()->withInput()
+            );
         }
     }
 
@@ -50,7 +57,14 @@ class CheckSubscriptionLimits
             ->count();
 
         if ($count >= $max) {
-            abort(403, "وصلت للحد الأقصى من المعاملات ({$max}) هذا الشهر في خطتك الحالية.");
+            session()->flash('upgrade_prompt', [
+                'resource' => 'transactions',
+                'message'  => "وصلت للحد الأقصى ({$max} معاملة) هذا الشهر في خطتك الحالية.",
+                'hint'     => 'الترقية إلى Pro تتيح لك 500 معاملة شهرياً.',
+            ]);
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                redirect()->back()->withInput()
+            );
         }
     }
 }

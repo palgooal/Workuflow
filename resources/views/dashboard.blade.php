@@ -24,12 +24,64 @@
             <p class="mt-0.5 text-sm text-gray-500">{{ now()->translatedFormat('l، d F Y') }}</p>
         </div>
         <a href="{{ route('transactions.create') }}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700
-                  text-white text-sm font-medium rounded-xl transition">
+           class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-xl transition"
+           style="background: #320E8E;" onmouseover="this.style.background='#26096e'" onmouseout="this.style.background='#320E8E'">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             معاملة جديدة
+        </a>
+    </div>
+
+    {{-- Wallets + Pending Invoices --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {{-- إجمالي رصيد الصناديق --}}
+        <a href="{{ route('wallets.index') }}"
+           class="bg-gradient-to-l from-indigo-600 to-indigo-500 rounded-2xl p-5 hover:from-indigo-700 hover:to-indigo-600 transition group">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-indigo-200">إجمالي رصيد الصناديق</p>
+                    <p class="mt-1.5 text-3xl font-bold text-white">
+                        {{ number_format($walletsSummary['total'], 2) }}
+                    </p>
+                    <p class="mt-1 text-xs text-indigo-200">{{ $walletsSummary['count'] }} {{ $walletsSummary['count'] == 1 ? 'صندوق' : 'صناديق' }} نشطة</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-white/30 transition">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                </div>
+            </div>
+        </a>
+
+        {{-- الفواتير المعلّقة --}}
+        <a href="{{ route('invoices.index') }}"
+           class="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-sm transition group">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">فواتير معلّقة</p>
+                    <p class="mt-1.5 text-3xl font-bold text-gray-900">{{ $pendingInvoices['count'] }}</p>
+                    <p class="mt-1 text-xs text-gray-400">
+                        بقيمة {{ number_format($pendingInvoices['total'], 2) }}
+                        @if($pendingInvoices['overdue'] > 0)
+                            · <span class="text-red-500 font-medium">{{ $pendingInvoices['overdue'] }} متأخرة</span>
+                        @endif
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+            </div>
+            @if($pendingInvoices['count'] == 0)
+                <p class="mt-3 text-xs text-green-600 font-medium">✓ لا توجد فواتير معلّقة</p>
+            @else
+                <p class="mt-3 text-xs text-indigo-600 font-medium group-hover:underline">عرض الفواتير ←</p>
+            @endif
         </a>
     </div>
 
@@ -146,9 +198,9 @@
                 <a href="{{ route('debts.index') }}" class="text-xs text-indigo-600 hover:text-indigo-700">الكل</a>
             </div>
             @if($debtsDue->isEmpty())
-                <div class="py-10 text-center">
-                    <p class="text-3xl mb-2">✅</p>
-                    <p class="text-sm text-gray-500">لا توجد ديون مستحقة</p>
+                <div class="py-6 text-center">
+                    <p class="text-2xl mb-1">✅</p>
+                    <p class="text-xs text-gray-400">لا توجد ديون مستحقة</p>
                 </div>
             @else
                 <ul class="divide-y divide-gray-50">
@@ -265,13 +317,30 @@
 document.addEventListener('DOMContentLoaded', function () {
     const ctx = document.getElementById('cashFlowChart');
     if (!ctx) return;
+
+    const income   = @json($chart['income']);
+    const expenses = @json($chart['expenses']);
+    const labels   = @json($chart['months']);
+
+    // أشهر فيها بيانات فعلية
+    const hasData = income.some(v => v > 0) || expenses.some(v => v > 0);
+
+    if (!hasData) {
+        ctx.closest('div').insertAdjacentHTML('beforeend',
+            '<div class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl">' +
+            '<p class="text-2xl mb-1">📊</p>' +
+            '<p class="text-sm text-gray-400">أضف معاملات لرؤية التدفق النقدي</p></div>'
+        );
+        ctx.closest('div').style.position = 'relative';
+    }
+
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: @json($chart['months']),
+            labels,
             datasets: [
-                { label: 'دخل', data: @json($chart['income']), backgroundColor: 'rgba(16,185,129,0.8)', borderRadius: 6, borderSkipped: false },
-                { label: 'مصروف', data: @json($chart['expenses']), backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 6, borderSkipped: false }
+                { label: 'دخل',    data: income,   backgroundColor: 'rgba(20,198,152,0.85)', borderRadius: 6, borderSkipped: false },
+                { label: 'مصروف', data: expenses, backgroundColor: 'rgba(239,68,68,0.65)',  borderRadius: 6, borderSkipped: false }
             ]
         },
         options: {
@@ -279,7 +348,11 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: { legend: { display: false } },
             scales: {
                 x: { grid: { display: false }, ticks: { font: { family: 'Tajawal' } } },
-                y: { grid: { color: '#f3f4f6' }, ticks: { font: { family: 'Tajawal' }, callback: v => v.toLocaleString() } }
+                y: {
+                    grid: { color: '#f3f4f6' },
+                    ticks: { font: { family: 'Tajawal' }, callback: v => v.toLocaleString() },
+                    beginAtZero: true,
+                }
             }
         }
     });

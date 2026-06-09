@@ -14,7 +14,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 antialiased">
+<body class="bg-[#F8FAFC] text-[#0F172A] antialiased">
 
 {{-- شريط الانتحال — يظهر فقط عند دخول الأدمن كمستخدم --}}
 @if(session('impersonator_id'))
@@ -44,30 +44,25 @@
 
     {{-- ===== Sidebar ===== --}}
     <aside
-        class="fixed inset-y-0 right-0 z-50 w-64 bg-white border-l border-gray-100 shadow-sm flex flex-col
+        class="fixed inset-y-0 right-0 z-50 w-64 flex flex-col
                transform transition-transform duration-200 ease-in-out
                lg:static lg:translate-x-0"
+        style="background: #320E8E;"
         :class="sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
     >
         {{-- Logo --}}
-        <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-            <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-            <div>
-                <span class="font-bold text-gray-900">دراهم</span>
-                <p class="text-xs text-gray-400">مال وأعمال</p>
-            </div>
+        <div class="flex items-center px-5 py-5" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <img src="{{ asset('img/logo-darahum.png') }}"
+                 alt="دراهم"
+                 class="h-9 w-auto object-contain"
+                 style="filter: brightness(0) invert(1);">
         </div>
 
         {{-- Navigation --}}
         <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
 
             {{-- القسم الرئيسي --}}
-            <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">الرئيسية</p>
+            <p class="px-3 mb-1 text-xs font-medium" style="color: rgba(255,255,255,0.5);">الرئيسية</p>
 
             <x-nav-item href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                 <x-slot name="icon">
@@ -80,7 +75,7 @@
             </x-nav-item>
 
             {{-- القسم المالي --}}
-            <p class="px-3 pt-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">المالية</p>
+            <p class="px-3 pt-3 mb-1 text-xs font-medium" style="color: rgba(255,255,255,0.5);">المالية</p>
 
             <x-nav-item href="{{ route('projects.index') }}" :active="request()->routeIs('projects.*')">
                 <x-slot name="icon">
@@ -143,7 +138,7 @@
             </x-nav-item>
 
             {{-- الأعمال --}}
-            <p class="px-3 pt-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">الأعمال</p>
+            <p class="px-3 pt-3 mb-1 text-xs font-medium" style="color: rgba(255,255,255,0.5);">الأعمال</p>
 
             <x-nav-item href="{{ route('clients.index') }}" :active="request()->routeIs('clients.index') || request()->routeIs('clients.show') || request()->routeIs('clients.create') || request()->routeIs('clients.edit')">
                 <x-slot name="icon">
@@ -184,7 +179,7 @@
                             d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
                     </svg>
                 </x-slot>
-                الشرائح وصحة العملاء
+                شرائح العملاء
             </x-nav-item>
 
             <x-nav-item href="{{ route('team.index') }}" :active="request()->routeIs('team.*')">
@@ -198,7 +193,7 @@
             </x-nav-item>
 
             {{-- التحليل --}}
-            <p class="px-3 pt-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">التحليل</p>
+            <p class="px-3 pt-3 mb-1 text-xs font-medium" style="color: rgba(255,255,255,0.5);">التحليل</p>
 
             <x-nav-item href="{{ route('reports.index') }}" :active="request()->routeIs('reports.*')">
                 <x-slot name="icon">
@@ -221,7 +216,7 @@
             </x-nav-item>
 
             {{-- المساعدة --}}
-            <p class="px-3 pt-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">الدعم</p>
+            <p class="px-3 pt-3 mb-1 text-xs font-medium" style="color: rgba(255,255,255,0.5);">الدعم</p>
 
             <x-nav-item href="{{ route('help.index') }}" :active="request()->routeIs('help.*')">
                 <x-slot name="icon">
@@ -236,18 +231,20 @@
         </nav>
 
         {{-- User Info --}}
-        <div class="border-t border-gray-100 p-4">
+        <div class="p-4" style="border-top: 1px solid rgba(255,255,255,0.1);">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                    <span class="text-indigo-700 font-bold text-sm">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                     style="background: #14C698;">
+                    <span class="text-white font-bold text-sm">
                         {{ mb_substr(auth()->user()->name, 0, 1) }}
                     </span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-xs text-gray-400 truncate">{{ auth()->user()->currentPlan()->label() }}</p>
+                    <p class="text-sm font-medium text-white truncate">{{ auth()->user()->name }}</p>
+                    <p class="text-xs truncate" style="color: rgba(255,255,255,0.5);">{{ auth()->user()->currentPlan()->label() }}</p>
                 </div>
-                <a href="{{ route('settings.index') }}" class="text-gray-400 hover:text-gray-600 transition">
+                <a href="{{ route('settings.index') }}" class="transition" style="color: rgba(255,255,255,0.4);"
+                   onmouseover="this.style.color='rgba(255,255,255,0.9)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -337,8 +334,9 @@
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
                             class="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 transition">
-                        <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <span class="text-indigo-700 font-bold text-sm">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             style="background: #320E8E;">
+                            <span class="text-white font-bold text-sm">
                                 {{ mb_substr(auth()->user()->name, 0, 1) }}
                             </span>
                         </div>
@@ -457,8 +455,5 @@
 {{-- Onboarding Modal — للمستخدمين الجدد --}}
 <x-onboarding-modal />
 
-{{-- Scripts Stack — للـ Charts وغيرها --}}
-@stack('scripts')
-
-</body>
-</html>
+{{-- Upgrade Modal — يظهر عند تجاوز حدود الخطة --}}
+<x-upgrade-modal />

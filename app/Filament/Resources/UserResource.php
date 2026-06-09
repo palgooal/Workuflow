@@ -12,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Mail\ReEngagementEmail;
 use Illuminate\Support\Facades\Mail;
 
 class UserResource extends Resource
@@ -271,6 +272,33 @@ class UserResource extends Resource
                         }
                     }),
 
+                // ─── إرسال بريد إعادة التفعيل ───────────────────────
+                Tables\Actions\Action::make('sendReEngagement')
+                    ->label('إعادة التفعيل')
+                    ->icon('heroicon-o-rocket-launch')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (User $record) => "إرسال بريد إعادة التفعيل لـ {$record->name}")
+                    ->modalDescription(fn (User $record) => "سيُرسل إيميل «مشروعك الأول ينتظرك» إلى {$record->email}.")
+                    ->modalSubmitActionLabel('إرسال')
+                    ->action(function (User $record): void {
+                        try {
+                            Mail::to($record->email, $record->name)
+                                ->send(new ReEngagementEmail($record));
+                            Notification::make()
+                                ->title('تم الإرسال')
+                                ->body("أُرسل بريد إعادة التفعيل إلى {$record->email}.")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('فشل الإرسال')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
                 // ─── حذف بيانات المستخدم ─────────────────────────────
                 Tables\Actions\Action::make('deleteData')
                     ->label('حذف البيانات')
@@ -349,6 +377,35 @@ class UserResource extends Resource
                             Notification::make()
                                 ->title('تم التفعيل')
                                 ->body('تم تفعيل الحسابات المحددة.')
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ─── إرسال بريد إعادة التفعيل للمحدد ─────────────
+                    Tables\Actions\BulkAction::make('sendReEngagementBulk')
+                        ->label('إرسال بريد إعادة التفعيل')
+                        ->icon('heroicon-o-rocket-launch')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('إرسال بريد إعادة التفعيل')
+                        ->modalDescription(fn ($records) => "سيُرسل إيميل «مشروعك الأول ينتظرك» إلى {$records->count()} مستخدم.")
+                        ->modalSubmitActionLabel('إرسال للجميع')
+                        ->action(function ($records): void {
+                            $sent   = 0;
+                            $failed = 0;
+                            foreach ($records as $user) {
+                                try {
+                                    Mail::to($user->email, $user->name)
+                                        ->send(new ReEngagementEmail($user));
+                                    $sent++;
+                                    usleep(200_000);
+                                } catch (\Throwable) {
+                                    $failed++;
+                                }
+                            }
+                            Notification::make()
+                                ->title('اكتمل الإرسال')
+                                ->body("✅ أُرسل: {$sent}" . ($failed ? " | ✗ فشل: {$failed}" : ''))
                                 ->success()
                                 ->send();
                         }),

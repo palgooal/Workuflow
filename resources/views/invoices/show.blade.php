@@ -48,6 +48,7 @@
                 $whatsappUrl = 'https://wa.me/' . $whatsappPhone . '?text=' . rawurlencode($whatsappMessage);
                 $pdfUrl = route('invoices.pdf', $invoice->ulid);
             @endphp
+            @if($whatsappPhone)
             <button onclick="sendWhatsappWithPdf('{{ $whatsappUrl }}', '{{ $pdfUrl }}')"
                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -55,6 +56,7 @@
                 </svg>
                 واتساب + PDF
             </button>
+            @endif
 
             {{-- زر تنزيل PDF --}}
             <a href="{{ route('invoices.pdf', $invoice->ulid) }}" target="_blank"

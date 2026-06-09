@@ -1,7 +1,7 @@
 # دراهم — وثيقة المعمارية التقنية
 
 > Laravel 12 / PHP 8.2 — SaaS Financial Platform  
-> آخر تحديث: 29 مايو 2026 | الإصدار: 2.5.0
+> آخر تحديث: 9 يونيو 2026 | الإصدار: 3.1.0 (Phase 26 — Communication Layer)
 
 ---
 
@@ -389,6 +389,15 @@ $schedule->command('crm:detect-inactive')->dailyAt('04:00');              // Spr
 
 $schedule->command('crm:send-follow-up-reminders')->everyThirtyMinutes(); // Sprint 6 — GAP-04
 // Output: storage/logs/crm-follow-up-reminders.log
+
+$schedule->command('invoices:send-reminders')->dailyAt('09:00');           // Phase 18
+// Output: storage/logs/invoice-reminders.log
+
+// Phase 26 — Sprint 1: Queue runner (cPanel-compatible)
+$schedule->command('queue:work --queue=emails --max-jobs=50 --stop-when-empty')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();
 ```
 
 ---
@@ -436,10 +445,135 @@ Admin → /admin/users
 
 | المقياس | القيمة |
 |---------|--------|
-| إجمالي Migrations | ~35 |
-| إجمالي Models | ~20 |
-| إجمالي Controllers | ~25 |
-| إجمالي Enums | ~15 |
-| اختبارات Pest | 54/54 ✅ |
-| ملفات Blade | ~60 |
-| المراحل المكتملة | 20 مرحلة |
+| إجمالي Migrations | ~42 (Phase 26: لا migrations جديدة) |
+| إجمالي Models | ~25 |
+| إجمالي Controllers | ~30 |
+| إجمالي Enums | ~24 (Phase 26 يضيف: NotificationPriority, NotificationType) |
+| Mailables | 7 (Phase 26 يضيف: QuoteMail, InvoicePaidMail, QuoteAcceptedMail, QuoteRejectedMail) |
+| Jobs | 5 (Phase 26 يضيف: SendInvoiceEmailJob, SendQuoteEmailJob, SendInvoicePaidEmailJob) |
+| Email Template Keys | 11 (Phase 26 يضيف 8 قوالب جديدة) |
+| اختبارات Pest | 54/54 ✅ (يرتفع مع Phase 26) |
+| ملفات Blade | ~80 (Phase 26 يضيف: notification center, widget, whatsapp button) |
+| المراحل المكتملة | 25 مرحلة
+
+---
+
+## Phase 26 — Communication Layer
+
+> وثيقة التصميم الكامل: `docs/PHASE-26-COMMUNICATION-LAYER.md`  
+> تدقيق البريد الإلكتروني: `docs/EMAIL-SYSTEM-AUDIT.md`
+
+### Sprint 1 & 2 — Email Layer
+
+```
+app/Jobs/
+├── SendInvoiceEmailJob.php          NEW — queue:'emails', tries:3
+├── SendQuoteEmailJob.php            NEW — queue:'emails', tries:3
+└── SendInvoicePaidEmailJob.php      NEW — queue:'emails', tries:3
+
+app/Mail/
+├── InvoiceMail.php                  UNCHANGED
+├── InvoiceReminderMail.php          UPDATED — use EmailTemplate (was hardcoded HTML)
+├── WelcomeEmail.php                 UNCHANGED
+├── QuoteMail.php                    NEW — Signed URL 30d, EmailTemplate('quote_send')
+├── InvoicePaidMail.php              NEW — EmailTemplate('invoice_paid')
+├── QuoteAcceptedMail.php            NEW — EmailTemplate('quote_accepted')
+└── QuoteRejectedMail.php            NEW — EmailTemplate('quote_rejected')
+
+app/Notifications/
+├── InvoiceDueSoonNotification.php   UPDATED — add mail channel + toMail()
+├── InvoiceOverdueNotification.php   UPDATED — add mail channel + toMail()
+├── DebtDueSoonNotification.php      UPDATED — add mail channel + toMail()
+├── DebtOverdueNotification.php      UPDATED — add mail channel + toMail()
+└── FollowUpReminderNotification.php UPDATED — add mail channel + toMail()
+
+database/seeders/
+└── EmailTemplateSeeder.php          NEW — 8 new template keys
+
+Email Template Keys (Phase 26):
+├── invoice_reminder
+├── invoice_paid
+├── quote_send
+├── quote_accepted
+├── quote_rejected
+├── debt_due_soon
+├── debt_overdue
+└── follow_up_reminder
+
+No new DB migrations — uses existing notifications + email_templates tables
+```
+
+### Sprint 3 — Notification Center
+
+```
+app/Support/Enums/
+├── NotificationPriority.php         NEW — Low/Medium/High/Critical + color() + badgeClass()
+└── NotificationType.php             NEW — Success/Warning/Error/Info + icon() + bgClass()
+
+app/Http/Controllers/
+└── NotificationController.php       UPDATED — add index(), markRead(), markAllRead(),
+                                              archive(), destroy()
+
+resources/views/notifications/
+└── index.blade.php                  NEW — Notification Center page with filters
+
+resources/views/components/
+├── notification-bell.blade.php      UPDATED — priority color badges
+├── notification-item.blade.php      NEW — reusable single notification row
+└── notification-widget.blade.php    NEW — dashboard widget (last 5 + unread count)
+
+Priority Assignment:
+  invoice_overdue  → Critical / Error
+  debt_overdue     → Critical / Error
+  invoice_due_soon → High / Warning
+  debt_due_soon    → High / Warning
+  follow_up        → Medium / Info
+  automation       → Medium / Info
+```
+
+### Sprint 4 — WhatsApp Quick Actions
+
+```
+app/Support/
+└── WhatsAppLinkGenerator.php        NEW — forInvoice(), forQuote(), forClient()
+                                          formatPhone(), buildUrl(), encode()
+                                          Returns null if no phone — no broken buttons
+
+resources/views/components/
+└── whatsapp-button.blade.php        NEW — bg:#25D366, inline SVG, target:_blank
+                                          hidden if url === null
+
+Integration points:
+  invoices/show.blade.php            ← x-whatsapp-button
+  invoices/index.blade.php           ← per-row icon button
+  quotes/show.blade.php              ← x-whatsapp-button
+  quotes/index.blade.php             ← per-row icon button
+  clients/show.blade.php             ← contact section button
+  clients/index.blade.php            ← per-row quick action
+
+wa.me URL format:
+  https://wa.me/{phone}?text={rawurlencode($message)}
+  Phone: strip non-digits, prepend country code if missing
+
+NO: API, DB, Meta API, Twilio, webhooks, storage
+```
+
+### مبدأ التصميم — Phase 26
+
+```
+HTTP Request
+  └─► Controller → dispatch(EmailJob)
+                        └─► (queue:emails) → Mailable
+                                               └─► EmailTemplate::render(key, vars)
+                                                     └─► emails.template Blade wrapper
+
+Scheduler
+  └─► Command → Notification::send(user, XxxNotification)
+                   └─► via: ['database', 'mail']
+                         ├─► toArray() — standardized data with priority + category
+                         └─► toMail() — EmailTemplate::render(key, vars)
+
+WhatsApp
+  └─► View → WhatsAppLinkGenerator::forInvoice($invoice)
+               └─► wa.me URL (no server-side state)
+```

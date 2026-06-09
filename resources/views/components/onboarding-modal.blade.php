@@ -1,11 +1,11 @@
 {{--
     Onboarding Modal — يظهر للمستخدمين الجدد الذين لم يُغلقوه بعد
-    يُعرض فقط إذا كان onboarding_dismissed_at = null
+    يُعرض إذا لم يُغلق المستخدم المودال ولم يكمل الإعداد بعد
+    الخطوات: 1-الترحيب+نوع العمل / 2-مشروع / 3-معاملة / 4-عميل / 5-جاهز
 --}}
 @php
     $user = auth()->user();
-    $showOnboarding = ! $user->onboarding_dismissed_at
-                   && $user->created_at->gt(now()->subDays(7));
+    $showOnboarding = app(\App\Services\OnboardingService::class)->shouldShow($user);
 @endphp
 @if($showOnboarding)
 <div
@@ -13,23 +13,32 @@
         open: false,
         step: 1,
         totalSteps: 5,
+        userType: null,
         init() {
-            // تحقق من localStorage أولاً (النسخة الاحتياطية الفورية)
-            if (localStorage.getItem('onboarding_dismissed') !== '1') {
-                this.open = true;
-            }
+            try {
+                const dismissed = localStorage.getItem('onboarding_dismissed');
+                if (dismissed !== '1') { this.open = true; }
+                const savedType = localStorage.getItem('onboarding_user_type');
+                if (savedType) { this.userType = savedType; }
+            } catch(e) { this.open = true; }
+        },
+        setUserType(type) {
+            this.userType = type;
+            try { localStorage.setItem('onboarding_user_type', type); } catch(e) {}
         },
         dismiss() {
             this.open = false;
-            // حفظ فوري في المتصفح — يعمل حتى لو فشل الطلب للسيرفر
             try { localStorage.setItem('onboarding_dismissed', '1'); } catch(e) {}
-            // إرسال للسيرفر باستخدام sendBeacon — مضمون الوصول حتى عند تغيير الصفحة
             const token = document.querySelector('meta[name=csrf-token]')?.content;
             if (token) {
                 const data = new FormData();
                 data.append('_token', token);
                 navigator.sendBeacon('{{ route('onboarding.dismiss') }}', data);
             }
+        },
+        goToPage(url) {
+            this.dismiss();
+            window.location.href = url;
         }
     }"
     x-show="open"
@@ -37,10 +46,7 @@
     class="fixed inset-0 z-[100] flex items-center justify-center p-4"
 >
     {{-- Backdrop --}}
-    <div
-        class="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        @click="dismiss()"
-    ></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="dismiss()"></div>
 
     {{-- Modal --}}
     <div
@@ -55,17 +61,13 @@
     >
         {{-- شريط التقدم العلوي --}}
         <div class="h-1.5 bg-gray-100 w-full">
-            <div
-                class="h-1.5 bg-indigo-500 transition-all duration-500 rounded-full"
-                :style="`width: ${(step / totalSteps) * 100}%`"
-            ></div>
+            <div class="h-1.5 bg-indigo-500 transition-all duration-500 rounded-full"
+                 :style="`width: ${(step / totalSteps) * 100}%`"></div>
         </div>
 
         {{-- زر الإغلاق --}}
-        <button
-            @click="dismiss()"
-            class="absolute top-4 left-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
-        >
+        <button @click="dismiss()"
+                class="absolute top-4 left-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
@@ -74,7 +76,7 @@
         {{-- محتوى الخطوات --}}
         <div class="p-8">
 
-            {{-- الخطوة 1: الترحيب --}}
+            {{-- الخطوة 1: الترحيب + نوع العمل --}}
             <div x-show="step === 1">
                 <div class="text-center mb-6">
                     <div class="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
@@ -85,36 +87,50 @@
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900 mb-2">أهلاً بك في دراهم! 🎉</h2>
                     <p class="text-gray-500 text-sm leading-relaxed">
-                        نظام مالي ذكي لإدارة مشاريعك ومعاملاتك وفريقك في مكان واحد.
-                        سنأخذك في جولة سريعة خلال دقيقتين.
+                        سنساعدك على الإعداد خلال دقيقتين — ما الذي يصفك أكثر؟
                     </p>
                 </div>
-                <div class="grid grid-cols-3 gap-3">
-                    @foreach([['📁','مشاريع'],['💸','معاملات'],['📊','تقارير']] as [$emoji, $label])
-                    <div class="p-3 bg-gray-50 rounded-xl text-center">
-                        <span class="text-2xl">{{ $emoji }}</span>
-                        <p class="text-xs text-gray-600 mt-1 font-medium">{{ $label }}</p>
-                    </div>
-                    @endforeach
+                <div class="grid grid-cols-2 gap-3">
+                    <button
+                        @click="setUserType('freelancer')"
+                        :class="userType === 'freelancer'
+                            ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-400'
+                            : 'border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/50'"
+                        class="p-4 rounded-2xl border-2 text-center transition cursor-pointer"
+                    >
+                        <span class="text-3xl block mb-2">💻</span>
+                        <p class="text-sm font-semibold text-gray-800">مستقل</p>
+                        <p class="text-xs text-gray-500 mt-0.5">فريلانسر أو عمل حر</p>
+                    </button>
+                    <button
+                        @click="setUserType('business')"
+                        :class="userType === 'business'
+                            ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-400'
+                            : 'border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/50'"
+                        class="p-4 rounded-2xl border-2 text-center transition cursor-pointer"
+                    >
+                        <span class="text-3xl block mb-2">🏢</span>
+                        <p class="text-sm font-semibold text-gray-800">شركة صغيرة</p>
+                        <p class="text-xs text-gray-500 mt-0.5">فريق أو نشاط تجاري</p>
+                    </button>
                 </div>
             </div>
 
-            {{-- الخطوة 2: المشاريع --}}
+            {{-- الخطوة 2: إنشاء مشروع --}}
             <div x-show="step === 2">
                 <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-4">
                     <span class="text-2xl">📁</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">ابدأ بإنشاء مشروع</h3>
-                <p class="text-gray-500 text-sm leading-relaxed mb-4">
-                    المشروع هو قلب التطبيق. أنشئ مشروعاً لكل عمل تقوم به — سواء كان تصميم هوية، موقع، أو حتى مشروع شخصي.
+                <h3 class="text-xl font-bold text-gray-900 mb-2">أنشئ مشروعك الأول</h3>
+                <p class="text-gray-500 text-sm leading-relaxed mb-5">
+                    المشروع هو قلب دراهم — كل دخل ومصروف يرتبط بمشروع ليعطيك صورة مالية واضحة.
                 </p>
-                <div class="space-y-2.5">
+                <div class="space-y-2 mb-5">
                     @foreach([
-                        ['اسم المشروع والعملة المستخدمة', 'text-blue-600', 'bg-blue-50'],
-                        ['ربطه بعميل من قائمة عملائك', 'text-green-600', 'bg-green-50'],
-                        ['إضافة الخدمات التي ستقدمها', 'text-purple-600', 'bg-purple-50'],
-                        ['تحديد قيمة العقد وميزانية التكاليف', 'text-orange-600', 'bg-orange-50'],
-                    ] as [$text, $tc, $bg])
+                        ['text-blue-600',   'bg-blue-50',   'اسم المشروع والعملة والعميل'],
+                        ['text-purple-600', 'bg-purple-50', 'ربط المعاملات والفواتير به'],
+                        ['text-orange-600', 'bg-orange-50', 'تتبع الأرباح والتكاليف تلقائياً'],
+                    ] as [$tc, $bg, $text])
                     <div class="flex items-center gap-2.5 p-2.5 {{ $bg }} rounded-xl">
                         <svg class="w-4 h-4 {{ $tc }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
@@ -123,57 +139,97 @@
                     </div>
                     @endforeach
                 </div>
+                <button
+                    @click="goToPage('{{ route('projects.create') }}')"
+                    class="flex items-center justify-center gap-2 w-full px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    أنشئ مشروعك الأول الآن
+                </button>
+                <button @click="step++" class="w-full text-sm text-gray-400 hover:text-gray-600 py-2.5 mt-1 transition">
+                    تخطّي هذه الخطوة ←
+                </button>
             </div>
 
-            {{-- الخطوة 3: المعاملات --}}
+            {{-- الخطوة 3: تسجيل معاملة --}}
             <div x-show="step === 3">
-                <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mb-4">
+                <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
                     <span class="text-2xl">💸</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">سجّل دخلك ومصروفاتك</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">سجّل أول معاملة</h3>
                 <p class="text-gray-500 text-sm leading-relaxed mb-4">
-                    كل دفعة تستلمها أو تدفعها تُسجَّل كمعاملة مرتبطة بالمشروع المناسب.
+                    استلمت دفعة أو دفعت مقابل خدمة؟ سجّلها الآن وابدأ بتتبع ماليتك من اللحظة الأولى.
                 </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
-                        <div class="w-9 h-9 bg-green-200 rounded-xl flex items-center justify-center font-bold text-green-800">↑</div>
+                <div class="grid grid-cols-2 gap-2 mb-5">
+                    <div class="flex items-center gap-2 p-2.5 bg-green-50 rounded-xl">
+                        <div class="w-8 h-8 bg-green-200 rounded-lg flex items-center justify-center font-bold text-green-800 shrink-0">↑</div>
                         <div>
-                            <p class="text-sm font-semibold text-green-900">دخل</p>
-                            <p class="text-xs text-green-700">استلمت دفعة من عميل؟ سجّلها كدخل</p>
+                            <p class="text-xs font-semibold text-green-900">دخل</p>
+                            <p class="text-xs text-green-700">دفعة من عميل</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 p-3 bg-red-50 rounded-xl">
-                        <div class="w-9 h-9 bg-red-200 rounded-xl flex items-center justify-center font-bold text-red-800">↓</div>
+                    <div class="flex items-center gap-2 p-2.5 bg-red-50 rounded-xl">
+                        <div class="w-8 h-8 bg-red-200 rounded-lg flex items-center justify-center font-bold text-red-800 shrink-0">↓</div>
                         <div>
-                            <p class="text-sm font-semibold text-red-900">مصروف</p>
-                            <p class="text-xs text-red-700">دفعت مقابل خدمة أو أداة؟ سجّلها كمصروف</p>
+                            <p class="text-xs font-semibold text-red-900">مصروف</p>
+                            <p class="text-xs text-red-700">أداة أو خدمة</p>
                         </div>
                     </div>
                 </div>
+                <button
+                    @click="goToPage('{{ route('transactions.create') }}')"
+                    class="flex items-center justify-center gap-2 w-full px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    سجّل أول معاملة الآن
+                </button>
+                <button @click="step++" class="w-full text-sm text-gray-400 hover:text-gray-600 py-2.5 mt-1 transition">
+                    تخطّي هذه الخطوة ←
+                </button>
             </div>
 
-            {{-- الخطوة 4: العملاء والفريق --}}
+            {{-- الخطوة 4: إضافة عميل --}}
             <div x-show="step === 4">
                 <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
                     <span class="text-2xl">👥</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">أضف عملاءك وفريقك</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">أضف عميلك الأول</h3>
                 <p class="text-gray-500 text-sm leading-relaxed mb-4">
-                    وفّر وقتك وحافظ على تنظيم عملك:
+                    أضف بيانات عميلك مرة واحدة — أرسل فواتير، تواصل عبر واتساب، واربط المشاريع بنقرة.
                 </p>
-                <div class="space-y-3">
-                    <div class="p-3.5 bg-indigo-50 rounded-xl">
-                        <p class="text-sm font-semibold text-indigo-900 mb-1">👥 العملاء</p>
-                        <p class="text-xs text-indigo-700">أضف بيانات عملائك مرة واحدة، اربطهم بالمشاريع، وتواصل معهم بالواتساب بنقرة.</p>
+                <div class="space-y-2 mb-5">
+                    @foreach([
+                        ['text-indigo-600', 'bg-indigo-50', 'الاسم ورقم الواتساب والإيميل'],
+                        ['text-purple-600', 'bg-purple-50', 'إصدار فواتير احترافية بنقرة'],
+                        ['text-pink-600',   'bg-pink-50',   'تتبع المدفوعات والمستحقات'],
+                    ] as [$tc, $bg, $text])
+                    <div class="flex items-center gap-2.5 p-2.5 {{ $bg }} rounded-xl">
+                        <svg class="w-4 h-4 {{ $tc }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <p class="text-sm text-gray-700">{{ $text }}</p>
                     </div>
-                    <div class="p-3.5 bg-purple-50 rounded-xl">
-                        <p class="text-sm font-semibold text-purple-900 mb-1">🧑‍💼 الفريق</p>
-                        <p class="text-xs text-purple-700">عيّن موظفين أو فريلانسرين على كل خدمة، وسجّل دفعاتهم تلقائياً كمصروف.</p>
-                    </div>
+                    @endforeach
                 </div>
+                <button
+                    @click="goToPage('{{ route('clients.create') }}')"
+                    class="flex items-center justify-center gap-2 w-full px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    أضف عميلك الأول الآن
+                </button>
+                <button @click="step++" class="w-full text-sm text-gray-400 hover:text-gray-600 py-2.5 mt-1 transition">
+                    تخطّي هذه الخطوة ←
+                </button>
             </div>
 
-            {{-- الخطوة 5: جاهز! --}}
+            {{-- الخطوة 5: جاهز --}}
             <div x-show="step === 5">
                 <div class="text-center">
                     <div class="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
@@ -181,25 +237,21 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">أنت جاهز! 🚀</h3>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">لوحتك جاهزة! 🚀</h3>
                     <p class="text-gray-500 text-sm leading-relaxed mb-6">
-                        يمكنك دائماً العودة لمركز المساعدة من الشريط الجانبي للاطلاع على شروحات مفصّلة لكل ميزة.
+                        يمكنك متابعة الإعداد في أي وقت من الـ Checklist في لوحة التحكم.
                     </p>
                     <div class="space-y-2">
-                        <a
-                            href="{{ route('projects.create') }}"
-                            @click="dismiss()"
-                            class="flex items-center justify-center gap-2 w-full px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition"
-                        >
+                        <a href="{{ route('projects.create') }}"
+                           @click="dismiss()"
+                           class="flex items-center justify-center gap-2 w-full px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
                             أنشئ مشروعك الأول
                         </a>
-                        <button
-                            @click="dismiss()"
-                            class="w-full px-5 py-2.5 text-gray-500 hover:text-gray-700 text-sm transition"
-                        >
+                        <button @click="dismiss()"
+                                class="w-full px-5 py-2.5 text-gray-500 hover:text-gray-700 text-sm transition">
                             تخطّي — سأستكشف بنفسي
                         </button>
                     </div>
@@ -208,8 +260,9 @@
 
         </div>
 
-        {{-- أزرار التنقل --}}
+        {{-- أزرار التنقل السفلية --}}
         <div class="px-8 pb-6 flex items-center justify-between" x-show="step < 5">
+
             {{-- السابق --}}
             <button
                 @click="step > 1 ? step-- : null"
@@ -225,23 +278,22 @@
             {{-- نقاط التقدم --}}
             <div class="flex items-center gap-1.5">
                 <template x-for="i in totalSteps" :key="i">
-                    <div
-                        class="rounded-full transition-all duration-300"
-                        :class="i === step ? 'w-5 h-2 bg-indigo-600' : 'w-2 h-2 bg-gray-200'"
-                    ></div>
+                    <div class="rounded-full transition-all duration-300"
+                         :class="i === step ? 'w-5 h-2 bg-indigo-600' : 'w-2 h-2 bg-gray-200'"></div>
                 </template>
             </div>
 
-            {{-- التالي --}}
-            <button
-                @click="step++"
-                class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition"
-            >
+            {{-- التالي (الخطوة 1 فقط — بقية الخطوات لها CTA خاص بها) --}}
+            <button x-show="step === 1"
+                    @click="step++"
+                    class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition">
                 التالي
                 <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
             </button>
+            <div x-show="step > 1" class="w-16"></div>
+
         </div>
 
     </div>

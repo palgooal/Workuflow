@@ -3,8 +3,11 @@
 namespace App\Modules\Dashboard\Services;
 
 use App\Models\Debt;
+use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\Transaction;
+use App\Models\Wallet;
+use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -17,13 +20,15 @@ class DashboardService
      */
     public function getData(int $userId): array
     {
-        return Cache::remember("dashboard:{$userId}", 1800, function () {
+        return Cache::remember("dashboard_v2:{$userId}", 1800, function () {
             return [
-                'kpis'          => $this->getKpis(),
-                'chart'         => $this->getChartData(),
-                'recent'        => $this->getRecentTransactions(),
-                'projects'      => $this->getActiveProjects(),
-                'debts_due'     => $this->getDebtsDueSoon(),
+                'kpis'             => $this->getKpis(),
+                'chart'            => $this->getChartData(),
+                'recent'           => $this->getRecentTransactions(),
+                'projects'         => $this->getActiveProjects(),
+                'debts_due'        => $this->getDebtsDueSoon(),
+                'wallets_summary'  => $this->getWalletsSummary(),
+                'pending_invoices' => $this->getPendingInvoicesSummary(),
             ];
         });
     }
@@ -33,7 +38,7 @@ class DashboardService
      */
     public function clearCache(int $userId): void
     {
-        Cache::forget("dashboard:{$userId}");
+        Cache::forget("dashboard_v2:{$userId}");
     }
 
     // ==================== Private Methods ====================
@@ -148,6 +153,33 @@ class DashboardService
             ->orderBy('due_date')
             ->limit(5)
             ->get();
+    }
+
+    private function getWalletsSummary(): array
+    {
+        $wallets = Wallet::active()->get();
+
+        return [
+            'total' => $wallets->sum(fn($w) => $w->balance()),
+            'count' => $wallets->count(),
+        ];
+    }
+
+    private function getPendingInvoicesSummary(): array
+    {
+        $rows = Invoice::whereNotIn('status', [
+            InvoiceStatus::Paid->value,
+            InvoiceStatus::Cancelled->value,
+        ])
+        ->selectRaw('status, COUNT(*) as cnt, SUM(total) as total_amount')
+        ->groupBy('status')
+        ->get();
+
+        return [
+            'count'   => (int) $rows->sum('cnt'),
+            'total'   => (float) $rows->sum('total_amount'),
+            'overdue' => (int) ($rows->firstWhere('status', InvoiceStatus::Overdue->value)?->cnt ?? 0),
+        ];
     }
 
     private function percentageChange(float $old, float $new): ?float
