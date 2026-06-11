@@ -18,7 +18,7 @@
                 required autofocus autocomplete="name"
                 placeholder="محمد العلي"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                        transition @error('name') border-red-400 @enderror"
             >
             @error('name')
@@ -35,7 +35,7 @@
                 required autocomplete="email"
                 placeholder="name@example.com"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                        transition @error('email') border-red-400 @enderror"
             >
             @error('email')
@@ -50,7 +50,7 @@
                 <select
                     id="currency" name="currency"
                     class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900
-                           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                            transition @error('currency') border-red-400 @enderror"
                 >
                     @foreach($currencies as $code => $label)
@@ -69,7 +69,7 @@
                 <select
                     id="timezone" name="timezone"
                     class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900
-                           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                            transition @error('timezone') border-red-400 @enderror"
                 >
                     @foreach($timezones as $tz => $label)
@@ -92,7 +92,7 @@
                 required autocomplete="new-password"
                 placeholder="8 أحرف على الأقل"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                        transition @error('password') border-red-400 @enderror"
             >
             @error('password')
@@ -108,15 +108,15 @@
                 required autocomplete="new-password"
                 placeholder="أعد كتابة كلمة المرور"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
             >
         </div>
 
         {{-- زر التسجيل --}}
         <button
             type="submit"
-            class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl
-                   transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            class="w-full py-3 px-4 bg-brand hover:opacity-90 text-white font-semibold rounded-xl
+                   transition focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
         >
             إنشاء الحساب مجاناً
         </button>
@@ -124,7 +124,7 @@
         {{-- رابط تسجيل الدخول --}}
         <p class="text-center text-sm text-gray-500">
             لديك حساب بالفعل؟
-            <a href="{{ route('login') }}" class="text-indigo-600 hover:text-indigo-700 font-medium">
+            <a href="{{ route('login') }}" class="text-brand hover:opacity-75 font-medium">
                 تسجيل الدخول
             </a>
         </p>

@@ -7,16 +7,17 @@
     <meta name="description" content="دراهم — منصة إدارة مال وأعمال للمستقلين وأصحاب المشاريع">
     <title>{{ config('app.name', 'دراهم') }}{{ isset($title) ? ' — ' . $title : '' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style> body { font-family: 'Tajawal', sans-serif; } </style>
+    <style> body { font-family: 'Readex Pro', sans-serif; } </style>
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">
 
 <div class="min-h-screen flex">
 
     {{-- الجانب الأيسر — العلامة التجارية (desktop only) --}}
-    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 flex-col justify-between p-12">
+    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-brand via-[#1C0060] to-[#006C51] flex-col justify-between p-12">
         <div>
             {{-- Logo --}}
             <div class="flex items-center gap-3">
@@ -33,9 +34,9 @@
             <div class="mt-16">
                 <h1 class="text-4xl font-bold text-white leading-snug">
                     نظّم فلوسك ومشاريعك<br>
-                    <span class="text-indigo-200">من مكان واحد</span>
+                    <span class="text-accent">من مكان واحد</span>
                 </h1>
-                <p class="mt-4 text-indigo-200 text-lg leading-relaxed">
+                <p class="mt-4 text-white/70 text-lg leading-relaxed">
                     اعرف بالضبط أين يذهب ربحك — بدون تعقيد محاسبي.
                 </p>
             </div>
@@ -50,13 +51,13 @@
                 ] as $feature)
                 <div class="flex items-center gap-3">
                     <span class="text-2xl">{{ $feature['icon'] }}</span>
-                    <span class="text-indigo-100">{{ $feature['text'] }}</span>
+                    <span class="text-white/80">{{ $feature['text'] }}</span>
                 </div>
                 @endforeach
             </div>
         </div>
 
-        <p class="text-indigo-300 text-sm">© {{ date('Y') }} دراهم. جميع الحقوق محفوظة.</p>
+        <p class="text-white/40 text-sm">© {{ date('Y') }} دراهم. جميع الحقوق محفوظة.</p>
     </div>
 
     {{-- الجانب الأيمن — النموذج --}}
@@ -65,7 +66,7 @@
 
             {{-- شعار للموبايل --}}
             <div class="flex items-center gap-2 mb-8 lg:hidden">
-                <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+                <div class="w-9 h-9 bg-brand rounded-xl flex items-center justify-center">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>

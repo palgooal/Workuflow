@@ -79,7 +79,7 @@
               <!-- Main dashboard image: w:547.61 h:547.61 rounded-[24px] border-white-8 shadow -->
               <div
                 class="relative rounded-[24px] rotate-[-5deg] overflow-hidden border-[8px] border-white shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] w-full aspect-square">
-                <img src="{{ asset('marketing/imgs/') }}hero-dashboard-56586a.png" alt="لوحة تحكم دراهم المالية"
+                <img src="{{ asset('marketing/imgs/hero-dashboard-56586a.png') }}" alt="لوحة تحكم دراهم المالية"
                   class="w-full h-full object-cover" />
               </div>
 

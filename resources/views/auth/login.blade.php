@@ -25,7 +25,7 @@
                 required autofocus autocomplete="username"
                 placeholder="name@example.com"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                        transition @error('email') border-red-400 @enderror"
             >
             @error('email')
@@ -38,7 +38,7 @@
             <div class="flex items-center justify-between mb-1">
                 <label for="password" class="block text-sm font-medium text-gray-700">كلمة المرور</label>
                 @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="text-sm text-indigo-600 hover:text-indigo-700">
+                    <a href="{{ route('password.request') }}" class="text-sm text-brand hover:opacity-75 transition-opacity">
                         نسيت كلمة المرور؟
                     </a>
                 @endif
@@ -48,7 +48,7 @@
                 required autocomplete="current-password"
                 placeholder="••••••••"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                        transition @error('password') border-red-400 @enderror"
             >
             @error('password')
@@ -60,7 +60,7 @@
         <div class="flex items-center gap-2">
             <input
                 id="remember_me" name="remember" type="checkbox"
-                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                class="rounded border-gray-300 text-accent focus:ring-accent"
             >
             <label for="remember_me" class="text-sm text-gray-600">تذكّرني</label>
         </div>
@@ -68,8 +68,8 @@
         {{-- زر الدخول --}}
         <button
             type="submit"
-            class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl
-                   transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            class="w-full py-3 px-4 bg-brand hover:opacity-90 text-white font-semibold rounded-xl
+                   transition focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
         >
             تسجيل الدخول
         </button>
@@ -77,7 +77,7 @@
         {{-- رابط التسجيل --}}
         <p class="text-center text-sm text-gray-500">
             ليس لديك حساب؟
-            <a href="{{ route('register') }}" class="text-indigo-600 hover:text-indigo-700 font-medium">
+            <a href="{{ route('register') }}" class="text-brand hover:opacity-75 font-medium transition-opacity">
                 إنشاء حساب مجاني
             </a>
         </p>
