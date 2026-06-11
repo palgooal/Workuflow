@@ -27,6 +27,14 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// ==================== الصفحات التسويقية ====================
+Route::prefix('')->name('marketing.')->group(function () {
+    Route::get('/features', fn() => view('marketing.features'))->name('features');
+    Route::get('/pricing',  fn() => view('marketing.pricing'))->name('pricing');
+    Route::get('/faq',      fn() => view('marketing.faq'))->name('faq');
+    Route::get('/contact',  fn() => view('marketing.contact'))->name('contact');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

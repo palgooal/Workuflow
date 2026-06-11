@@ -1,8 +1,6 @@
-@extends('layouts.marketing')
+<?php $__env->startSection('title', 'دراهم — المنصة المالية للمستقلين'); ?>
 
-@section('title', 'دراهم — المنصة المالية للمستقلين')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <main>
 
     <!-- ════════════════════════════════════════
@@ -79,7 +77,7 @@
               <!-- Main dashboard image: w:547.61 h:547.61 rounded-[24px] border-white-8 shadow -->
               <div
                 class="relative rounded-[24px] rotate-[-5deg] overflow-hidden border-[8px] border-white shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] w-full aspect-square">
-                <img src="{{ asset('marketing/imgs/') }}hero-dashboard-56586a.png" alt="لوحة تحكم دراهم المالية"
+                <img src="<?php echo e(asset('marketing/imgs/')); ?>hero-dashboard-56586a.png" alt="لوحة تحكم دراهم المالية"
                   class="w-full h-full object-cover" />
               </div>
 
@@ -547,7 +545,7 @@
               <!-- Avatar: 48×48 rounded-full border-2 white shadow -->
               <div
                 class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-[0px_2px_4px_-2px_rgba(0,0,0,0.1),0px_4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
-                <img src="{{ asset('marketing/imgs/') }}testimonial-sarah-513477.png" alt="سارة أحمد"
+                <img src="<?php echo e(asset('marketing/imgs/')); ?>testimonial-sarah-513477.png" alt="سارة أحمد"
                   class="w-full h-full object-cover" />
               </div>
               <!-- Name & role block: layout_07VM3R column align-start gap-0 -->
@@ -568,7 +566,7 @@
             <div class="flex items-center justify-start gap-4">
               <div
                 class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-[0px_2px_4px_-2px_rgba(0,0,0,0.1),0px_4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
-                <img src="{{ asset('marketing/imgs/') }}testimonial-omar-513477.png" alt="عمر خالد"
+                <img src="<?php echo e(asset('marketing/imgs/')); ?>testimonial-omar-513477.png" alt="عمر خالد"
                   class="w-full h-full object-cover" />
               </div>
               <div class="flex flex-col items-start">
@@ -903,8 +901,10 @@
 
 
   <!-- Section: Footer -->
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
-<script src="{{ asset('marketing/js/home.js') }}"></script>
-@endsection
+<?php $__env->startSection('scripts'); ?>
+<script src="<?php echo e(asset('marketing/js/home.js')); ?>"></script>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.marketing', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH F:\laragon\www\Workuflow\resources\views/welcome.blade.php ENDPATH**/ ?>

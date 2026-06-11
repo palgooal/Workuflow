@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-g-green:       #006C51;
+  --color-g-green-lt:    #13C597;
+  --color-g-purple:      #1C0060;
+  --color-g-purple-mid:  #310E8E;
+  --color-g-navy:        #002452;
+  --color-g-dark:        #191C1F;
+  --color-g-body:        #484553;
+  --color-g-muted:       #6B7280;
+  --color-g-light:       #F8F9FD;
+  --color-g-light2:      #F2F3F7;
+  --color-g-orange:      #F0995A;
+  --color-g-border:      #E5E7EB;
+  --color-g-border2:     #C4C6D0;
+  --color-g-mint-soft:   #F0FDF9;
+  --color-g-mint-bright: #63F8C7;
+
+  /* Font */
+  --font-sans:    "Readex Pro", sans-serif;
+  --font-heading: "IBM Plex Sans Arabic", sans-serif;
+
+  /* Spacing */
+  --spacing-section: 5rem;
+}
+
+/* ── Scroll Reveal Animation ───────────────────────────── */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── 404 Page Animations ────────────────────────────────── */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes fade-up-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-float {
+  animation: float-y 3.6s ease-in-out infinite;
+}
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fade-up-in 0.65s ease-out forwards;
+}
+
+
+button {
+  cursor: pointer;
+}
