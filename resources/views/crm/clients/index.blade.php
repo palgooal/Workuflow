@@ -743,7 +743,7 @@
 
 @push('scripts')
 <script>
-function clientList() {
+window.clientList = function() {
     return {
         // ── State ────────────────────────────────────────────────────
         selectedIds:  [],
@@ -950,7 +950,7 @@ function clientList() {
     }
 }
 
-function importManager() {
+window.importManager = function() {
     return {
         open:          false,
         step:          'upload',   // upload | processing | done

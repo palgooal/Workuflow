@@ -457,3 +457,5 @@
 
 {{-- Upgrade Modal — يظهر عند تجاوز حدود الخطة --}}
 <x-upgrade-modal />
+
+@stack('scripts')
