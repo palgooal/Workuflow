@@ -1,114 +1,124 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'إنشاء فاتورة جديدة'); ?>
 
-@section('title', 'تعديل الفاتورة ' . $invoice->number)
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="max-w-4xl mx-auto space-y-5" x-data="invoiceForm()">
 
-    {{-- Header --}}
+    
     <div class="flex items-center gap-3">
-        <a href="{{ route('invoices.show', $invoice->ulid) }}"
+        <a href="<?php echo e(url()->previous()); ?>"
            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
         </a>
         <div>
-            <h1 class="text-xl font-bold text-gray-900">تعديل الفاتورة</h1>
-            <p class="text-sm text-gray-500">{{ $invoice->number }}</p>
+            <h1 class="text-xl font-bold text-gray-900">إنشاء فاتورة جديدة</h1>
+            <p class="text-sm text-gray-500">أدخل بيانات الفاتورة والبنود</p>
         </div>
     </div>
 
-    <form method="POST" action="{{ route('invoices.update', $invoice->ulid) }}" class="space-y-5">
-        @csrf
-        @method('PUT')
+    <form method="POST" action="<?php echo e(route('invoices.store')); ?>" class="space-y-5">
+        <?php echo csrf_field(); ?>
 
-        {{-- البيانات الأساسية --}}
+        
         <div class="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
             <h2 class="text-sm font-semibold text-gray-700">بيانات الفاتورة</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                {{-- العميل --}}
+                
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">العميل <span class="text-red-500">*</span></label>
                     <select name="client_id" required
-                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white {{ $errors->has('client_id') ? 'border-red-400' : '' }}">
+                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white <?php echo e($errors->has('client_id') ? 'border-red-400' : ''); ?>">
                         <option value="">اختر العميل…</option>
-                        @foreach($clients as $client)
-                        <option value="{{ $client->id }}"
-                            {{ (old('client_id', $invoice->client_id) == $client->id) ? 'selected' : '' }}>
-                            {{ $client->name }} @if($client->company)({{ $client->company }})@endif
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($client->id); ?>"
+                            <?php echo e((old('client_id', $selectedClient?->id) == $client->id) ? 'selected' : ''); ?>>
+                            <?php echo e($client->name); ?> <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($client->company): ?>(<?php echo e($client->company); ?>)<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </select>
-                    @error('client_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['client_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-xs text-red-500"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
 
-                {{-- المشروع --}}
+                
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">المشروع <span class="text-gray-400 text-xs">(اختياري)</span></label>
                     <select name="project_id"
                             class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
                         <option value="">بدون مشروع</option>
-                        @foreach($projects as $project)
-                        <option value="{{ $project->id }}" {{ old('project_id', $invoice->project_id) == $project->id ? 'selected' : '' }}>
-                            {{ $project->name }}
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $projects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $project): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($project->id); ?>" <?php echo e(old('project_id') == $project->id ? 'selected' : ''); ?>>
+                            <?php echo e($project->name); ?>
+
                         </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </select>
                 </div>
 
-                {{-- العنوان --}}
+                
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">عنوان الفاتورة <span class="text-gray-400 text-xs">(اختياري)</span></label>
-                    <input type="text" name="title" value="{{ old('title', $invoice->title) }}"
+                    <input type="text" name="title" value="<?php echo e(old('title')); ?>"
                            placeholder="مثال: خدمات تصميم — مايو 2026"
                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
 
-                {{-- تاريخ الإصدار --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الإصدار <span class="text-red-500">*</span></label>
-                    <input type="date" name="issue_date"
-                           value="{{ old('issue_date', $invoice->issue_date->format('Y-m-d')) }}" required
-                           class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none {{ $errors->has('issue_date') ? 'border-red-400' : '' }}">
-                    @error('issue_date') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    <input type="date" name="issue_date" value="<?php echo e(old('issue_date', now()->format('Y-m-d'))); ?>" required
+                           class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none <?php echo e($errors->has('issue_date') ? 'border-red-400' : ''); ?>">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['issue_date'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-xs text-red-500"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
 
-                {{-- تاريخ الاستحقاق --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستحقاق</label>
-                    <input type="date" name="due_date"
-                           value="{{ old('due_date', $invoice->due_date?->format('Y-m-d')) }}"
+                    <input type="date" name="due_date" value="<?php echo e(old('due_date', now()->addDays(14)->format('Y-m-d'))); ?>"
                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
 
-                {{-- العملة --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">العملة</label>
                     <select name="currency"
                             class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                        @foreach($currencies as $code => $label)
-                            <option value="{{ $code }}"
-                                {{ old('currency', $invoice->currency) === $code ? 'selected' : '' }}>
-                                {{ $label }}
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $currencies; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $code => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($code); ?>"
+                                <?php echo e(old('currency', auth()->user()->currency ?? 'SAR') === $code ? 'selected' : ''); ?>>
+                                <?php echo e($label); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </select>
                 </div>
 
-                {{-- الضريبة --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">نسبة الضريبة %</label>
-                    <input type="number" name="tax_rate"
-                           value="{{ old('tax_rate', $invoice->tax_rate) }}"
+                    <input type="number" name="tax_rate" value="<?php echo e(old('tax_rate', 0)); ?>"
                            min="0" max="100" step="0.01" x-model.number="taxRate"
                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
             </div>
         </div>
 
-        {{-- البنود --}}
+        
         <div class="bg-white rounded-xl border border-gray-100 p-5 space-y-3">
             <div class="flex items-center justify-between">
                 <h2 class="text-sm font-semibold text-gray-700">البنود</h2>
@@ -121,7 +131,7 @@
                 </button>
             </div>
 
-            {{-- رأس الجدول --}}
+            
             <div class="hidden md:grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 px-1">
                 <div class="col-span-6">الوصف</div>
                 <div class="col-span-2 text-center">الكمية</div>
@@ -129,7 +139,7 @@
                 <div class="col-span-1"></div>
             </div>
 
-            {{-- البنود --}}
+            
             <template x-for="(item, index) in items" :key="index">
                 <div class="grid grid-cols-12 gap-2 items-center">
                     <div class="col-span-12 md:col-span-6">
@@ -161,10 +171,17 @@
                 </div>
             </template>
 
-            @error('items') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['items'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-xs text-red-500"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
-        {{-- الإجماليات --}}
+        
         <div class="bg-white rounded-xl border border-gray-100 p-5">
             <div class="max-w-xs mr-auto space-y-2 text-sm">
                 <div class="flex justify-between text-gray-600">
@@ -185,40 +202,39 @@
                 </div>
             </div>
 
-            {{-- خصم --}}
+            
             <div class="mt-4 max-w-xs mr-auto">
                 <label class="block text-sm font-medium text-gray-700 mb-1">خصم (بالقيمة)</label>
-                <input type="number" name="discount"
-                       value="{{ old('discount', $invoice->discount) }}"
+                <input type="number" name="discount" value="<?php echo e(old('discount', 0)); ?>"
                        min="0" step="0.01" x-model.number="discount" @input="recalc()"
                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
         </div>
 
-        {{-- الملاحظات والشروط --}}
+        
         <div class="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
             <h2 class="text-sm font-semibold text-gray-700">ملاحظات وشروط</h2>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">ملاحظات للعميل</label>
                 <textarea name="notes" rows="2" placeholder="شكراً لتعاملكم معنا…"
-                          class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none">{{ old('notes', $invoice->notes) }}</textarea>
+                          class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none"><?php echo e(old('notes')); ?></textarea>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">الشروط والأحكام</label>
                 <textarea name="terms" rows="2" placeholder="الدفع خلال 14 يوم من تاريخ الفاتورة…"
-                          class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none">{{ old('terms', $invoice->terms) }}</textarea>
+                          class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none"><?php echo e(old('terms')); ?></textarea>
             </div>
         </div>
 
-        {{-- الأزرار --}}
+        
         <div class="flex items-center justify-end gap-3">
-            <a href="{{ route('invoices.show', $invoice->ulid) }}"
+            <a href="<?php echo e(url()->previous()); ?>"
                class="px-4 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition">
                 إلغاء
             </a>
             <button type="submit"
                     class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition">
-                حفظ التعديلات
+                إنشاء الفاتورة
             </button>
         </div>
 
@@ -226,23 +242,14 @@
 </div>
 
 <script>
-@php
-    $invoiceItems = $invoice->items->map(fn($i) => [
-        'description' => $i->description,
-        'quantity'    => (float) $i->quantity,
-        'unit_price'  => (float) $i->unit_price,
-    ])->values()->all();
-@endphp
 function invoiceForm() {
     return {
-        items: @json($invoiceItems),
-        taxRate:   {{ old('tax_rate',  $invoice->tax_rate)  }},
-        discount:  {{ old('discount',  $invoice->discount)  }},
-        subtotal:  {{ $invoice->subtotal }},
-        taxAmount: {{ $invoice->tax_amount }},
-        total:     {{ $invoice->total }},
-
-        init() { this.recalc(); },
+        items: [{ description: '', quantity: 1, unit_price: 0 }],
+        taxRate: <?php echo e(old('tax_rate', 0)); ?>,
+        discount: <?php echo e(old('discount', 0)); ?>,
+        subtotal: 0,
+        taxAmount: 0,
+        total: 0,
 
         addItem() {
             this.items.push({ description: '', quantity: 1, unit_price: 0 });
@@ -252,9 +259,9 @@ function invoiceForm() {
             this.recalc();
         },
         recalc() {
-            this.subtotal  = this.items.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
+            this.subtotal = this.items.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
             this.taxAmount = this.subtotal * (this.taxRate / 100);
-            this.total     = Math.max(0, this.subtotal + this.taxAmount - this.discount);
+            this.total = Math.max(0, this.subtotal + this.taxAmount - this.discount);
         },
         formatMoney(val) {
             return new Intl.NumberFormat('ar-PS', { minimumFractionDigits: 2 }).format(val || 0);
@@ -262,4 +269,6 @@ function invoiceForm() {
     }
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH F:\laragon\www\Workuflow\resources\views/invoices/create.blade.php ENDPATH**/ ?>

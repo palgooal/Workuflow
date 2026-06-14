@@ -3,7 +3,9 @@
 namespace App\Http\Requests\Debts;
 
 use App\Support\Enums\DebtType;
+use App\Support\Helpers\Currency;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class StoreDebtRequest extends FormRequest
@@ -16,7 +18,7 @@ class StoreDebtRequest extends FormRequest
             'type'       => ['required', new Enum(DebtType::class)],
             'party_name' => ['required', 'string', 'max:100'],
             'amount'     => ['required', 'numeric', 'min:0.01'],
-            'currency'   => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'   => ['required', 'string', Rule::in(Currency::codes())],
             'due_date'   => ['nullable', 'date', 'after_or_equal:today'],
             'notes'      => ['nullable', 'string', 'max:500'],
         ];

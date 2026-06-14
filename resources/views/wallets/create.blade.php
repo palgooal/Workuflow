@@ -44,8 +44,11 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">العملة <span class="text-red-500">*</span></label>
                     <select name="currency" required
                             class="w-full rounded-xl border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        @foreach(['SAR','USD','EUR','GBP','AED','KWD','BHD','QAR','OMR','JOD','EGP','ILS'] as $cur)
-                            <option value="{{ $cur }}" {{ old('currency','SAR') === $cur ? 'selected' : '' }}>{{ $cur }}</option>
+                        @foreach($currencies as $code => $label)
+                            <option value="{{ $code }}"
+                                {{ old('currency', auth()->user()->currency ?? 'SAR') === $code ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
                         @endforeach
                     </select>
                 </div>

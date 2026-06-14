@@ -16,6 +16,7 @@ use App\Modules\Transactions\Services\TransactionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Support\Helpers\Currency;
 
 class TransactionController extends Controller
 {
@@ -43,7 +44,7 @@ class TransactionController extends Controller
         $projects   = Project::active()->orderBy('name')->get();
         $categories = Category::orderBy('type')->orderBy('name')->get();
         $wallets    = Wallet::active()->orderBy('name')->get();
-        $currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $currencies = Currency::all();
         $preProject = $request->query('project');
 
         return view('transactions.create', compact('projects', 'categories', 'wallets', 'currencies', 'preProject'));
@@ -77,7 +78,7 @@ class TransactionController extends Controller
         $projects   = Project::active()->orderBy('name')->get();
         $categories = Category::orderBy('type')->orderBy('name')->get();
         $wallets    = Wallet::active()->orderBy('name')->get();
-        $currencies = ['SAR', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $currencies = Currency::all();
 
         return view('transactions.edit', compact('transaction', 'projects', 'categories', 'wallets', 'currencies'));
     }

@@ -15,6 +15,7 @@ use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use App\Support\Helpers\Currency;
 use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\TransactionType;
 use Illuminate\Http\RedirectResponse;
@@ -51,7 +52,8 @@ class InvoiceController extends Controller
                     ->where('id', $request->query('client_id'))->first()
             : null;
 
-        return view('invoices.create', compact('clients', 'projects', 'statuses', 'selectedClient'));
+        $currencies = Currency::all();
+        return view('invoices.create', compact('clients', 'projects', 'statuses', 'selectedClient', 'currencies'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -185,7 +187,8 @@ class InvoiceController extends Controller
             ->where('is_archived', false)->orderBy('name')->get();
         $projects = Project::active()->orderBy('name')->get();
 
-        return view('invoices.edit', compact('invoice', 'clients', 'projects'));
+        $currencies = Currency::all();
+        return view('invoices.edit', compact('invoice', 'clients', 'projects', 'currencies'));
     }
 
     public function update(Request $request, string $ulid): RedirectResponse

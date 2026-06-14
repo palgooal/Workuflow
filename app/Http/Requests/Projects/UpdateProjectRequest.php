@@ -4,7 +4,9 @@ namespace App\Http\Requests\Projects;
 
 use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\ProjectType;
+use App\Support\Helpers\Currency;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class UpdateProjectRequest extends FormRequest
@@ -19,7 +21,7 @@ class UpdateProjectRequest extends FormRequest
         return [
             'name'        => ['required', 'string', 'max:100'],
             'type'        => ['required', new Enum(ProjectType::class)],
-            'currency'    => ['required', 'string', 'in:SAR,ILS,USD,EUR,GBP,AED,KWD'],
+            'currency'    => ['required', 'string', Rule::in(Currency::codes())],
             'color'       => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'description' => ['nullable', 'string', 'max:500'],
             'status'      => ['nullable', new Enum(ProjectStatus::class)],

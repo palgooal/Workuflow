@@ -12,13 +12,36 @@ class MoneyFormatter
         $formatted = number_format(abs($amount), 2);
 
         return match($currency) {
+            // ── خليج عربي ──────────────────────────────────
             'SAR' => $formatted . ' ر.س',
-            'USD' => '$ ' . $formatted,
-            'EUR' => '€ ' . $formatted,
-            'GBP' => '£ ' . $formatted,
             'AED' => $formatted . ' د.إ',
             'KWD' => $formatted . ' د.ك',
-            'ILS' => '₪ ' . $formatted,
+            'QAR' => $formatted . ' ر.ق',
+            'BHD' => $formatted . ' د.ب',
+            'OMR' => $formatted . ' ر.ع',
+            // ── المشرق العربي ───────────────────────────────
+            'JOD' => $formatted . ' د.أ',
+            'IQD' => $formatted . ' ع.د',
+            'SYP' => $formatted . ' ل.س',
+            'LBP' => $formatted . ' ل.ل',
+            'ILS' => '₪ '      . $formatted,
+            'YER' => $formatted . ' ر.ي',
+            // ── شمال أفريقيا ────────────────────────────────
+            'EGP' => $formatted . ' ج.م',
+            'LYD' => $formatted . ' ل.د',
+            'TND' => $formatted . ' د.ت',
+            'DZD' => $formatted . ' دج',
+            'MAD' => $formatted . ' د.م.',
+            'SDG' => $formatted . ' ج.س',
+            // ── أفريقيا جنوب الصحراء (دول الجامعة) ─────────
+            'SOS' => $formatted . ' ش.ص',
+            'MRU' => $formatted . ' أ.م',
+            'DJF' => $formatted . ' ف.ج',
+            'KMF' => $formatted . ' ف.ق',
+            // ── دولي ────────────────────────────────────────
+            'USD' => '$ '      . $formatted,
+            'EUR' => '€ '      . $formatted,
+            'GBP' => '£ '      . $formatted,
             default => $formatted . ' ' . $currency,
         };
     }

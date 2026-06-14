@@ -11,7 +11,7 @@ class UpdatePreferencesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'currency'          => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD,EGP,QAR,BHD,OMR,JOD,MAD,TND,LYD'],
+            'currency'          => ['required', 'string', 'in:SAR,AED,KWD,QAR,BHD,OMR,JOD,IQD,SYP,LBP,ILS,YER,EGP,LYD,TND,DZD,MAD,SDG,SOS,MRU,DJF,KMF,USD,EUR,GBP'],
             'timezone'          => ['required', 'string', 'timezone'],
             'target_margin_pct' => ['required', 'integer', 'min:1', 'max:99'],
         ];

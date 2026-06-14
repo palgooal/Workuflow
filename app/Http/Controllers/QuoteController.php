@@ -14,6 +14,7 @@ use App\Support\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Support\Helpers\Currency;
 
 class QuoteController extends Controller
 {
@@ -43,7 +44,7 @@ class QuoteController extends Controller
 
     public function create(Request $request): View
     {
-        $currencies  = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $currencies = Currency::all();
         $clients     = Client::where('user_id', $request->user()->id)
                              ->where('is_archived', false)
                              ->orderBy('name')->get();
@@ -147,7 +148,7 @@ class QuoteController extends Controller
 
         abort_if(! $quote->status->isEditable(), 403, 'لا يمكن تعديل عرض غير مسودة.');
 
-        $currencies = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $currencies = Currency::all();
         $clients    = Client::where('user_id', $request->user()->id)
                             ->where('is_archived', false)->orderBy('name')->get();
         $projects   = Project::where('user_id', $request->user()->id)

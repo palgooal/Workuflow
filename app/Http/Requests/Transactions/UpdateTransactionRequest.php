@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Transactions;
 
 use App\Support\Enums\TransactionType;
+use App\Support\Helpers\Currency;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -19,7 +20,7 @@ class UpdateTransactionRequest extends FormRequest
         return [
             'type'             => ['required', new Enum(TransactionType::class)],
             'amount'           => ['required', 'numeric', 'min:0.01', 'max:999999999'],
-            'currency'         => ['required', 'string', 'in:SAR,ILS,USD,EUR,GBP,AED,KWD'],
+            'currency'         => ['required', 'string', Rule::in(Currency::codes())],
             'description'      => ['required', 'string', 'max:255'],
             'payee'            => ['nullable', 'string', 'max:255'],
             'transaction_date' => ['required', 'date'],

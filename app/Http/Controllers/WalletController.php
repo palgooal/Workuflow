@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Wallet;
 use App\Models\WalletTransfer;
 use App\Support\Enums\WalletType;
+use App\Support\Helpers\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -38,8 +39,9 @@ class WalletController extends Controller
 
     public function create(): View
     {
-        $types = WalletType::cases();
-        return view('wallets.create', compact('types'));
+        $types      = WalletType::cases();
+        $currencies = Currency::all();
+        return view('wallets.create', compact('types', 'currencies'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -86,8 +88,9 @@ class WalletController extends Controller
     public function edit(Wallet $wallet): View
     {
         $this->authorize('update', $wallet);
-        $types = WalletType::cases();
-        return view('wallets.edit', compact('wallet', 'types'));
+        $types      = WalletType::cases();
+        $currencies = Currency::all();
+        return view('wallets.edit', compact('wallet', 'types', 'currencies'));
     }
 
     public function update(Request $request, Wallet $wallet): RedirectResponse

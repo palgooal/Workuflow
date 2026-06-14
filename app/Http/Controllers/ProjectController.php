@@ -24,6 +24,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use App\Support\Helpers\Currency;
 
 class ProjectController extends Controller
 {
@@ -56,7 +57,7 @@ class ProjectController extends Controller
     {
         $this->authorize('create', Project::class);
 
-        $currencies  = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $currencies = Currency::all();
         $colors      = $this->defaultColors();
         $clients     = Client::where('user_id', auth()->id())->where('is_archived', false)->orderBy('name')->get();
         $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();
@@ -138,7 +139,7 @@ class ProjectController extends Controller
         $this->authorize('update', $project);
 
         $project->load(['client', 'services']);
-        $currencies  = ['SAR', 'ILS', 'USD', 'EUR', 'GBP', 'AED', 'KWD'];
+        $currencies = Currency::all();
         $colors      = $this->defaultColors();
         $clients     = Client::where('user_id', auth()->id())->where('is_archived', false)->orderBy('name')->get();
         $services    = Service::active()->forUser(auth()->id())->orderBy('name_ar')->get();

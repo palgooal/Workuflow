@@ -85,10 +85,12 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">العملة</label>
                     <select name="currency"
                             class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                        <option value="ILS" {{ old('currency', 'ILS') === 'ILS' ? 'selected' : '' }}>₪ شيكل (ILS)</option>
-                        <option value="USD" {{ old('currency') === 'USD' ? 'selected' : '' }}>$ دولار (USD)</option>
-                        <option value="EUR" {{ old('currency') === 'EUR' ? 'selected' : '' }}>€ يورو (EUR)</option>
-                        <option value="JOD" {{ old('currency') === 'JOD' ? 'selected' : '' }}>د.أ دينار (JOD)</option>
+                        @foreach($currencies as $code => $label)
+                            <option value="{{ $code }}"
+                                {{ old('currency', auth()->user()->currency ?? 'SAR') === $code ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 

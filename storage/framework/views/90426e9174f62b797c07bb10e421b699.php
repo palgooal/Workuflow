@@ -1,11 +1,11 @@
-{{-- Shared form partial for create & edit --}}
+
 <div class="bg-white rounded-2xl border border-gray-100 p-6"
      x-data="{
-         selectedColor: '{{ old('color', $project->color ?? '#6366F1') }}',
-         selectedType: '{{ old('type', $project->type->value ?? 'business') }}',
-         allServiceOptions: {{ $services->map(fn($s) => ['id' => $s->id, 'name_ar' => $s->name_ar ?? $s->name])->toJson() }},
-         teamMembers: {{ $teamMembers->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toJson() }},
-         services: {{ json_encode(
+         selectedColor: '<?php echo e(old('color', $project->color ?? '#6366F1')); ?>',
+         selectedType: '<?php echo e(old('type', $project->type->value ?? 'business')); ?>',
+         allServiceOptions: <?php echo e($services->map(fn($s) => ['id' => $s->id, 'name_ar' => $s->name_ar ?? $s->name])->toJson()); ?>,
+         teamMembers: <?php echo e($teamMembers->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toJson()); ?>,
+         services: <?php echo e(json_encode(
              old('services', isset($project)
                  ? $project->services->map(fn($s) => [
                      'service_id' => (string) $s->id,
@@ -22,8 +22,8 @@
                  ])->toArray()
                  : []
              )
-         ) }},
-         historyRoute: '{{ route('projects.service-margin-history', '__ID__') }}',
+         )); ?>,
+         historyRoute: '<?php echo e(route('projects.service-margin-history', '__ID__')); ?>',
          addService() {
              this.services.push({ service_id: '', amount: '', type: 'income', notes: '', members: [], history: null, historyLoading: false, target_margin_pct: '' });
          },
@@ -53,7 +53,7 @@
              const m = this.serviceMargin(svc);
              return m.revenue > 0 ? Math.round((m.cost / m.revenue) * 100) : null;
          },
-         targetMarginPct: {{ $targetMarginPct ?? 40 }},
+         targetMarginPct: <?php echo e($targetMarginPct ?? 40); ?>,
          effectiveMarginPct(svc) {
              // الأولوية: هامش الخدمة المخصص → إعداد المستخدم العام
              const custom = parseInt(svc.target_margin_pct);
@@ -93,24 +93,38 @@
 
     <div class="space-y-5">
 
-        {{-- Project Name --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">
                 اسم المشروع <span class="text-red-500">*</span>
             </label>
             <input type="text"
                    name="name"
-                   value="{{ old('name', $project->name ?? '') }}"
+                   value="<?php echo e(old('name', $project->name ?? '')); ?>"
                    placeholder="مثال: متجر إلكتروني، تطوير تطبيق..."
                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm
                           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                          @error('name') border-red-300 bg-red-50 @enderror">
-            @error('name')
-                <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-            @enderror
+                          <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-300 bg-red-50 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <p class="mt-1.5 text-xs text-red-600"><?php echo e($message); ?></p>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
-        {{-- Project Type --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 نوع المشروع <span class="text-red-500">*</span>
@@ -119,7 +133,8 @@
                 <label class="relative cursor-pointer"
                        @click="selectedType = 'business'">
                     <input type="radio" name="type" value="business"
-                           {{ old('type', $project->type->value ?? 'business') === 'business' ? 'checked' : '' }}
+                           <?php echo e(old('type', $project->type->value ?? 'business') === 'business' ? 'checked' : ''); ?>
+
                            class="sr-only">
                     <div class="flex items-center gap-3 p-4 rounded-xl border-2 transition"
                          :class="selectedType === 'business'
@@ -135,7 +150,8 @@
                 <label class="relative cursor-pointer"
                        @click="selectedType = 'personal'">
                     <input type="radio" name="type" value="personal"
-                           {{ old('type', $project->type->value ?? '') === 'personal' ? 'checked' : '' }}
+                           <?php echo e(old('type', $project->type->value ?? '') === 'personal' ? 'checked' : ''); ?>
+
                            class="sr-only">
                     <div class="flex items-center gap-3 p-4 rounded-xl border-2 transition"
                          :class="selectedType === 'personal'
@@ -149,14 +165,21 @@
                     </div>
                 </label>
             </div>
-            @error('type')
-                <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-            @enderror
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['type'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <p class="mt-1.5 text-xs text-red-600"><?php echo e($message); ?></p>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
-        {{-- Currency + Color Row --}}
+        
         <div class="grid grid-cols-2 gap-4">
-            {{-- Currency --}}
+            
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
                     العملة <span class="text-red-500">*</span>
@@ -164,37 +187,52 @@
                 <select name="currency"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white
                                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                               @error('currency') border-red-300 bg-red-50 @enderror">
-                    @foreach($currencies as $code => $label)
-                        <option value="{{ $code }}"
-                                {{ old('currency', $project->currency ?? auth()->user()->currency) === $code ? 'selected' : '' }}>
-                            {{ $label }}
+                               <?php $__errorArgs = ['currency'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-300 bg-red-50 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $currencies; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $code => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($code); ?>"
+                                <?php echo e(old('currency', $project->currency ?? auth()->user()->currency) === $code ? 'selected' : ''); ?>>
+                            <?php echo e($label); ?>
+
                         </option>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </select>
-                @error('currency')
-                    <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-                @enderror
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['currency'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="mt-1.5 text-xs text-red-600"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
-            {{-- Color Picker --}}
+            
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
                     لون المشروع <span class="text-red-500">*</span>
                 </label>
                 <input type="hidden" name="color" :value="selectedColor">
                 <div class="flex items-center gap-2 flex-wrap">
-                    @foreach($colors as $color)
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $colors; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $color): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <button type="button"
-                            @click="selectedColor = '{{ $color }}'"
+                            @click="selectedColor = '<?php echo e($color); ?>'"
                             class="w-7 h-7 rounded-lg transition-all duration-150 border-2"
-                            :class="selectedColor === '{{ $color }}'
+                            :class="selectedColor === '<?php echo e($color); ?>'
                                 ? 'scale-110 border-gray-800'
                                 : 'border-transparent hover:scale-105'"
-                            style="background-color: {{ $color }}">
+                            style="background-color: <?php echo e($color); ?>">
                     </button>
-                    @endforeach
-                    {{-- Custom color input --}}
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
                     <div class="relative">
                         <input type="color"
                                :value="selectedColor"
@@ -203,18 +241,25 @@
                                title="اختر لوناً مخصصاً">
                     </div>
                 </div>
-                {{-- Preview --}}
+                
                 <div class="mt-2 flex items-center gap-2">
                     <div class="w-4 h-4 rounded-full" :style="`background-color: ${selectedColor}`"></div>
                     <span class="text-xs text-gray-400" x-text="selectedColor"></span>
                 </div>
-                @error('color')
-                    <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-                @enderror
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['color'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="mt-1.5 text-xs text-red-600"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
         </div>
 
-        {{-- Description --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">
                 وصف المشروع <span class="text-gray-400 font-normal">(اختياري)</span>
@@ -224,13 +269,27 @@
                       placeholder="وصف مختصر للمشروع وأهدافه..."
                       class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm resize-none
                              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                             @error('description') border-red-300 bg-red-50 @enderror">{{ old('description', $project->description ?? '') }}</textarea>
-            @error('description')
-                <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-            @enderror
+                             <?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-300 bg-red-50 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"><?php echo e(old('description', $project->description ?? '')); ?></textarea>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <p class="mt-1.5 text-xs text-red-600"><?php echo e($message); ?></p>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
-        {{-- Contract Value + Expense Budget --}}
+        
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -245,49 +304,71 @@
                         </svg>
                     </div>
                     <input type="number" name="contract_value" step="0.01" min="0"
-                           value="{{ old('contract_value', $project->contract_value ?? '') }}"
+                           value="<?php echo e(old('contract_value', $project->contract_value ?? '')); ?>"
                            placeholder="0.00"
                            class="w-full pr-9 pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm
                                   focus:outline-none focus:ring-2 focus:ring-indigo-500
-                                  @error('contract_value') border-red-300 @enderror">
+                                  <?php $__errorArgs = ['contract_value'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-300 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
                 </div>
-                @error('contract_value') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['contract_value'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-xs text-red-600"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
         </div>
 
-        {{-- Client --}}
+        
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1.5">
                 العميل <span class="text-gray-400 font-normal">(اختياري)</span>
             </label>
-            @if($clients->isEmpty())
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($clients->isEmpty()): ?>
                 <div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
                     <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     لا يوجد عملاء بعد.
-                    <a href="{{ route('clients.create') }}" class="font-medium underline">أضف عميلاً الآن</a>
+                    <a href="<?php echo e(route('clients.create')); ?>" class="font-medium underline">أضف عميلاً الآن</a>
                 </div>
-            @else
+            <?php else: ?>
                 <select name="client_id"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white
                                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     <option value="">— بدون عميل —</option>
-                    @foreach($clients as $client)
-                        <option value="{{ $client->id }}"
-                                {{ old('client_id', $project->client_id ?? '') == $client->id ? 'selected' : '' }}>
-                            {{ $client->name }}{{ $client->company ? ' — ' . $client->company : '' }}
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($client->id); ?>"
+                                <?php echo e(old('client_id', $project->client_id ?? '') == $client->id ? 'selected' : ''); ?>>
+                            <?php echo e($client->name); ?><?php echo e($client->company ? ' — ' . $client->company : ''); ?>
+
                         </option>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </select>
-                @error('client_id')
-                    <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            @endif
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['client_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="mt-1.5 text-xs text-red-600"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
-        {{-- Services --}}
+        
         <div x-data="{
                 quickAddOpen: false,
                 quickName: '',
@@ -298,7 +379,7 @@
                     this.quickLoading = true;
                     this.quickError   = '';
                     try {
-                        const res = await fetch('{{ route('services.quick-store') }}', {
+                        const res = await fetch('<?php echo e(route('services.quick-store')); ?>', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -321,7 +402,7 @@
                 }
              }">
 
-            {{-- Header --}}
+            
             <div class="flex items-center justify-between mb-3">
                 <label class="block text-sm font-medium text-gray-700">
                     الخدمات المقدمة
@@ -337,12 +418,12 @@
                 </button>
             </div>
 
-            {{-- Services List --}}
+            
             <div class="space-y-2" x-show="services.length > 0">
                 <template x-for="(svc, index) in services" :key="index">
                     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
 
-                        {{-- Row 1: Service + Remove --}}
+                        
                         <div class="flex items-center gap-3">
                             <div class="flex-1">
                                 <label class="block text-xs font-medium text-gray-500 mb-1.5">الخدمة</label>
@@ -358,7 +439,7 @@
                                     </template>
                                 </select>
 
-                                {{-- التنبيه التاريخي --}}
+                                
                                 <template x-if="svc.history && svc.history.has_history">
                                     <div class="mt-1.5 flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg"
                                          :class="{
@@ -393,11 +474,11 @@
                             </button>
                         </div>
 
-                        {{-- Row 2: Amount --}}
+                        
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="text-xs font-medium text-gray-500">القيمة</label>
-                                {{-- اقتراح السعر —يظهر فقط عند وجود تكاليف وغياب قيمة --}}
+                                
                                 <template x-if="suggestedPrice(svc) !== null && (! svc.amount || parseFloat(svc.amount) === 0)">
                                     <button type="button"
                                             @click="svc.amount = suggestedPrice(svc)"
@@ -418,7 +499,7 @@
                             <input type="hidden" :name="`services[${index}][type]`" value="income">
                         </div>
 
-                        {{-- Row 3: Notes + هامش مخصص --}}
+                        
                         <div class="grid grid-cols-[1fr_auto] gap-2 items-start">
                             <input type="text"
                                    :name="`services[${index}][notes]`"
@@ -427,7 +508,7 @@
                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs text-gray-600
                                           focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white">
 
-                            {{-- هامش مخصص للخدمة --}}
+                            
                             <div class="flex-shrink-0" x-data="{ showMargin: svc.target_margin_pct !== '' }">
                                 <template x-if="!showMargin">
                                     <button type="button"
@@ -468,10 +549,10 @@
                             </div>
                         </div>
 
-                        {{-- منفذو الخدمة --}}
+                        
                         <div class="pt-2 border-t border-gray-100 mt-1 space-y-2">
 
-                            {{-- عنوان القسم + زر الإضافة --}}
+                            
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-medium text-gray-500">منفذو الخدمة</span>
                                 <button type="button" @click="addMember(index)"
@@ -484,11 +565,11 @@
                                 </button>
                             </div>
 
-                            {{-- قائمة المنفذين --}}
+                            
                             <template x-for="(member, memberIndex) in svc.members" :key="memberIndex">
                                 <div class="flex items-center gap-2 bg-white border border-gray-100 rounded-lg p-2.5">
 
-                                    {{-- اسم المنفذ --}}
+                                    
                                     <select :name="`services[${index}][members][${memberIndex}][team_member_id]`"
                                             x-model="member.team_member_id"
                                             class="flex-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm bg-white
@@ -500,7 +581,7 @@
                                         </template>
                                     </select>
 
-                                    {{-- تكلفة المنفذ --}}
+                                    
                                     <div class="relative w-28 flex-shrink-0">
                                         <input type="number"
                                                :name="`services[${index}][members][${memberIndex}][team_cost]`"
@@ -510,7 +591,7 @@
                                                       focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                     </div>
 
-                                    {{-- حذف المنفذ --}}
+                                    
                                     <button type="button" @click="removeMember(index, memberIndex)"
                                             class="w-6 h-6 flex-shrink-0 flex items-center justify-center
                                                    text-gray-300 hover:text-red-500 rounded transition">
@@ -521,13 +602,13 @@
                                 </div>
                             </template>
 
-                            {{-- رسالة إذا لا يوجد منفذون --}}
+                            
                             <p x-show="svc.members.length === 0"
                                class="text-xs text-gray-400 text-center py-1">
                                 لا يوجد منفذون — الخدمة بدون تكاليف تنفيذ
                             </p>
 
-                            {{-- مؤشر الهامش الحي --}}
+                            
                             <template x-if="parseFloat(svc.amount) > 0 || svc.members.length > 0">
                                 <div class="rounded-lg border px-3 py-2 flex items-center justify-between text-xs font-bold transition-colors"
                                      :class="marginColor(serviceMargin(svc).pct)">
@@ -555,7 +636,7 @@
                                 </div>
                             </template>
 
-                            {{-- اقتراح رفع السعر — عند وجود قيمة وهامش أقل من المستهدف --}}
+                            
                             <template x-if="
                                 suggestedPrice(svc) !== null &&
                                 parseFloat(svc.amount) > 0 &&
@@ -576,7 +657,7 @@
                                 </div>
                             </template>
 
-                            {{-- تنبيه: الهامش الحالي أقل بكثير من المتوسط التاريخي --}}
+                            
                             <template x-if="
                                 svc.history &&
                                 svc.history.has_history &&
@@ -596,7 +677,7 @@
                                 </div>
                             </template>
 
-                            {{-- تنبيه: تكلفة تتجاوز 80% --}}
+                            
                             <template x-if="svc.members.length > 0 && serviceMargin(svc).pct !== null && serviceMargin(svc).pct >= 0 && serviceMargin(svc).pct < 20">
                                 <div class="flex items-start gap-2 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2 text-xs text-orange-800">
                                     <span class="mt-px flex-shrink-0">⚠️</span>
@@ -609,7 +690,7 @@
                                 </div>
                             </template>
 
-                            {{-- تنبيه: خسارة --}}
+                            
                             <template x-if="svc.members.length > 0 && serviceMargin(svc).margin < 0">
                                 <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-800 font-semibold">
                                     <span class="mt-px flex-shrink-0">🔴</span>
@@ -627,10 +708,10 @@
                 </template>
             </div>
 
-            {{-- تنبيه على مستوى المشروع --}}
+            
             <template x-if="services.length > 1 && projectMarginSummary().totalCost > 0">
                 <div class="mt-3">
-                    {{-- خسارة إجمالية --}}
+                    
                     <template x-if="projectMarginSummary().isLoss">
                         <div class="flex items-start gap-2 rounded-xl bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-800">
                             <span class="mt-0.5 flex-shrink-0 text-base">🔴</span>
@@ -645,7 +726,7 @@
                             </div>
                         </div>
                     </template>
-                    {{-- هامش إجمالي منخفض --}}
+                    
                     <template x-if="!projectMarginSummary().isLoss && projectMarginSummary().pct !== null && projectMarginSummary().pct < 20">
                         <div class="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
                             <span class="mt-0.5 flex-shrink-0 text-base">⚠️</span>
@@ -664,7 +745,7 @@
                 </div>
             </template>
 
-            {{-- Empty State --}}
+            
             <div x-show="services.length === 0"
                  class="flex flex-col items-center gap-2 py-8 border-2 border-dashed border-gray-200 rounded-xl text-center">
                 <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
@@ -680,7 +761,7 @@
                 </button>
             </div>
 
-            {{-- Quick Add Service --}}
+            
             <div class="mt-3">
                 <button type="button"
                         @click="quickAddOpen = !quickAddOpen"
@@ -721,8 +802,8 @@
 
         </div>
 
-        {{-- حالة المشروع --}}
-        @php
+        
+        <?php
             $currentStatus = old('status', isset($project) ? $project->status->value : 'active');
             $statuses = [
                 ['value' => 'active',    'label' => 'نشط',    'icon' => '🟢', 'desc' => 'يُعمل عليه الآن'],
@@ -730,34 +811,42 @@
                 ['value' => 'on_hold',   'label' => 'متوقف',  'icon' => '⏸',  'desc' => 'مؤجل مؤقتاً'],
                 ['value' => 'cancelled', 'label' => 'ملغي',   'icon' => '❌', 'desc' => 'تم الإلغاء'],
             ];
-        @endphp
+        ?>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">حالة المشروع</label>
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                @foreach($statuses as $s)
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $statuses; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <label class="cursor-pointer">
-                    <input type="radio" name="status" value="{{ $s['value'] }}"
-                           {{ $currentStatus === $s['value'] ? 'checked' : '' }}
+                    <input type="radio" name="status" value="<?php echo e($s['value']); ?>"
+                           <?php echo e($currentStatus === $s['value'] ? 'checked' : ''); ?>
+
                            class="sr-only peer">
                     <div class="flex flex-col items-center gap-1 px-3 py-3 rounded-xl border-2 text-center
                                 transition cursor-pointer text-xs font-medium
                                 border-gray-200 text-gray-500
                                 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700">
-                        <span class="text-base">{{ $s['icon'] }}</span>
-                        <span class="font-bold">{{ $s['label'] }}</span>
-                        <span class="text-gray-400 font-normal text-[10px] leading-tight peer-checked:text-indigo-500">{{ $s['desc'] }}</span>
+                        <span class="text-base"><?php echo e($s['icon']); ?></span>
+                        <span class="font-bold"><?php echo e($s['label']); ?></span>
+                        <span class="text-gray-400 font-normal text-[10px] leading-tight peer-checked:text-indigo-500"><?php echo e($s['desc']); ?></span>
                     </div>
                 </label>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
-            @error('status')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['status'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <p class="mt-1 text-xs text-red-600"><?php echo e($message); ?></p>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
 
-        {{-- Actions --}}
+        
         <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
-            <a href="{{ route('projects.index') }}"
+            <a href="<?php echo e(route('projects.index')); ?>"
                class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition">
                 إلغاء
             </a>
@@ -767,9 +856,11 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                {{ isset($project) ? 'حفظ التعديلات' : 'إنشاء المشروع' }}
+                <?php echo e(isset($project) ? 'حفظ التعديلات' : 'إنشاء المشروع'); ?>
+
             </button>
         </div>
 
     </div>
 </div>
+<?php /**PATH F:\laragon\www\Workuflow\resources\views/projects/_form.blade.php ENDPATH**/ ?>

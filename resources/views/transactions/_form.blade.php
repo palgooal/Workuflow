@@ -70,10 +70,10 @@
                 <select name="currency"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm bg-white
                                focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    @foreach($currencies as $currency)
-                        <option value="{{ $currency }}"
-                                {{ old('currency', $transaction->currency ?? auth()->user()->currency) === $currency ? 'selected' : '' }}>
-                            {{ $currency }}
+                    @foreach($currencies as $code => $label)
+                        <option value="{{ $code }}"
+                                {{ old('currency', $transaction->currency ?? auth()->user()->currency) === $code ? 'selected' : '' }}>
+                            {{ $label }}
                         </option>
                     @endforeach
                 </select>
