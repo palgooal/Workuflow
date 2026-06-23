@@ -2,224 +2,292 @@
 
 @section('title', 'تعديل الفاتورة ' . $invoice->number)
 
+@section('breadcrumb')
+    <span class="text-muted/60">/</span>
+    <a href="{{ route('invoices.index') }}" class="text-muted hover:text-ink transition-colors">الفواتير</a>
+    <span class="text-muted/60">/</span>
+    <a href="{{ route('invoices.show', $invoice->ulid) }}" class="text-muted hover:text-ink transition-colors">{{ $invoice->number }}</a>
+    <span class="text-muted/60">/</span>
+    <span class="text-ink">تعديل</span>
+@endsection
+
 @section('content')
 <div class="max-w-4xl mx-auto space-y-5" x-data="invoiceForm()">
 
-    {{-- Header --}}
-    <div class="flex items-center gap-3">
-        <a href="{{ route('invoices.show', $invoice->ulid) }}"
-           class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-        </a>
-        <div>
-            <h1 class="text-xl font-bold text-gray-900">تعديل الفاتورة</h1>
-            <p class="text-sm text-gray-500">{{ $invoice->number }}</p>
-        </div>
-    </div>
+    <x-page-header title="تعديل الفاتورة" :subtitle="$invoice->number" />
 
     <form method="POST" action="{{ route('invoices.update', $invoice->ulid) }}" class="space-y-5">
         @csrf
         @method('PUT')
 
         {{-- البيانات الأساسية --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
-            <h2 class="text-sm font-semibold text-gray-700">بيانات الفاتورة</h2>
+        <x-card-section title="بيانات الفاتورة">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {{-- العميل --}}
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">العميل <span class="text-red-500">*</span></label>
-                    <select name="client_id" required
-                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white {{ $errors->has('client_id') ? 'border-red-400' : '' }}">
-                        <option value="">اختر العميل…</option>
-                        @foreach($clients as $client)
-                        <option value="{{ $client->id }}"
-                            {{ (old('client_id', $invoice->client_id) == $client->id) ? 'selected' : '' }}>
-                            {{ $client->name }} @if($client->company)({{ $client->company }})@endif
-                        </option>
-                        @endforeach
-                    </select>
-                    @error('client_id') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    <label class="block text-sm font-semibold text-ink mb-1.5">
+                        العميل <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </span>
+                        <select name="client_id" required
+                                class="dash-field pr-9 py-2.5 @error('client_id') dash-field-error @enderror">
+                            <option value="">اختر العميل…</option>
+                            @foreach($clients as $client)
+                            <option value="{{ $client->id }}"
+                                {{ (old('client_id', $invoice->client_id) == $client->id) ? 'selected' : '' }}>
+                                {{ $client->name }} @if($client->company)({{ $client->company }})@endif
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @error('client_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- المشروع --}}
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">المشروع <span class="text-gray-400 text-xs">(اختياري)</span></label>
-                    <select name="project_id"
-                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                        <option value="">بدون مشروع</option>
-                        @foreach($projects as $project)
-                        <option value="{{ $project->id }}" {{ old('project_id', $invoice->project_id) == $project->id ? 'selected' : '' }}>
-                            {{ $project->name }}
-                        </option>
-                        @endforeach
-                    </select>
+                    <label class="block text-sm font-semibold text-ink mb-1.5">
+                        المشروع <span class="text-muted font-normal text-xs">(اختياري)</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
+                        </span>
+                        <select name="project_id" class="dash-field pr-9 py-2.5">
+                            <option value="">بدون مشروع</option>
+                            @foreach($projects as $project)
+                            <option value="{{ $project->id }}" {{ old('project_id', $invoice->project_id) == $project->id ? 'selected' : '' }}>
+                                {{ $project->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 {{-- العنوان --}}
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">عنوان الفاتورة <span class="text-gray-400 text-xs">(اختياري)</span></label>
-                    <input type="text" name="title" value="{{ old('title', $invoice->title) }}"
-                           placeholder="مثال: خدمات تصميم — مايو 2026"
-                           class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-semibold text-ink mb-1.5">
+                        عنوان الفاتورة <span class="text-muted font-normal text-xs">(اختياري)</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                        </span>
+                        <input type="text" name="title" value="{{ old('title', $invoice->title) }}"
+                               placeholder="مثال: خدمات تصميم — مايو 2026"
+                               class="dash-field pr-9 py-2.5">
+                    </div>
                 </div>
 
                 {{-- تاريخ الإصدار --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الإصدار <span class="text-red-500">*</span></label>
-                    <input type="date" name="issue_date"
-                           value="{{ old('issue_date', $invoice->issue_date->format('Y-m-d')) }}" required
-                           class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none {{ $errors->has('issue_date') ? 'border-red-400' : '' }}">
-                    @error('issue_date') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    <label class="block text-sm font-semibold text-ink mb-1.5">
+                        تاريخ الإصدار <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </span>
+                        <input type="date" name="issue_date"
+                               value="{{ old('issue_date', $invoice->issue_date->format('Y-m-d')) }}" required
+                               class="dash-field pr-9 py-2.5 nums @error('issue_date') dash-field-error @enderror">
+                    </div>
+                    @error('issue_date') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- تاريخ الاستحقاق --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستحقاق</label>
-                    <input type="date" name="due_date"
-                           value="{{ old('due_date', $invoice->due_date?->format('Y-m-d')) }}"
-                           class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-semibold text-ink mb-1.5">تاريخ الاستحقاق</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </span>
+                        <input type="date" name="due_date"
+                               value="{{ old('due_date', $invoice->due_date?->format('Y-m-d')) }}"
+                               class="dash-field pr-9 py-2.5 nums">
+                    </div>
                 </div>
 
                 {{-- العملة --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">العملة</label>
-                    <select name="currency"
-                            class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                        @foreach($currencies as $code => $label)
-                            <option value="{{ $code }}"
-                                {{ old('currency', $invoice->currency) === $code ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <label class="block text-sm font-semibold text-ink mb-1.5">العملة</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </span>
+                        <select name="currency" class="dash-field pr-9 py-2.5">
+                            @foreach($currencies as $code => $label)
+                                <option value="{{ $code }}"
+                                    {{ old('currency', $invoice->currency) === $code ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 {{-- الضريبة --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">نسبة الضريبة %</label>
-                    <input type="number" name="tax_rate"
-                           value="{{ old('tax_rate', $invoice->tax_rate) }}"
-                           min="0" max="100" step="0.01" x-model.number="taxRate"
-                           class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-semibold text-ink mb-1.5">نسبة الضريبة %</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </span>
+                        <input type="number" name="tax_rate"
+                               value="{{ old('tax_rate', $invoice->tax_rate) }}"
+                               min="0" max="100" step="0.01" x-model.number="taxRate"
+                               class="dash-field pr-9 py-2.5 nums">
+                    </div>
                 </div>
             </div>
-        </div>
+        </x-card-section>
 
         {{-- البنود --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-5 space-y-3">
-            <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-gray-700">البنود</h2>
+        <x-card-section title="البنود">
+            <x-slot name="action">
                 <button type="button" @click="addItem()"
-                        class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        class="inline-flex items-center gap-1.5 text-xs text-brand hover:text-brand-700 font-semibold transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>
                     إضافة بند
                 </button>
-            </div>
+            </x-slot>
 
-            {{-- رأس الجدول --}}
-            <div class="hidden md:grid grid-cols-12 gap-2 text-xs font-medium text-gray-400 px-1">
-                <div class="col-span-6">الوصف</div>
-                <div class="col-span-2 text-center">الكمية</div>
-                <div class="col-span-3 text-center">السعر</div>
-                <div class="col-span-1"></div>
-            </div>
+            <div class="space-y-3">
+                {{-- رأس الجدول --}}
+                <div class="hidden md:grid grid-cols-12 gap-2 dash-th px-1">
+                    <div class="col-span-6">الوصف</div>
+                    <div class="col-span-2 text-center">الكمية</div>
+                    <div class="col-span-3 text-center">السعر</div>
+                    <div class="col-span-1"></div>
+                </div>
 
-            {{-- البنود --}}
-            <template x-for="(item, index) in items" :key="index">
-                <div class="grid grid-cols-12 gap-2 items-center">
-                    <div class="col-span-12 md:col-span-6">
-                        <input type="text" :name="`items[${index}][description]`"
-                               x-model="item.description" placeholder="وصف الخدمة أو المنتج" required
-                               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                <template x-for="(item, index) in items" :key="index">
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <div class="col-span-12 md:col-span-6">
+                            <input type="text" :name="`items[${index}][description]`"
+                                   x-model="item.description" placeholder="وصف الخدمة أو المنتج" required
+                                   class="dash-field px-3 py-2">
+                        </div>
+                        <div class="col-span-4 md:col-span-2">
+                            <input type="number" :name="`items[${index}][quantity]`"
+                                   x-model.number="item.quantity" @input="recalc()"
+                                   placeholder="1" min="0.01" step="0.01" required
+                                   class="dash-field px-3 py-2 text-center nums">
+                        </div>
+                        <div class="col-span-7 md:col-span-3">
+                            <input type="number" :name="`items[${index}][unit_price]`"
+                                   x-model.number="item.unit_price" @input="recalc()"
+                                   placeholder="0.00" min="0" step="0.01" required
+                                   class="dash-field px-3 py-2 text-left nums">
+                        </div>
+                        <div class="col-span-1 flex justify-center">
+                            <button type="button" @click="removeItem(index)"
+                                    x-show="items.length > 1"
+                                    class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="col-span-4 md:col-span-2">
-                        <input type="number" :name="`items[${index}][quantity]`"
-                               x-model.number="item.quantity" @input="recalc()"
-                               placeholder="1" min="0.01" step="0.01" required
-                               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-center">
-                    </div>
-                    <div class="col-span-7 md:col-span-3">
-                        <input type="number" :name="`items[${index}][unit_price]`"
-                               x-model.number="item.unit_price" @input="recalc()"
-                               placeholder="0.00" min="0" step="0.01" required
-                               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-left">
-                    </div>
-                    <div class="col-span-1 flex justify-center">
-                        <button type="button" @click="removeItem(index)"
-                                x-show="items.length > 1"
-                                class="text-red-400 hover:text-red-600 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </template>
+
+                @error('items') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+        </x-card-section>
+
+        {{-- الإجماليات + الخصم --}}
+        <x-card-section>
+            <div class="flex flex-col md:flex-row gap-6 items-start">
+                {{-- الخصم --}}
+                <div class="w-full md:w-48">
+                    <label class="block text-sm font-semibold text-ink mb-1.5">خصم (بالقيمة)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M17 17h.01M5 19L19 5"/>
                             </svg>
-                        </button>
+                        </span>
+                        <input type="number" name="discount"
+                               value="{{ old('discount', $invoice->discount) }}"
+                               min="0" step="0.01" x-model.number="discount" @input="recalc()"
+                               class="dash-field pr-9 py-2.5 nums">
                     </div>
                 </div>
-            </template>
 
-            @error('items') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
-        </div>
-
-        {{-- الإجماليات --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-5">
-            <div class="max-w-xs mr-auto space-y-2 text-sm">
-                <div class="flex justify-between text-gray-600">
-                    <span>المجموع الفرعي</span>
-                    <span x-text="formatMoney(subtotal)"></span>
-                </div>
-                <div class="flex justify-between text-gray-600" x-show="taxRate > 0">
-                    <span>الضريبة (<span x-text="taxRate"></span>%)</span>
-                    <span x-text="formatMoney(taxAmount)"></span>
-                </div>
-                <div class="flex justify-between text-gray-600" x-show="discount > 0">
-                    <span>الخصم</span>
-                    <span x-text="'-' + formatMoney(discount)"></span>
-                </div>
-                <div class="flex justify-between font-bold text-gray-900 text-base pt-2 border-t border-gray-100">
-                    <span>الإجمالي</span>
-                    <span x-text="formatMoney(total)"></span>
+                {{-- الأرقام --}}
+                <div class="flex-1 space-y-2 text-sm bg-slate-50 rounded-xl p-4">
+                    <div class="flex justify-between text-muted">
+                        <span>المجموع الفرعي</span>
+                        <span class="nums font-medium text-ink" x-text="formatMoney(subtotal)"></span>
+                    </div>
+                    <div class="flex justify-between text-muted" x-show="taxRate > 0">
+                        <span>الضريبة (<span x-text="taxRate"></span>%)</span>
+                        <span class="nums font-medium text-ink" x-text="formatMoney(taxAmount)"></span>
+                    </div>
+                    <div class="flex justify-between text-muted" x-show="discount > 0">
+                        <span>الخصم</span>
+                        <span class="nums font-medium text-red-600" x-text="'-' + formatMoney(discount)"></span>
+                    </div>
+                    <div class="flex justify-between font-bold text-ink text-base pt-2 border-t border-subtle">
+                        <span>الإجمالي</span>
+                        <span class="nums" x-text="formatMoney(total)"></span>
+                    </div>
                 </div>
             </div>
-
-            {{-- خصم --}}
-            <div class="mt-4 max-w-xs mr-auto">
-                <label class="block text-sm font-medium text-gray-700 mb-1">خصم (بالقيمة)</label>
-                <input type="number" name="discount"
-                       value="{{ old('discount', $invoice->discount) }}"
-                       min="0" step="0.01" x-model.number="discount" @input="recalc()"
-                       class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-            </div>
-        </div>
+        </x-card-section>
 
         {{-- الملاحظات والشروط --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
-            <h2 class="text-sm font-semibold text-gray-700">ملاحظات وشروط</h2>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ملاحظات للعميل</label>
-                <textarea name="notes" rows="2" placeholder="شكراً لتعاملكم معنا…"
-                          class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none">{{ old('notes', $invoice->notes) }}</textarea>
+        <x-card-section title="ملاحظات وشروط">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-ink mb-1.5">ملاحظات للعميل</label>
+                    <textarea name="notes" rows="2" placeholder="شكراً لتعاملكم معنا…"
+                              class="dash-field px-4 py-2.5 resize-none">{{ old('notes', $invoice->notes) }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-ink mb-1.5">الشروط والأحكام</label>
+                    <textarea name="terms" rows="2" placeholder="الدفع خلال 14 يوم من تاريخ الفاتورة…"
+                              class="dash-field px-4 py-2.5 resize-none">{{ old('terms', $invoice->terms) }}</textarea>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">الشروط والأحكام</label>
-                <textarea name="terms" rows="2" placeholder="الدفع خلال 14 يوم من تاريخ الفاتورة…"
-                          class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none">{{ old('terms', $invoice->terms) }}</textarea>
-            </div>
-        </div>
+        </x-card-section>
 
         {{-- الأزرار --}}
-        <div class="flex items-center justify-end gap-3">
-            <a href="{{ route('invoices.show', $invoice->ulid) }}"
-               class="px-4 py-2.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition">
-                إلغاء
-            </a>
+        <div class="flex items-center gap-3">
             <button type="submit"
-                    class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition">
+                    class="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-brand hover:bg-brand-600 text-white text-sm font-semibold rounded-btn transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
                 حفظ التعديلات
             </button>
+            <a href="{{ route('invoices.show', $invoice->ulid) }}"
+               class="flex-1 inline-flex items-center justify-center gap-2 py-2.5 bg-slate-100 text-slate-700 rounded-btn text-sm font-medium hover:bg-slate-200 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                إلغاء
+            </a>
         </div>
 
     </form>
@@ -257,7 +325,7 @@ function invoiceForm() {
             this.total     = Math.max(0, this.subtotal + this.taxAmount - this.discount);
         },
         formatMoney(val) {
-            return new Intl.NumberFormat('ar-PS', { minimumFractionDigits: 2 }).format(val || 0);
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(val || 0);
         }
     }
 }

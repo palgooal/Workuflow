@@ -9,39 +9,39 @@
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="flex items-center gap-4">
             <a href="{{ route('clients.index') }}"
-               class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition flex-shrink-0">
+               class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
             </a>
             {{-- Avatar --}}
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0
-                        {{ $client->is_archived ? 'bg-gray-100 text-gray-400' : 'bg-indigo-100 text-indigo-700' }}">
+                        {{ $client->is_archived ? 'bg-slate-100 text-slate-400' : 'bg-brand-100 text-brand-600' }}">
                 {{ mb_substr($client->name, 0, 1) }}
             </div>
             <div>
                 <div class="flex items-center gap-2 flex-wrap">
-                    <h1 class="text-xl font-bold text-gray-900">{{ $client->name }}</h1>
+                    <h1 class="text-xl font-bold text-ink tracking-tight">{{ $client->name }}</h1>
                     @if($client->status)
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $client->status->badgeClass() }}">
                         {{ $client->status->label() }}
                     </span>
                     @endif
                     @if($client->is_archived)
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
                         📦 مؤرشف
                     </span>
                     @endif
                 </div>
                 <div class="flex items-center gap-3 mt-1 flex-wrap">
                     @if($client->company)
-                    <span class="text-sm text-gray-500">{{ $client->company }}</span>
+                    <span class="text-sm text-slate-500">{{ $client->company }}</span>
                     @endif
                     @if($client->email)
-                    <a href="mailto:{{ $client->email }}" class="text-sm text-indigo-600 hover:underline">{{ $client->email }}</a>
+                    <a href="mailto:{{ $client->email }}" class="text-sm text-brand hover:underline">{{ $client->email }}</a>
                     @endif
                     @if($client->phone)
-                    <a href="tel:{{ $client->phone }}" class="text-sm text-gray-500 hover:text-gray-700">{{ $client->phone }}</a>
+                    <a href="tel:{{ $client->phone }}" class="text-sm text-muted hover:text-ink transition-colors">{{ $client->phone }}</a>
                     @php
                         $waNumber = preg_replace('/[^0-9]/', '', $client->phone);
                         // أرقام محلية تبدأ بـ 0 → أضف 970
@@ -87,7 +87,7 @@
                     اقتراحات وسوم ({{ count($tagSuggestions) }})
                 </button>
                 <div x-show="open" @click.away="open = false" x-cloak
-                     class="absolute left-0 mt-1 w-56 bg-white border border-gray-100 rounded-xl shadow-lg z-10 p-2">
+                     class="absolute left-0 mt-1 w-56 bg-white border border-slate-100 rounded-xl shadow-lg z-10 p-2">
                     @foreach($tagSuggestions as $suggestion)
                     <form method="POST" action="{{ route('clients.tags.assign', [$client->public_id, $suggestion->id]) }}"
                           @submit.prevent="
@@ -101,8 +101,8 @@
                           ">
                         @csrf
                         <button type="submit"
-                                class="w-full text-right flex items-center gap-2 px-3 py-2 text-sm text-gray-700
-                                       hover:bg-gray-50 rounded-lg transition">
+                                class="w-full text-right flex items-center gap-2 px-3 py-2 text-sm text-slate-700
+                                       hover:bg-slate-50 rounded-lg transition">
                             <span class="w-2.5 h-2.5 rounded-full flex-shrink-0"
                                   style="background-color: {{ $suggestion->color ?? '#6366f1' }}"></span>
                             تعيين: {{ $suggestion->name }}
@@ -115,8 +115,8 @@
 
             @can('update', $client)
             <a href="{{ route('clients.edit', $client->public_id) }}"
-               class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white
-                      border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+               class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 bg-white
+                      border border-slate-200 rounded-xl hover:bg-slate-50 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -143,8 +143,8 @@
                   onsubmit="return confirm('هل تريد أرشفة هذا العميل؟')">
                 @csrf
                 <button type="submit"
-                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500
-                               bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500
+                               bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">
                     أرشفة
                 </button>
             </form>
@@ -160,46 +160,46 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
 
         {{-- إجمالي الإيراد --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs text-gray-500 mb-1">إجمالي الإيراد</p>
+        <div class="dash-card p-4">
+            <p class="text-xs text-slate-500 mb-1">إجمالي الإيراد</p>
             @if(empty($revenueByCurrency))
-                <p class="text-2xl font-bold text-gray-300">—</p>
+                <p class="text-2xl font-bold text-slate-300">—</p>
             @else
                 @foreach($revenueByCurrency as $cur => $amount)
-                <p class="font-bold text-gray-900 {{ $multiCurrency ? 'text-lg' : 'text-2xl' }}">
+                <p class="font-bold text-slate-900 {{ $multiCurrency ? 'text-lg' : 'text-2xl' }}">
                     {{ number_format($amount, 0) }}
-                    <span class="text-sm font-normal text-gray-400">{{ $cur }}</span>
+                    <span class="text-sm font-normal text-slate-400">{{ $cur }}</span>
                 </p>
                 @endforeach
             @endif
         </div>
 
         {{-- إجمالي المدفوع --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs text-gray-500 mb-1">إجمالي المدفوع</p>
+        <div class="dash-card p-4">
+            <p class="text-xs text-slate-500 mb-1">إجمالي المدفوع</p>
             @if(empty($paidByCurrency))
-                <p class="text-2xl font-bold text-gray-300">—</p>
+                <p class="text-2xl font-bold text-slate-300">—</p>
             @else
                 @foreach($paidByCurrency as $cur => $amount)
                 <p class="font-bold text-teal-600 {{ $multiCurrency ? 'text-lg' : 'text-2xl' }}">
                     {{ number_format($amount, 0) }}
-                    <span class="text-sm font-normal text-gray-400">{{ $cur }}</span>
+                    <span class="text-sm font-normal text-slate-400">{{ $cur }}</span>
                 </p>
                 @endforeach
             @endif
         </div>
 
         {{-- المستحق --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-4">
-            <p class="text-xs text-gray-500 mb-1">المستحق</p>
+        <div class="dash-card p-4">
+            <p class="text-xs text-slate-500 mb-1">المستحق</p>
             @if(empty($outstandingByCurrency))
-                <p class="text-2xl font-bold text-gray-300">✓</p>
+                <p class="text-2xl font-bold text-slate-300">✓</p>
                 <p class="text-xs text-teal-500 mt-0.5">لا يوجد مستحق</p>
             @else
                 @foreach($outstandingByCurrency as $cur => $amount)
                 <p class="font-bold text-red-600 {{ count($outstandingByCurrency) > 1 ? 'text-lg' : 'text-2xl' }}">
                     {{ number_format($amount, 0) }}
-                    <span class="text-sm font-normal text-gray-400">{{ $cur }}</span>
+                    <span class="text-sm font-normal text-slate-400">{{ $cur }}</span>
                 </p>
                 @endforeach
             @endif
@@ -209,7 +209,7 @@
         @php
             $hs = $client->latestHealthScore;
             $hsScore = $hs?->score ?? $client->health_score;
-            $hsColor = !$hsScore ? 'text-gray-300' : ($hsScore >= 75 ? 'text-teal-600' : ($hsScore >= 50 ? 'text-amber-600' : 'text-red-500'));
+            $hsColor = !$hsScore ? 'text-slate-300' : ($hsScore >= 75 ? 'text-teal-600' : ($hsScore >= 50 ? 'text-amber-600' : 'text-red-500'));
             $hsBg    = !$hsScore ? '' : ($hsScore >= 75 ? 'bg-teal-50' : ($hsScore >= 50 ? 'bg-amber-50' : 'bg-red-50'));
             $factorLabels = [
                 'payment_rate'      => ['معدل الدفع', '35%'],
@@ -220,9 +220,9 @@
             ];
             $factors = $hs?->factorBreakdown() ?? [];
         @endphp
-        <div class="bg-white rounded-xl border border-gray-100 p-4 col-span-1">
+        <div class="dash-card p-4 col-span-1">
             <div class="flex items-center justify-between mb-2">
-                <p class="text-xs text-gray-500">نقاط الصحة</p>
+                <p class="text-xs text-slate-500">نقاط الصحة</p>
                 @if($hsScore !== null)
                 <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ $hsBg }} {{ $hsColor }}">
                     {{ $hs?->grade()->label() ?? '' }}
@@ -230,18 +230,18 @@
                 @endif
             </div>
             <p class="text-3xl font-bold {{ $hsColor }}">
-                {{ $hsScore ?? '—' }}<span class="text-sm font-normal text-gray-400">/100</span>
+                {{ $hsScore ?? '—' }}<span class="text-sm font-normal text-slate-400">/100</span>
             </p>
             @if(!empty($factors))
             <div class="mt-3 space-y-1.5">
                 @foreach($factorLabels as $key => [$label, $weight])
                 @php $val = $factors[$key] ?? 0; @endphp
                 <div>
-                    <div class="flex justify-between text-xs text-gray-500 mb-0.5">
+                    <div class="flex justify-between text-xs text-slate-500 mb-0.5">
                         <span>{{ $label }}</span>
-                        <span class="font-medium text-gray-700">{{ $val }}%</span>
+                        <span class="font-medium text-slate-700">{{ $val }}%</span>
                     </div>
-                    <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div class="h-full rounded-full transition-all duration-500
                             {{ $val >= 75 ? 'bg-teal-500' : ($val >= 50 ? 'bg-amber-400' : 'bg-red-400') }}"
                              style="width: {{ $val }}%"></div>
@@ -268,7 +268,7 @@
     <div x-data="{ tab: '{{ request()->get('tab', 'activity') }}' }">
 
         {{-- شريط التبويبات --}}
-        <div class="flex gap-1 border-b border-gray-200 overflow-x-auto">
+        <div class="flex gap-1 border-b border-slate-200 overflow-x-auto">
             @php
                 $tabs = [
                     'activity'   => ['label' => 'النشاط',   'icon' => '📋'],
@@ -283,13 +283,13 @@
             @foreach($tabs as $key => $tab)
             <button @click="tab = '{{ $key }}'"
                     :class="tab === '{{ $key }}'
-                        ? 'border-b-2 border-indigo-600 text-indigo-600 font-medium'
-                        : 'text-gray-500 hover:text-gray-700'"
+                        ? 'border-b-2 border-brand text-brand font-medium'
+                        : 'text-muted hover:text-ink transition-colors'"
                     class="px-4 py-2.5 text-sm whitespace-nowrap transition flex items-center gap-1.5">
                 <span>{{ $tab['icon'] }}</span>
                 {{ $tab['label'] }}
                 @if(!empty($tab['badge']) && $tab['badge'] > 0)
-                <span class="inline-flex items-center justify-center w-4 h-4 text-xs bg-indigo-100 text-indigo-700 rounded-full">{{ $tab['badge'] }}</span>
+                <span class="inline-flex items-center justify-center w-4 h-4 text-xs bg-brand-100 text-brand-600 rounded-full">{{ $tab['badge'] }}</span>
                 @endif
             </button>
             @endforeach
@@ -297,11 +297,11 @@
 
         {{-- ==================== تبويب النشاط ==================== --}}
         <div x-show="tab === 'activity'" class="pt-4" x-on:click.away="" x-init="loadTimeline(false)">
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
+            <div class="dash-card p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-gray-700">سجل النشاط</h3>
+                    <h3 class="text-sm font-semibold text-slate-700">سجل النشاط</h3>
                     <button x-on:click="loadTimeline(false)"
-                            class="text-xs text-indigo-600 hover:underline flex items-center gap-1">
+                            class="text-xs text-brand hover:underline flex items-center gap-1">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -310,7 +310,7 @@
                     </button>
                 </div>
                 <div id="timeline-container">
-                    <div class="flex items-center justify-center py-8 text-gray-400">
+                    <div class="flex items-center justify-center py-8 text-slate-400">
                         <svg class="w-5 h-5 animate-spin ml-2" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -323,8 +323,8 @@
                     <button id="load-more-btn"
                             x-on:click="loadTimeline(true)"
                             :disabled="timelineLoading"
-                            class="text-xs text-indigo-600 hover:text-indigo-800 px-4 py-2 border border-indigo-200
-                                   rounded-lg hover:bg-indigo-50 transition disabled:opacity-50">
+                            class="text-xs text-brand hover:text-brand-700 px-4 py-2 border border-brand/30
+                                   rounded-lg hover:bg-brand-50 transition disabled:opacity-50">
                         <span x-show="!timelineLoading">تحميل المزيد</span>
                         <span x-show="timelineLoading">جاري التحميل…</span>
                     </button>
@@ -334,13 +334,13 @@
 
         {{-- ==================== تبويب المشاريع ==================== --}}
         <div x-show="tab === 'projects'" class="pt-4">
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
+            <div class="dash-card p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-gray-700">
+                    <h3 class="text-sm font-semibold text-slate-700">
                         المشاريع ({{ $projects->count() }})
                     </h3>
                     <a href="{{ route('projects.create') }}"
-                       class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 transition">
+                       class="inline-flex items-center gap-1.5 text-xs text-brand hover:text-brand-700 transition">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -349,14 +349,14 @@
                 </div>
 
                 @if($projects->isEmpty())
-                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                <div class="flex flex-col items-center justify-center py-10 text-slate-400">
                     <svg class="w-10 h-10 mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                               d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
                     </svg>
                     <p class="text-sm">لا توجد مشاريع مرتبطة بهذا العميل</p>
                     <a href="{{ route('projects.create') }}"
-                       class="mt-3 text-xs text-indigo-600 hover:underline">إضافة مشروع</a>
+                       class="mt-3 text-xs text-brand hover:underline">إضافة مشروع</a>
                 </div>
                 @else
                 <div class="space-y-3">
@@ -365,23 +365,23 @@
                         $profit = $project->netProfit();
                     @endphp
                     <a href="{{ route('projects.show', $project) }}"
-                       class="flex items-center justify-between p-3 rounded-xl border border-gray-100
-                              hover:border-indigo-200 hover:bg-indigo-50/30 transition group">
+                       class="flex items-center justify-between p-3 rounded-xl border border-slate-100
+                              hover:border-brand/30 hover:bg-brand-50/30 transition group">
                         <div class="flex items-center gap-3 min-w-0">
                             {{-- لون المشروع --}}
                             <span class="w-3 h-3 rounded-full flex-shrink-0"
                                   style="background-color: {{ $project->color ?? '#6366f1' }}"></span>
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate group-hover:text-indigo-700">
+                                <p class="text-sm font-medium text-slate-900 truncate group-hover:text-brand-600">
                                     {{ $project->name }}
                                 </p>
                                 <div class="flex items-center gap-2 mt-0.5">
                                     @if($project->type)
-                                    <span class="text-xs text-gray-400">
+                                    <span class="text-xs text-slate-400">
                                         {{ $project->type->label() ?? $project->type->value }}
                                     </span>
                                     @endif
-                                    <span class="text-xs {{ $project->is_active ? 'text-teal-600' : 'text-gray-400' }}">
+                                    <span class="text-xs {{ $project->is_active ? 'text-teal-600' : 'text-slate-400' }}">
                                         {{ $project->is_active ? '● نشط' : '○ منتهي' }}
                                     </span>
                                 </div>
@@ -390,21 +390,21 @@
                         <div class="flex items-center gap-4 flex-shrink-0 text-left">
                             @if($project->contract_value)
                             <div class="text-right">
-                                <p class="text-xs text-gray-400">قيمة العقد</p>
-                                <p class="text-sm font-semibold text-gray-700">
+                                <p class="text-xs text-slate-400">قيمة العقد</p>
+                                <p class="text-sm font-semibold text-slate-700">
                                     {{ number_format($project->contract_value, 0) }} ₪
                                 </p>
                             </div>
                             @endif
                             @if($profit != 0)
                             <div class="text-right">
-                                <p class="text-xs text-gray-400">الربح</p>
+                                <p class="text-xs text-slate-400">الربح</p>
                                 <p class="text-sm font-semibold {{ $profit >= 0 ? 'text-teal-600' : 'text-red-500' }}">
                                     {{ number_format(abs($profit), 0) }} ₪
                                 </p>
                             </div>
                             @endif
-                            <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-slate-300 group-hover:text-brand/70 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </div>
@@ -417,13 +417,13 @@
 
         {{-- ==================== تبويب الفواتير ==================== --}}
         <div x-show="tab === 'invoices'" class="pt-4">
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
+            <div class="dash-card p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-gray-700">
+                    <h3 class="text-sm font-semibold text-slate-700">
                         الفواتير ({{ $clientInvoices->count() }})
                     </h3>
                     <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}"
-                       class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
+                       class="inline-flex items-center gap-1.5 text-xs text-brand hover:text-brand-700 font-medium transition">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -432,25 +432,25 @@
                 </div>
 
                 @if($clientInvoices->isEmpty())
-                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                <div class="flex flex-col items-center justify-center py-10 text-slate-400">
                     <svg class="w-10 h-10 mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <p class="text-sm">لا توجد فواتير لهذا العميل</p>
                     <a href="{{ route('invoices.create', ['client_id' => $client->id]) }}"
-                       class="mt-3 text-xs text-indigo-600 hover:underline">إنشاء أول فاتورة</a>
+                       class="mt-3 text-xs text-brand hover:underline">إنشاء أول فاتورة</a>
                 </div>
                 @else
                 <div class="space-y-2">
                     @foreach($clientInvoices as $inv)
                     <a href="{{ route('invoices.show', $inv->ulid) }}"
-                       class="flex items-center justify-between p-3 rounded-xl border border-gray-100
-                              hover:border-indigo-200 hover:bg-indigo-50/30 transition group">
+                       class="flex items-center justify-between p-3 rounded-xl border border-slate-100
+                              hover:border-brand/30 hover:bg-brand-50/30 transition group">
                         <div class="flex items-center gap-3 min-w-0">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
-                                    <p class="text-sm font-medium text-gray-900 group-hover:text-indigo-700">
+                                    <p class="text-sm font-medium text-slate-900 group-hover:text-brand-600">
                                         {{ $inv->number }}
                                     </p>
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {{ $inv->status->badgeClass() }}">
@@ -460,17 +460,17 @@
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">⚠️ متأخرة</span>
                                     @endif
                                 </div>
-                                <p class="text-xs text-gray-400 mt-0.5">
+                                <p class="text-xs text-slate-400 mt-0.5">
                                     {{ $inv->issue_date->format('Y/m/d') }}
                                     @if($inv->project) — {{ $inv->project->name }} @endif
                                 </p>
                             </div>
                         </div>
                         <div class="flex items-center gap-3 flex-shrink-0">
-                            <p class="text-sm font-semibold text-gray-800">
+                            <p class="text-sm font-semibold text-slate-800">
                                 {{ number_format($inv->total, 0) }} {{ $inv->currency }}
                             </p>
-                            <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-slate-300 group-hover:text-brand/70 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </div>
@@ -483,13 +483,13 @@
 
         {{-- ==================== تبويب عروض الأسعار ==================== --}}
         <div x-show="tab === 'quotes'" class="pt-4">
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
+            <div class="dash-card p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-gray-700">
+                    <h3 class="text-sm font-semibold text-slate-700">
                         عروض الأسعار ({{ $clientQuotes->count() }})
                     </h3>
                     <a href="{{ route('quotes.create', ['client_id' => $client->id]) }}"
-                       class="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">
+                       class="inline-flex items-center gap-1.5 text-xs text-brand hover:text-brand-700 font-medium transition">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -498,7 +498,7 @@
                 </div>
 
                 @if($clientQuotes->isEmpty())
-                <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+                <div class="flex flex-col items-center justify-center py-10 text-slate-400">
                     <div class="text-4xl mb-2">📋</div>
                     <p class="text-sm">لا توجد عروض أسعار بعد</p>
                 </div>
@@ -506,19 +506,19 @@
                 <div class="space-y-2">
                     @foreach($clientQuotes as $q)
                     <a href="{{ route('quotes.show', $q->ulid) }}"
-                       class="flex items-center justify-between p-3 rounded-xl border border-gray-100
-                              hover:border-indigo-200 hover:bg-indigo-50/30 transition group">
+                       class="flex items-center justify-between p-3 rounded-xl border border-slate-100
+                              hover:border-brand/30 hover:bg-brand-50/30 transition group">
                         <div class="flex items-center gap-3">
-                            <span class="text-xs font-semibold text-indigo-600">{{ $q->number }}</span>
+                            <span class="text-xs font-semibold text-brand">{{ $q->number }}</span>
                             @if($q->title)
-                                <span class="text-xs text-gray-500 truncate max-w-40">{{ $q->title }}</span>
+                                <span class="text-xs text-slate-500 truncate max-w-40">{{ $q->title }}</span>
                             @endif
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-medium {{ $q->status->badgeClass() }} px-2 py-0.5 rounded-full">
                                 {{ $q->status->icon() }} {{ $q->status->label() }}
                             </span>
-                            <span class="text-xs font-semibold text-gray-700">
+                            <span class="text-xs font-semibold text-slate-700">
                                 {{ number_format($q->total, 2) }} {{ $q->currency }}
                             </span>
                         </div>
@@ -533,8 +533,8 @@
         <div x-show="tab === 'followups'" class="pt-4 space-y-4">
             {{-- إضافة متابعة --}}
             @can('update', $client)
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">إضافة متابعة جديدة</h3>
+            <div class="dash-card p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-3">إضافة متابعة جديدة</h3>
                 <form method="POST"
                       action="{{ route('clients.client-follow-ups.store', $client->public_id) }}"
                       class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -542,23 +542,23 @@
                     {{-- client_id مطلوب للـ Validation --}}
                     <input type="hidden" name="client_id" value="{{ $client->id }}">
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">العنوان *</label>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">العنوان *</label>
                         <input type="text" name="title" required placeholder="موضوع المتابعة"
-                               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                      focus:ring-2 focus:ring-indigo-500 outline-none">
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
+                                      focus:ring-2 focus:ring-accent/40 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">الموعد *</label>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">الموعد *</label>
                         <input type="datetime-local" name="due_at" required
                                min="{{ now()->addMinutes(5)->format('Y-m-d\TH:i') }}"
-                               class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                      focus:ring-2 focus:ring-indigo-500 outline-none">
+                               class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
+                                      focus:ring-2 focus:ring-accent/40 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">الأولوية</label>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">الأولوية</label>
                         <select name="priority"
-                                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                       focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg
+                                       focus:ring-2 focus:ring-accent/40 outline-none bg-white">
                             <option value="1">🔴 عاجل</option>
                             <option value="2">🟠 مرتفع</option>
                             <option value="3" selected>🟡 متوسط</option>
@@ -567,7 +567,7 @@
                     </div>
                     <div class="md:col-span-3">
                         <button type="submit"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm
+                                class="px-4 py-2 bg-brand hover:bg-brand-600 text-white text-sm
                                        font-medium rounded-lg transition">
                             إضافة متابعة
                         </button>
@@ -577,11 +577,11 @@
             @endcan
 
             {{-- قائمة المتابعات --}}
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">المتابعات</h3>
+            <div class="dash-card p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-3">المتابعات</h3>
                 @php $followUps = $client->followUps()->orderBy('due_at')->get() @endphp
                 @if($followUps->isEmpty())
-                <p class="text-sm text-gray-400 text-center py-6">لا توجد متابعات بعد</p>
+                <p class="text-sm text-slate-400 text-center py-6">لا توجد متابعات بعد</p>
                 @else
                 <div class="space-y-2">
                     @foreach($followUps as $followUp)
@@ -595,17 +595,17 @@
                         $isCancelled = $statusVal === 'cancelled';
                     @endphp
                     <div class="flex items-center justify-between p-3 rounded-lg
-                                {{ $isDone ? 'bg-gray-50 opacity-60' : ($isPast ? 'bg-red-50' : 'bg-gray-50') }}">
+                                {{ $isDone ? 'bg-slate-50 opacity-60' : ($isPast ? 'bg-red-50' : 'bg-slate-50') }}">
                         <div class="flex items-center gap-3 min-w-0">
                             <span class="text-base">
                                 {{ $isDone ? '✅' : ($isCancelled ? '❌' : ($isPast ? '⚠️' : '⏰')) }}
                             </span>
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-gray-800 truncate
-                                          {{ $isDone || $isCancelled ? 'line-through text-gray-400' : '' }}">
+                                <p class="text-sm font-medium text-slate-800 truncate
+                                          {{ $isDone || $isCancelled ? 'line-through text-slate-400' : '' }}">
                                     {{ $followUp->title }}
                                 </p>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs text-slate-500">
                                     {{ $followUp->due_at->format('Y-m-d H:i') }}
                                     @if($isPast) <span class="text-red-500">(متأخرة)</span> @endif
                                 </p>
@@ -627,7 +627,7 @@
                                   action="{{ route('clients.client-follow-ups.cancel', [$client->public_id, $followUp->id]) }}">
                                 @csrf
                                 <button type="submit"
-                                        class="px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 border border-gray-200
+                                        class="px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 border border-slate-200
                                                rounded-lg transition">
                                     إلغاء
                                 </button>
@@ -646,8 +646,8 @@
         <div x-show="tab === 'tags'" class="pt-4 space-y-4">
 
             {{-- الوسوم الحالية --}}
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">الوسوم المُعيَّنة</h3>
+            <div class="dash-card p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-3">الوسوم المُعيَّنة</h3>
                 @if($client->tags->isNotEmpty())
                 <div class="flex flex-wrap gap-2">
                     @foreach($client->tags as $tag)
@@ -674,7 +674,7 @@
                     @endforeach
                 </div>
                 @else
-                <p class="text-sm text-gray-400">لا توجد وسوم مُعيَّنة بعد.</p>
+                <p class="text-sm text-slate-400">لا توجد وسوم مُعيَّنة بعد.</p>
                 @endif
             </div>
 
@@ -682,8 +682,8 @@
             @can('update', $client)
             @php $availableTags = $allTags->whereNotIn('id', $client->tags->pluck('id')); @endphp
             @if($availableTags->isNotEmpty())
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">إضافة وسم</h3>
+            <div class="dash-card p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-3">إضافة وسم</h3>
                 <div class="flex flex-wrap gap-2">
                     @foreach($availableTags as $tag)
                     <form method="POST" action="{{ route('clients.tags.assign', [$client->public_id, $tag->id]) }}"
@@ -741,7 +741,7 @@
 
         {{-- ==================== تبويب المعلومات ==================== --}}
         <div x-show="tab === 'info'" class="pt-4">
-            <div class="bg-white rounded-xl border border-gray-100 p-5">
+            <div class="dash-card p-5">
                 <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     @php
                         // تحويل Enum إلى label نصي قابل للعرض
@@ -767,10 +767,10 @@
                     @foreach($fields as $label => $value)
                     @if($value)
                     <div>
-                        <dt class="text-xs font-medium text-gray-500">{{ $label }}</dt>
-                        <dd class="mt-0.5 text-sm text-gray-900">
+                        <dt class="text-xs font-medium text-slate-500">{{ $label }}</dt>
+                        <dd class="mt-0.5 text-sm text-slate-900">
                             @if(str_starts_with($value ?? '', 'http'))
-                            <a href="{{ $value }}" target="_blank" class="text-indigo-600 hover:underline break-all">{{ $value }}</a>
+                            <a href="{{ $value }}" target="_blank" class="text-brand hover:underline break-all">{{ $value }}</a>
                             @else
                             {{ $value }}
                             @endif
@@ -781,8 +781,8 @@
 
                     @if($client->notes)
                     <div class="md:col-span-2">
-                        <dt class="text-xs font-medium text-gray-500">ملاحظات</dt>
-                        <dd class="mt-0.5 text-sm text-gray-900 whitespace-pre-line">{{ $client->notes }}</dd>
+                        <dt class="text-xs font-medium text-slate-500">ملاحظات</dt>
+                        <dd class="mt-0.5 text-sm text-slate-900 whitespace-pre-line">{{ $client->notes }}</dd>
                     </div>
                     @endif
                 </dl>
@@ -805,7 +805,7 @@ function clientProfile() {
             const container = document.getElementById('timeline-container');
             const btn       = document.getElementById('load-more-btn');
             if (!append) {
-                container.innerHTML = '<div class="flex items-center justify-center py-8 text-gray-400"><svg class="w-5 h-5 animate-spin ml-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>جاري التحميل…</div>';
+                container.innerHTML = '<div class="flex items-center justify-center py-8 text-slate-400"><svg class="w-5 h-5 animate-spin ml-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>جاري التحميل…</div>';
             }
             this.timelineLoading = true;
             try {
@@ -815,7 +815,7 @@ function clientProfile() {
                 const data = await res.json();
 
                 if (!append && (!data.data || data.data.length === 0)) {
-                    container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">لا يوجد نشاط بعد</p>';
+                    container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">لا يوجد نشاط بعد</p>';
                     return;
                 }
 
@@ -826,11 +826,11 @@ function clientProfile() {
                                  style="background-color:${item.color}22; color:${item.color}">
                                 ${item.icon}
                             </div>
-                            <div class="w-px flex-1 bg-gray-100 mt-1"></div>
+                            <div class="w-px flex-1 bg-slate-100 mt-1"></div>
                         </div>
                         <div class="flex-1 pt-0.5 pb-2">
-                            <p class="text-sm text-gray-800">${item.description}</p>
-                            <p class="text-xs text-gray-400 mt-0.5">${item.actor} · ${item.occurred_ago}</p>
+                            <p class="text-sm text-slate-800">${item.description}</p>
+                            <p class="text-xs text-slate-400 mt-0.5">${item.actor} · ${item.occurred_ago}</p>
                         </div>
                     </div>`).join('');
 

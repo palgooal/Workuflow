@@ -8,11 +8,11 @@
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-bold text-gray-900">تذكيرات واتساب المعلّقة</h1>
-            <p class="text-sm text-gray-500 mt-0.5">فواتير تحتاج إرسال تذكير عبر واتساب</p>
+            <h1 class="text-xl font-bold text-slate-900">تذكيرات واتساب المعلّقة</h1>
+            <p class="text-sm text-slate-500 mt-0.5">فواتير تحتاج إرسال تذكير عبر واتساب</p>
         </div>
         <a href="{{ route('invoices.index') }}"
-           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+           class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -32,22 +32,22 @@
     </div>
 
     {{-- القائمة --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-800">التذكيرات المعلّقة</h3>
-            <span class="text-xs text-gray-400">{{ $pendingReminders->total() }} تذكير</span>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-800">التذكيرات المعلّقة</h3>
+            <span class="text-xs text-slate-400">{{ $pendingReminders->total() }} تذكير</span>
         </div>
 
         @if($pendingReminders->isEmpty())
-            <div class="py-16 text-center text-gray-400">
-                <svg class="w-12 h-12 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="py-16 text-center text-slate-400">
+                <svg class="w-12 h-12 mx-auto mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <p class="text-sm font-medium">لا توجد تذكيرات معلّقة</p>
                 <p class="text-xs mt-1">ستظهر هنا التذكيرات التي يولّدها النظام تلقائياً كل صباح</p>
             </div>
         @else
-            <div class="divide-y divide-gray-50">
+            <div class="divide-y divide-slate-50">
                 @foreach($pendingReminders as $reminder)
                 @php
                     $typeLabel = $reminder->type === 'before_due' ? 'قبل الاستحقاق' : 'متأخرة';
@@ -67,8 +67,8 @@
 
                     {{-- معلومات --}}
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-800">{{ $reminder->client_name }}</p>
-                        <p class="text-xs text-gray-500">
+                        <p class="text-sm font-medium text-slate-800">{{ $reminder->client_name }}</p>
+                        <p class="text-xs text-slate-500">
                             {{ $reminder->number }} —
                             {{ number_format($reminder->total, 2) }} {{ $reminder->currency }}
                             @if($reminder->due_date)
@@ -88,7 +88,7 @@
                         </a>
 
                         <button onclick="markSent({{ $reminder->id }}, this)"
-                                class="text-xs px-3 py-1.5 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                                class="text-xs px-3 py-1.5 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition">
                             تم الإرسال ✓
                         </button>
                     </div>
@@ -96,7 +96,7 @@
                 @endforeach
             </div>
 
-            <div class="px-5 py-4 border-t border-gray-100">
+            <div class="px-5 py-4 border-t border-slate-100">
                 {{ $pendingReminders->links() }}
             </div>
         @endif

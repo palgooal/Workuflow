@@ -9,14 +9,14 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
             <a href="{{ route('clients.show', $invoice->client->public_id) }}"
-               class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+               class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
             </a>
             <div>
                 <div class="flex items-center gap-2">
-                    <h1 class="text-xl font-bold text-gray-900">{{ $invoice->number }}</h1>
+                    <h1 class="text-xl font-bold text-slate-900">{{ $invoice->number }}</h1>
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $invoice->status->badgeClass() }}">
                         {{ $invoice->status->icon() }} {{ $invoice->status->label() }}
                     </span>
@@ -26,7 +26,7 @@
                     </span>
                     @endif
                 </div>
-                <p class="text-sm text-gray-500">{{ $invoice->client->name }}
+                <p class="text-sm text-slate-500">{{ $invoice->client->name }}
                     @if($invoice->project) — {{ $invoice->project->name }} @endif
                 </p>
             </div>
@@ -37,7 +37,7 @@
             {{-- زر إرسال للعميل --}}
             @if($invoice->status !== \App\Support\Enums\InvoiceStatus::Cancelled)
             <button @click="showSendModal = true"
-                    class="px-3 py-2 text-sm text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition">
+                    class="px-3 py-2 text-sm text-brand bg-brand-50 border border-brand/30 rounded-xl hover:bg-brand-100 transition">
                 📧 إرسال للعميل
             </button>
 
@@ -75,44 +75,44 @@
                 <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showSendModal = false"></div>
                 <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" @click.stop>
                     <div class="flex items-center justify-between">
-                        <h3 class="text-base font-bold text-gray-900">إرسال الفاتورة بالبريد</h3>
-                        <button @click="showSendModal = false" class="text-gray-400 hover:text-gray-600">
+                        <h3 class="text-base font-bold text-slate-900">إرسال الفاتورة بالبريد</h3>
+                        <button @click="showSendModal = false" class="text-slate-400 hover:text-slate-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
-                    <div class="bg-gray-50 rounded-xl p-3 text-sm space-y-1.5">
-                        <div class="flex justify-between text-gray-500">
+                    <div class="bg-slate-50 rounded-xl p-3 text-sm space-y-1.5">
+                        <div class="flex justify-between text-slate-500">
                             <span>الفاتورة</span>
-                            <span class="font-semibold text-gray-800">{{ $invoice->number }}</span>
+                            <span class="font-semibold text-slate-800">{{ $invoice->number }}</span>
                         </div>
-                        <div class="flex justify-between text-gray-500">
+                        <div class="flex justify-between text-slate-500">
                             <span>العميل</span>
-                            <span class="font-semibold text-gray-800">{{ $invoice->client->name }}</span>
+                            <span class="font-semibold text-slate-800">{{ $invoice->client->name }}</span>
                         </div>
-                        <div class="flex justify-between text-gray-500">
+                        <div class="flex justify-between text-slate-500">
                             <span>المبلغ</span>
-                            <span class="font-bold text-indigo-700">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
+                            <span class="font-bold text-brand-600">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
                         </div>
                     </div>
                     <form method="POST" action="{{ route('invoices.send-client', $invoice->ulid) }}" class="space-y-3">
                         @csrf
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">البريد الإلكتروني للمستلم</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">البريد الإلكتروني للمستلم</label>
                             <input type="email" name="recipient_email"
                                    value="{{ old('recipient_email', $invoice->client->email ?? '') }}"
                                    required placeholder="client@example.com"
-                                   class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <p class="text-xs text-gray-400 mt-1">سيُرسَل باسمك ({{ auth()->user()->name }}) مع تفاصيل الفاتورة.</p>
+                                   class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-accent/40">
+                            <p class="text-xs text-slate-400 mt-1">سيُرسَل باسمك ({{ auth()->user()->name }}) مع تفاصيل الفاتورة.</p>
                         </div>
                         <div class="flex gap-3">
                             <button type="button" @click="showSendModal = false"
-                                    class="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                                    class="flex-1 py-2.5 text-sm text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
                                 إلغاء
                             </button>
                             <button type="submit"
-                                    class="flex-1 py-2.5 text-sm text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition font-medium">
+                                    class="flex-1 py-2.5 text-sm text-white bg-brand rounded-xl hover:bg-brand-600 transition font-medium">
                                 📧 إرسال الآن
                             </button>
                         </div>
@@ -141,14 +141,14 @@
 
             {{-- طباعة --}}
             <button onclick="window.print()"
-                    class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                    class="px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">
                 🖨️ طباعة / PDF
             </button>
 
             {{-- تعديل --}}
             @if($invoice->status === \App\Support\Enums\InvoiceStatus::Draft)
             <a href="{{ route('invoices.edit', $invoice->ulid) }}"
-               class="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+               class="px-3 py-2 text-sm text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">
                 ✏️ تعديل
             </a>
             @endif
@@ -179,27 +179,27 @@
     @endif
 
     {{-- ورقة الفاتورة --}}
-    <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm print:shadow-none print:border-0" id="invoice-paper">
+    <div class="dash-card p-8 shadow-sm print:shadow-none print:border-0" id="invoice-paper">
 
         {{-- رأس الفاتورة --}}
         <div class="flex justify-between items-start mb-8">
             <div>
-                <h2 class="text-3xl font-bold text-indigo-600">فاتورة</h2>
-                <p class="text-gray-500 text-sm mt-1">{{ $invoice->number }}</p>
+                <h2 class="text-3xl font-bold text-brand">فاتورة</h2>
+                <p class="text-slate-500 text-sm mt-1">{{ $invoice->number }}</p>
                 @if($invoice->title)
-                <p class="text-gray-700 font-medium mt-1">{{ $invoice->title }}</p>
+                <p class="text-slate-700 font-medium mt-1">{{ $invoice->title }}</p>
                 @endif
             </div>
-            <div class="text-left text-sm text-gray-500 space-y-1">
+            <div class="text-left text-sm text-slate-500 space-y-1">
                 <div class="flex gap-6">
                     <div>
-                        <p class="text-xs text-gray-400">تاريخ الإصدار</p>
-                        <p class="font-medium text-gray-700">{{ $invoice->issue_date->format('Y/m/d') }}</p>
+                        <p class="text-xs text-slate-400">تاريخ الإصدار</p>
+                        <p class="font-medium text-slate-700">{{ $invoice->issue_date->format('Y/m/d') }}</p>
                     </div>
                     @if($invoice->due_date)
                     <div>
-                        <p class="text-xs text-gray-400">تاريخ الاستحقاق</p>
-                        <p class="font-medium {{ $invoice->isOverdue() ? 'text-red-600' : 'text-gray-700' }}">
+                        <p class="text-xs text-slate-400">تاريخ الاستحقاق</p>
+                        <p class="font-medium {{ $invoice->isOverdue() ? 'text-red-600' : 'text-slate-700' }}">
                             {{ $invoice->due_date->format('Y/m/d') }}
                         </p>
                     </div>
@@ -209,24 +209,24 @@
         </div>
 
         {{-- بيانات العميل --}}
-        <div class="grid grid-cols-2 gap-8 mb-8 pb-6 border-b border-gray-100">
+        <div class="grid grid-cols-2 gap-8 mb-8 pb-6 border-b border-slate-100">
             <div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">إلى</p>
-                <p class="font-semibold text-gray-900">{{ $invoice->client->name }}</p>
+                <p class="dash-th mb-2">إلى</p>
+                <p class="font-semibold text-slate-900">{{ $invoice->client->name }}</p>
                 @if($invoice->client->company)
-                <p class="text-sm text-gray-600">{{ $invoice->client->company }}</p>
+                <p class="text-sm text-slate-600">{{ $invoice->client->company }}</p>
                 @endif
                 @if($invoice->client->email)
-                <p class="text-sm text-gray-500">{{ $invoice->client->email }}</p>
+                <p class="text-sm text-slate-500">{{ $invoice->client->email }}</p>
                 @endif
                 @if($invoice->client->phone)
-                <p class="text-sm text-gray-500">{{ $invoice->client->phone }}</p>
+                <p class="text-sm text-slate-500">{{ $invoice->client->phone }}</p>
                 @endif
             </div>
             @if($invoice->project)
             <div>
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">المشروع</p>
-                <p class="font-semibold text-gray-900">{{ $invoice->project->name }}</p>
+                <p class="dash-th mb-2">المشروع</p>
+                <p class="font-semibold text-slate-900">{{ $invoice->project->name }}</p>
             </div>
             @endif
         </div>
@@ -234,20 +234,20 @@
         {{-- جدول البنود --}}
         <table class="w-full text-sm mb-6">
             <thead>
-                <tr class="border-b border-gray-200">
-                    <th class="text-right py-2 text-gray-500 font-medium w-1/2">الوصف</th>
-                    <th class="text-center py-2 text-gray-500 font-medium w-1/6">الكمية</th>
-                    <th class="text-left py-2 text-gray-500 font-medium w-1/6">سعر الوحدة</th>
-                    <th class="text-left py-2 text-gray-500 font-medium w-1/6">الإجمالي</th>
+                <tr class="border-b border-slate-200">
+                    <th class="text-right py-2 text-slate-500 font-medium w-1/2">الوصف</th>
+                    <th class="text-center py-2 text-slate-500 font-medium w-1/6">الكمية</th>
+                    <th class="text-left py-2 text-slate-500 font-medium w-1/6">سعر الوحدة</th>
+                    <th class="text-left py-2 text-slate-500 font-medium w-1/6">الإجمالي</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($invoice->items as $item)
-                <tr class="border-b border-gray-50">
-                    <td class="py-3 text-gray-800">{{ $item->description }}</td>
-                    <td class="py-3 text-center text-gray-600">{{ number_format($item->quantity, 2) }}</td>
-                    <td class="py-3 text-gray-600">{{ number_format($item->unit_price, 2) }} {{ $invoice->currency }}</td>
-                    <td class="py-3 font-medium text-gray-800">{{ number_format($item->total, 2) }} {{ $invoice->currency }}</td>
+                <tr class="border-b border-slate-50">
+                    <td class="py-3 text-slate-800">{{ $item->description }}</td>
+                    <td class="py-3 text-center text-slate-600">{{ number_format($item->quantity, 2) }}</td>
+                    <td class="py-3 text-slate-600">{{ number_format($item->unit_price, 2) }} {{ $invoice->currency }}</td>
+                    <td class="py-3 font-medium text-slate-800">{{ number_format($item->total, 2) }} {{ $invoice->currency }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -257,22 +257,22 @@
         <div class="flex justify-end mb-6">
             <div class="w-64 space-y-2 text-sm">
                 @if($invoice->discount > 0)
-                <div class="flex justify-between text-gray-600">
+                <div class="flex justify-between text-slate-600">
                     <span>المجموع الفرعي</span>
                     <span>{{ number_format($invoice->subtotal, 2) }} {{ $invoice->currency }}</span>
                 </div>
-                <div class="flex justify-between text-gray-600">
+                <div class="flex justify-between text-slate-600">
                     <span>الخصم</span>
                     <span>- {{ number_format($invoice->discount, 2) }} {{ $invoice->currency }}</span>
                 </div>
                 @endif
                 @if($invoice->tax > 0)
-                <div class="flex justify-between text-gray-600">
+                <div class="flex justify-between text-slate-600">
                     <span>الضريبة</span>
                     <span>{{ number_format($invoice->tax, 2) }} {{ $invoice->currency }}</span>
                 </div>
                 @endif
-                <div class="flex justify-between font-bold text-gray-900 border-t border-gray-200 pt-2">
+                <div class="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-2">
                     <span>الإجمالي</span>
                     <span>{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
                 </div>
@@ -280,9 +280,9 @@
         </div>
 
         @if($invoice->notes)
-        <div class="border-t border-gray-100 pt-4">
-            <p class="text-xs font-medium text-gray-500 mb-1">ملاحظات</p>
-            <p class="text-sm text-gray-700">{{ $invoice->notes }}</p>
+        <div class="border-t border-slate-100 pt-4">
+            <p class="text-xs font-medium text-slate-500 mb-1">ملاحظات</p>
+            <p class="text-sm text-slate-700">{{ $invoice->notes }}</p>
         </div>
         @endif
 
@@ -304,9 +304,9 @@
     <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 z-10"
          @click.outside="open = false">
 
-        <h3 class="text-lg font-bold text-gray-900 mb-1">تسجيل الدفع</h3>
-        <p class="text-sm text-gray-500 mb-5">
-            الفاتورة: <span class="font-semibold text-gray-800">{{ $invoice->number }}</span>
+        <h3 class="text-lg font-bold text-slate-900 mb-1">تسجيل الدفع</h3>
+        <p class="text-sm text-slate-500 mb-5">
+            الفاتورة: <span class="font-semibold text-slate-800">{{ $invoice->number }}</span>
             — المبلغ: <span class="font-bold text-teal-700">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
         </p>
 
@@ -314,7 +314,7 @@
             @csrf
 
             <div class="mb-5">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">
                     🏦 إلى أي صندوق ستُودَع هذه المبالغ؟ <span class="text-red-500">*</span>
                 </label>
 
@@ -325,16 +325,16 @@
                 @else
                     <div class="space-y-2">
                         @foreach($wallets as $wallet)
-                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-100
-                                      hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition
-                                      has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-slate-100
+                                      hover:border-brand/40 hover:bg-brand-50 cursor-pointer transition
+                                      has-[:checked]:border-brand has-[:checked]:bg-brand-50">
                             <input type="radio" name="wallet_id" value="{{ $wallet->id }}"
-                                   class="text-indigo-600" required
+                                   class="text-brand" required
                                    {{ $loop->first ? 'checked' : '' }}>
                             <span class="text-xl">{{ $wallet->icon ?: $wallet->type->icon() }}</span>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold text-gray-800">{{ $wallet->name }}</p>
-                                <p class="text-xs text-gray-400">
+                                <p class="text-sm font-semibold text-slate-800">{{ $wallet->name }}</p>
+                                <p class="text-xs text-slate-400">
                                     {{ $wallet->type->label() }} · {{ $wallet->currency }}
                                     · الرصيد: {{ number_format($wallet->balance(), 2) }}
                                 </p>
@@ -356,7 +356,7 @@
                 </button>
                 @endif
                 <button type="button" @click="open = false"
-                        class="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition">
+                        class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition">
                     إلغاء
                 </button>
             </div>

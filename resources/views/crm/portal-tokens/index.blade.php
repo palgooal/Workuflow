@@ -21,13 +21,13 @@
         {{-- Header --}}
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 mb-4 flex items-center justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800">رموز بوابة العميل</h2>
-                <p class="text-sm text-gray-500 mt-0.5">{{ $client->name }}
+                <h2 class="font-semibold text-xl text-slate-800">رموز بوابة العميل</h2>
+                <p class="text-sm text-slate-500 mt-0.5">{{ $client->name }}
                     @if($client->company) · {{ $client->company }} @endif
                 </p>
             </div>
             <a href="{{ route('clients.show', $client->public_id) }}"
-               class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+               class="text-sm text-muted hover:text-ink transition-colors flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -51,9 +51,9 @@
             </div>
 
             {{-- New Token Form --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                <h3 class="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     إنشاء رمز وصول جديد
@@ -62,19 +62,19 @@
                 <div class="space-y-4">
                     {{-- Permissions --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الصلاحيات</label>
+                        <label class="block text-sm font-semibold text-ink mb-2">الصلاحيات</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             @foreach($permissions as $perm)
-                                <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition"
-                                       :class="newToken.permissions.includes('{{ $perm->value }}') ? 'border-indigo-400 bg-indigo-50' : ''">
+                                <label class="flex items-start gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand/40 hover:bg-brand-50 transition"
+                                       :class="newToken.permissions.includes('{{ $perm->value }}') ? 'border-brand/60 bg-brand-50' : ''">
                                     <input type="checkbox"
                                            value="{{ $perm->value }}"
                                            x-on:change="togglePermission('{{ $perm->value }}')"
                                            :checked="newToken.permissions.includes('{{ $perm->value }}')"
-                                           class="mt-0.5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                           class="mt-0.5 text-brand rounded border-slate-300 focus:ring-accent/40">
                                     <div>
-                                        <div class="text-sm font-medium text-gray-800">{{ $perm->label() }}</div>
-                                        <div class="text-xs text-gray-400">{{ $perm->description() }}</div>
+                                        <div class="text-sm font-medium text-slate-800">{{ $perm->label() }}</div>
+                                        <div class="text-xs text-slate-400">{{ $perm->description() }}</div>
                                     </div>
                                 </label>
                             @endforeach
@@ -83,10 +83,10 @@
 
                     {{-- TTL --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">مدة الصلاحية</label>
+                        <label class="block text-sm font-semibold text-ink mb-1.5">مدة الصلاحية</label>
                         <div class="flex items-center gap-3">
                             <select x-model="newToken.ttl_days"
-                                    class="text-sm border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500">
+                                    class="text-sm border-slate-300 rounded-xl focus:ring-accent/40 focus:border-accent">
                                 <option value="7">7 أيام</option>
                                 <option value="14">14 يوماً</option>
                                 <option value="30" selected>30 يوماً (افتراضي)</option>
@@ -95,7 +95,7 @@
                                 <option value="180">6 أشهر</option>
                                 <option value="365">سنة كاملة</option>
                             </select>
-                            <span class="text-xs text-gray-400">
+                            <span class="text-xs text-slate-400">
                                 ينتهي بتاريخ
                                 <span x-text="getExpiryDate()"></span>
                             </span>
@@ -104,7 +104,7 @@
 
                     <button x-on:click="createToken()"
                             :disabled="newToken.permissions.length === 0 || creating"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-brand-600 text-white text-sm font-medium rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg x-show="!creating" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                         </svg>
@@ -130,9 +130,9 @@
 
                 {{-- Token Display --}}
                 <div class="bg-white border border-emerald-300 rounded-xl p-3 mb-3">
-                    <p class="text-xs text-gray-500 mb-1">رمز الوصول:</p>
+                    <p class="text-xs text-slate-500 mb-1">رمز الوصول:</p>
                     <div class="flex items-center gap-2">
-                        <code class="text-xs font-mono text-gray-800 flex-1 break-all leading-relaxed" x-text="createdToken?.plaintext"></code>
+                        <code class="text-xs font-mono text-slate-800 flex-1 break-all leading-relaxed" x-text="createdToken?.plaintext"></code>
                         <button x-on:click="copyToken(createdToken?.plaintext)"
                                 class="shrink-0 p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 rounded-lg transition"
                                 title="نسخ الرمز">
@@ -145,9 +145,9 @@
 
                 {{-- Portal URL --}}
                 <div class="bg-white border border-emerald-300 rounded-xl p-3 mb-3">
-                    <p class="text-xs text-gray-500 mb-1">رابط البوابة مع الرمز:</p>
+                    <p class="text-xs text-slate-500 mb-1">رابط البوابة مع الرمز:</p>
                     <div class="flex items-center gap-2">
-                        <code class="text-xs font-mono text-indigo-700 flex-1 break-all" x-text="createdToken?.url"></code>
+                        <code class="text-xs font-mono text-brand-600 flex-1 break-all" x-text="createdToken?.url"></code>
                         <button x-on:click="copyToken(createdToken?.url)"
                                 class="shrink-0 p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 rounded-lg transition"
                                 title="نسخ الرابط">
@@ -165,28 +165,28 @@
             </div>
 
             {{-- Active Tokens List --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="text-sm font-semibold text-gray-800">الرموز النشطة</h3>
-                    <span class="text-xs text-gray-400">{{ $tokens->count() }} رمز</span>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-800">الرموز النشطة</h3>
+                    <span class="text-xs text-slate-400">{{ $tokens->count() }} رمز</span>
                 </div>
 
                 @if($tokens->isEmpty())
-                    <div class="py-10 text-center text-gray-400">
-                        <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="py-10 text-center text-slate-400">
+                        <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                         </svg>
                         <p class="text-sm">لا توجد رموز نشطة</p>
                         <p class="text-xs mt-1">أنشئ رمزاً جديداً أعلاه</p>
                     </div>
                 @else
-                    <div class="divide-y divide-gray-50">
+                    <div class="divide-y divide-slate-50">
                         @foreach($tokens as $token)
                             @php $expired = $token->isExpired(); @endphp
                             <div class="flex items-center gap-4 px-5 py-4 {{ $expired ? 'opacity-60' : '' }}">
 
                                 {{-- Status dot --}}
-                                <div class="w-2 h-2 rounded-full shrink-0 {{ $expired ? 'bg-gray-300' : 'bg-emerald-500' }}"></div>
+                                <div class="w-2 h-2 rounded-full shrink-0 {{ $expired ? 'bg-slate-300' : 'bg-emerald-500' }}"></div>
 
                                 {{-- Info --}}
                                 <div class="flex-1 min-w-0">
@@ -194,13 +194,13 @@
                                         @foreach($token->permissions ?? [] as $perm)
                                             @php $permEnum = \App\Modules\CRM\Enums\PortalPermission::tryFrom($perm); @endphp
                                             @if($permEnum)
-                                                <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                                                <span class="text-xs px-2 py-0.5 rounded-full bg-brand-50 text-brand-600">
                                                     {{ $permEnum->label() }}
                                                 </span>
                                             @endif
                                         @endforeach
                                     </div>
-                                    <div class="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                                    <div class="flex items-center gap-3 mt-1 text-xs text-slate-400">
                                         <span>
                                             {{ $expired ? 'انتهى' : 'ينتهي' }}:
                                             {{ $token->expires_at->format('Y/m/d') }}

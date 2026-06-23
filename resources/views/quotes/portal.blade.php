@@ -12,14 +12,14 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen" x-data="{ showRejectForm: false }">
+<body class="bg-slate-50 min-h-screen" x-data="{ showRejectForm: false }">
 
     {{-- شريط علوي بسيط --}}
-    <div class="bg-white border-b border-gray-100 px-4 py-3 no-print">
+    <div class="bg-white border-b border-slate-100 px-4 py-3 no-print">
         <div class="max-w-3xl mx-auto flex items-center justify-between">
-            <span class="text-sm font-semibold text-gray-700">دراهم</span>
+            <span class="text-sm font-semibold text-slate-700">دراهم</span>
             <button onclick="window.print()"
-                    class="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1.5">
+                    class="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
@@ -40,9 +40,9 @@
         @endif
 
         @if(session('portal_info'))
-        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-center no-print">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-center no-print">
             <div class="text-2xl mb-2">📩</div>
-            <p class="text-gray-600">{{ session('portal_info') }}</p>
+            <p class="text-slate-600">{{ session('portal_info') }}</p>
         </div>
         @endif
 
@@ -57,13 +57,13 @@
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
 
             {{-- رأس ملوّن --}}
-            <div class="bg-gradient-to-l from-indigo-600 to-indigo-800 text-white p-8">
+            <div class="bg-gradient-to-l from-brand to-brand-700 text-white p-8">
                 <div class="flex justify-between items-start">
                     <div>
                         <h1 class="text-2xl font-bold">عرض سعر</h1>
-                        <p class="text-indigo-200 text-sm mt-1">{{ $quote->number }}</p>
+                        <p class="text-brand/40 text-sm mt-1">{{ $quote->number }}</p>
                         @if($quote->title)
-                            <p class="text-indigo-100 mt-1">{{ $quote->title }}</p>
+                            <p class="text-brand-100 mt-1">{{ $quote->title }}</p>
                         @endif
                     </div>
                     <div class="text-left">
@@ -79,31 +79,31 @@
                 {{-- بيانات العميل والتواريخ --}}
                 <div class="grid grid-cols-2 gap-6">
                     <div>
-                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">مُقدَّم لـ</p>
-                        <p class="font-semibold text-gray-900 text-lg">{{ $quote->client->name }}</p>
+                        <p class="text-xs text-slate-400 uppercase tracking-wide mb-2">مُقدَّم لـ</p>
+                        <p class="font-semibold text-slate-900 text-lg">{{ $quote->client->name }}</p>
                         @if($quote->client->company)
-                            <p class="text-gray-500 text-sm">{{ $quote->client->company }}</p>
+                            <p class="text-slate-500 text-sm">{{ $quote->client->company }}</p>
                         @endif
                         @if($quote->project)
-                            <p class="text-xs text-indigo-600 mt-1">📁 {{ $quote->project->name }}</p>
+                            <p class="text-xs text-brand mt-1">📁 {{ $quote->project->name }}</p>
                         @endif
                     </div>
                     <div class="text-left space-y-1.5">
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-400">تاريخ الإصدار</span>
-                            <span class="text-gray-700">{{ $quote->issue_date->format('d/m/Y') }}</span>
+                            <span class="text-slate-400">تاريخ الإصدار</span>
+                            <span class="text-slate-700">{{ $quote->issue_date->format('d/m/Y') }}</span>
                         </div>
                         @if($quote->valid_until)
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-400">صالح حتى</span>
-                            <span class="{{ $isExpired ? 'text-red-600 font-semibold' : 'text-gray-700' }}">
+                            <span class="text-slate-400">صالح حتى</span>
+                            <span class="{{ $isExpired ? 'text-red-600 font-semibold' : 'text-slate-700' }}">
                                 {{ $quote->valid_until->format('d/m/Y') }}
                             </span>
                         </div>
                         @endif
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-400">العملة</span>
-                            <span class="text-gray-700 font-medium">{{ $quote->currency }}</span>
+                            <span class="text-slate-400">العملة</span>
+                            <span class="text-slate-700 font-medium">{{ $quote->currency }}</span>
                         </div>
                     </div>
                 </div>
@@ -112,24 +112,24 @@
                 <div>
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b-2 border-gray-200">
-                                <th class="text-right text-xs font-semibold text-gray-500 pb-2">البيان</th>
-                                <th class="text-center text-xs font-semibold text-gray-500 pb-2 w-20 px-3">الكمية</th>
-                                <th class="text-left text-xs font-semibold text-gray-500 pb-2 w-28 px-2">سعر الوحدة</th>
-                                <th class="text-left text-xs font-semibold text-gray-500 pb-2 w-28">الإجمالي</th>
+                            <tr class="border-b-2 border-slate-200">
+                                <th class="text-right text-xs font-semibold text-slate-500 pb-2">البيان</th>
+                                <th class="text-center text-xs font-semibold text-slate-500 pb-2 w-20 px-3">الكمية</th>
+                                <th class="text-left text-xs font-semibold text-slate-500 pb-2 w-28 px-2">سعر الوحدة</th>
+                                <th class="text-left text-xs font-semibold text-slate-500 pb-2 w-28">الإجمالي</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-50">
+                        <tbody class="divide-y divide-slate-50">
                             @foreach($quote->items as $item)
                             <tr>
-                                <td class="py-3 text-gray-800">{{ $item->description }}</td>
-                                <td class="py-3 text-center text-gray-600 px-3">
+                                <td class="py-3 text-slate-800">{{ $item->description }}</td>
+                                <td class="py-3 text-center text-slate-600 px-3">
                                     {{ number_format($item->quantity, 2) }}
                                 </td>
-                                <td class="py-3 text-gray-600 px-2">
+                                <td class="py-3 text-slate-600 px-2">
                                     {{ number_format($item->unit_price, 2) }}
                                 </td>
-                                <td class="py-3 font-medium text-gray-800">
+                                <td class="py-3 font-medium text-slate-800">
                                     {{ number_format($item->total, 2) }}
                                 </td>
                             </tr>
@@ -141,12 +141,12 @@
                 {{-- الإجماليات --}}
                 <div class="flex justify-end">
                     <div class="w-64 space-y-2 text-sm">
-                        <div class="flex justify-between text-gray-600">
+                        <div class="flex justify-between text-slate-600">
                             <span>المجموع الفرعي</span>
                             <span>{{ number_format($quote->subtotal, 2) }} {{ $quote->currency }}</span>
                         </div>
                         @if($quote->tax_rate > 0)
-                        <div class="flex justify-between text-gray-600">
+                        <div class="flex justify-between text-slate-600">
                             <span>ضريبة ({{ number_format($quote->tax_rate, 1) }}%)</span>
                             <span>{{ number_format($quote->tax_amount, 2) }} {{ $quote->currency }}</span>
                         </div>
@@ -157,8 +157,8 @@
                             <span>- {{ number_format($quote->discount, 2) }} {{ $quote->currency }}</span>
                         </div>
                         @endif
-                        <div class="border-t-2 border-gray-200 pt-2 flex justify-between
-                                    font-bold text-gray-900 text-base">
+                        <div class="border-t-2 border-slate-200 pt-2 flex justify-between
+                                    font-bold text-slate-900 text-base">
                             <span>الإجمالي النهائي</span>
                             <span>{{ number_format($quote->total, 2) }} {{ $quote->currency }}</span>
                         </div>
@@ -167,16 +167,16 @@
 
                 {{-- ملاحظات --}}
                 @if($quote->notes)
-                <div class="border-t border-gray-100 pt-4">
-                    <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">ملاحظات</p>
-                    <p class="text-sm text-gray-600 whitespace-pre-line">{{ $quote->notes }}</p>
+                <div class="border-t border-slate-100 pt-4">
+                    <p class="text-xs text-slate-400 uppercase tracking-wide mb-1">ملاحظات</p>
+                    <p class="text-sm text-slate-600 whitespace-pre-line">{{ $quote->notes }}</p>
                 </div>
                 @endif
 
                 @if($quote->terms)
-                <div class="border-t border-gray-100 pt-4">
-                    <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">الشروط والأحكام</p>
-                    <p class="text-sm text-gray-500 whitespace-pre-line">{{ $quote->terms }}</p>
+                <div class="border-t border-slate-100 pt-4">
+                    <p class="text-xs text-slate-400 uppercase tracking-wide mb-1">الشروط والأحكام</p>
+                    <p class="text-sm text-slate-500 whitespace-pre-line">{{ $quote->terms }}</p>
                 </div>
                 @endif
 
@@ -185,8 +185,8 @@
 
         {{-- أزرار القبول والرفض — تظهر فقط إذا كان العرض في انتظار الرد --}}
         @if(in_array($quote->status, [\App\Support\Enums\QuoteStatus::Sent, \App\Support\Enums\QuoteStatus::Viewed]) && !$isExpired)
-        <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 no-print">
-            <h2 class="text-base font-semibold text-gray-800 text-center">ردّك على هذا العرض</h2>
+        <div class="bg-white rounded-2xl border border-slate-100 p-6 space-y-4 no-print">
+            <h2 class="text-base font-semibold text-slate-800 text-center">ردّك على هذا العرض</h2>
 
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
 
@@ -238,7 +238,7 @@
                 </form>
             </div>
 
-            <p class="text-xs text-gray-400 text-center">
+            <p class="text-xs text-slate-400 text-center">
                 سيتلقى مقدّم العرض إشعاراً فور ردّك.
                 @if($quote->valid_until)
                     هذا العرض صالح حتى {{ $quote->valid_until->format('d/m/Y') }}.
@@ -278,7 +278,7 @@
         @endif
 
         {{-- Footer --}}
-        <p class="text-xs text-gray-400 text-center pb-4">
+        <p class="text-xs text-slate-400 text-center pb-4">
             مدعوم بـ <strong>دراهم</strong> — نظام إدارة مالي للمستقلين
         </p>
 

@@ -3,18 +3,15 @@
 @section('title', 'معاملة جديدة')
 
 @section('breadcrumb')
-    <span class="text-gray-300">/</span>
-    <a href="{{ route('transactions.index') }}" class="text-gray-500 hover:text-gray-700">المعاملات</a>
-    <span class="text-gray-300">/</span>
-    <span class="text-gray-700">جديدة</span>
+    <span class="text-muted/60">/</span>
+    <a href="{{ route('transactions.index') }}" class="text-muted hover:text-ink transition-colors">المعاملات</a>
+    <span class="text-muted/60">/</span>
+    <span class="text-ink">جديدة</span>
 @endsection
 
 @section('content')
-<div class="max-w-2xl">
-    <div class="mb-5">
-        <h1 class="text-xl font-bold text-gray-900">إضافة معاملة جديدة</h1>
-        <p class="mt-1 text-sm text-gray-500">سجّل دخلاً أو مصروفاً جديداً</p>
-    </div>
+<div class="max-w-2xl mx-auto space-y-5">
+    <x-page-header title="إضافة معاملة جديدة" subtitle="سجّل دخلاً أو مصروفاً جديداً" />
 
     <form method="POST" action="{{ route('transactions.store') }}">
         @csrf

@@ -7,13 +7,13 @@
 
     {{-- Header --}}
     <div class="text-center space-y-3">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl mb-2">
-            <svg class="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-100 dark:bg-brand-900/40 rounded-2xl mb-2">
+            <svg class="w-8 h-8 text-brand dark:text-brand/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
         </div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">ترقية خطتك</h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
+        <h1 class="text-2xl font-bold text-ink tracking-tight">ترقية خطتك</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">
             تواصل معنا مباشرة وسنفعّل خطتك خلال دقائق — بدون بطاقات ائتمان
         </p>
     </div>
@@ -29,21 +29,21 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
         {{-- Pro --}}
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border-2 border-indigo-400 p-6 relative shadow-md">
-            <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-600 text-white text-xs font-medium rounded-full">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-brand/60 p-6 relative shadow-md">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                 الأكثر شيوعاً
             </span>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Pro</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">للمستقلين المحترفين</p>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Pro</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">للمستقلين المحترفين</p>
 
             <div class="mb-5">
-                <span class="text-3xl font-bold text-gray-900 dark:text-white">
+                <span class="text-3xl font-bold text-slate-900 dark:text-white">
                     {{ $planPrices['pro']['price'] ?? '99' }}
                 </span>
-                <span class="text-gray-500 dark:text-gray-400"> {{ $planPrices['pro']['currency'] ?? 'SAR' }} / شهر</span>
+                <span class="text-slate-500 dark:text-slate-400"> {{ $planPrices['pro']['currency'] ?? 'SAR' }} / شهر</span>
             </div>
 
-            <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
+            <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-6">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     حتى 10 مشاريع
@@ -73,25 +73,25 @@
             </a>
             @else
             <a href="{{ route('billing.index') }}"
-               class="flex items-center justify-center w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition text-sm">
+               class="flex items-center justify-center w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-600 transition text-sm">
                 عرض خيارات الترقية
             </a>
             @endif
         </div>
 
         {{-- Business --}}
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-800 p-6">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Business</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">للأعمال والفرق الصغيرة</p>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 p-6">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Business</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">للأعمال والفرق الصغيرة</p>
 
             <div class="mb-5">
-                <span class="text-3xl font-bold text-gray-900 dark:text-white">
+                <span class="text-3xl font-bold text-slate-900 dark:text-white">
                     {{ $planPrices['business']['price'] ?? '299' }}
                 </span>
-                <span class="text-gray-500 dark:text-gray-400"> {{ $planPrices['business']['currency'] ?? 'SAR' }} / شهر</span>
+                <span class="text-slate-500 dark:text-slate-400"> {{ $planPrices['business']['currency'] ?? 'SAR' }} / شهر</span>
             </div>
 
-            <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
+            <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-6">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     مشاريع غير محدودة
@@ -121,7 +121,7 @@
             </a>
             @else
             <a href="{{ route('billing.index') }}"
-               class="flex items-center justify-center w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold rounded-xl hover:bg-gray-700 dark:hover:bg-gray-100 transition text-sm">
+               class="flex items-center justify-center w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold rounded-xl hover:bg-slate-700 dark:hover:bg-slate-100 transition text-sm">
                 عرض خيارات الترقية
             </a>
             @endif
@@ -129,19 +129,19 @@
     </div>
 
     {{-- How it works --}}
-    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
-        <h2 class="font-semibold text-gray-900 dark:text-white mb-4 text-sm">كيف تعمل الترقية اليدوية؟</h2>
-        <ol class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+        <h2 class="font-semibold text-slate-900 dark:text-white mb-4 text-sm">كيف تعمل الترقية اليدوية؟</h2>
+        <ol class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
             <li class="flex items-start gap-3">
-                <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">١</span>
+                <span class="flex-shrink-0 w-6 h-6 bg-brand-100 dark:bg-brand-900/40 text-brand dark:text-brand/70 rounded-full flex items-center justify-center text-xs font-bold">١</span>
                 <span>اضغط على "تواصل على واتساب" واختر الخطة المناسبة</span>
             </li>
             <li class="flex items-start gap-3">
-                <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">٢</span>
+                <span class="flex-shrink-0 w-6 h-6 bg-brand-100 dark:bg-brand-900/40 text-brand dark:text-brand/70 rounded-full flex items-center justify-center text-xs font-bold">٢</span>
                 <span>نرسل لك تعليمات التحويل البنكي أو رابط الدفع</span>
             </li>
             <li class="flex items-start gap-3">
-                <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">٣</span>
+                <span class="flex-shrink-0 w-6 h-6 bg-brand-100 dark:bg-brand-900/40 text-brand dark:text-brand/70 rounded-full flex items-center justify-center text-xs font-bold">٣</span>
                 <span>بعد تأكيد الدفع نفعّل خطتك فوراً — خلال دقائق</span>
             </li>
         </ol>
@@ -149,7 +149,7 @@
 
     {{-- Back link --}}
     <div class="text-center">
-        <a href="{{ route('billing.index') }}" class="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+        <a href="{{ route('billing.index') }}" class="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">
             ← العودة لصفحة الاشتراك
         </a>
     </div>

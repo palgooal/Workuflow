@@ -2,9 +2,9 @@
 @section('title', 'الشرائح وصحة العملاء')
 @section('content')
 <div class="flex items-center justify-between mb-4">
-    <h1 class="text-xl font-bold text-gray-900">الشرائح وصحة العملاء</h1>
+    <h1 class="text-xl font-bold text-ink tracking-tight">الشرائح وصحة العملاء</h1>
     <a href="{{ route('clients.index') }}"
-       class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+       class="text-sm text-muted hover:text-ink transition-colors flex items-center gap-1">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
@@ -36,29 +36,29 @@
         style="display:none"
     >
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" @click.stop>
-            <h3 class="text-lg font-bold text-gray-800 mb-4">💾 حفظ الشريحة</h3>
+            <h3 class="text-lg font-bold text-slate-800 mb-4">💾 حفظ الشريحة</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">اسم الشريحة</label>
+                    <label class="block text-sm font-semibold text-ink mb-1">اسم الشريحة</label>
                     <input type="text" x-model="name" placeholder="مثال: عملاء VIP نشطون"
                            @keydown.enter="submit()"
-                           class="w-full border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                           class="w-full border-slate-300 rounded-xl focus:ring-accent/40 focus:border-accent text-sm"
                            maxlength="80">
                 </div>
                 <label class="flex items-center gap-3 cursor-pointer select-none">
                     <input type="checkbox" x-model="pinned"
-                           class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500">
-                    <span class="text-sm text-gray-700">📌 تثبيت في القائمة</span>
+                           class="w-4 h-4 rounded text-brand border-slate-300 focus:ring-accent/40">
+                    <span class="text-sm text-slate-700">📌 تثبيت في القائمة</span>
                 </label>
             </div>
             <div class="mt-6 flex items-center gap-3 justify-end">
                 <button @click="open = false"
-                        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                        class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
                     إلغاء
                 </button>
                 <button @click="submit()"
                         :disabled="!name.trim() || saving"
-                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-50">
+                        class="px-5 py-2 bg-brand hover:bg-brand-600 text-white text-sm font-medium rounded-xl transition disabled:opacity-50">
                     <span x-text="saving ? 'جاري الحفظ...' : 'حفظ'"></span>
                 </button>
             </div>
@@ -70,15 +70,15 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             {{-- TABS --}}
-            <div class="border-b border-gray-200">
+            <div class="border-b border-slate-200">
                 <nav class="-mb-px flex gap-6">
                     <button @click="tab = 'builder'"
-                            :class="tab === 'builder' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            :class="tab === 'builder' ? 'border-brand text-brand' : 'border-transparent text-muted hover:text-ink transition-colors hover:border-slate-300'"
                             class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition">
                         🔍 بناء الشرائح
                     </button>
                     <button @click="tab = 'health'"
-                            :class="tab === 'health' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            :class="tab === 'health' ? 'border-brand text-brand' : 'border-transparent text-muted hover:text-ink transition-colors hover:border-slate-300'"
                             class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition">
                         💯 صحة العملاء
                     </button>
@@ -91,17 +91,17 @@
 
                     {{-- Builder Panel --}}
                     <div class="lg:col-span-2 space-y-4">
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h3 class="text-base font-semibold text-gray-800 mb-4">بناء فلتر جديد</h3>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                            <h3 class="text-base font-semibold text-slate-800 mb-4">بناء فلتر جديد</h3>
 
                             {{-- Filter Rows --}}
                             <div class="space-y-3">
                                 <template x-for="(filter, index) in filters" :key="index">
-                                    <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
 
                                         <select x-model="filter.field"
                                                 @change="filter.value = ''"
-                                                class="text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                                                class="text-sm border-slate-300 rounded-lg focus:ring-accent/40 focus:border-accent">
                                             <option value="">— اختر حقلاً —</option>
                                             <option value="status">الحالة</option>
                                             <option value="source">المصدر</option>
@@ -114,7 +114,7 @@
 
                                         <div class="flex-1">
                                             <template x-if="filter.field === 'status'">
-                                                <select x-model="filter.value" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                                                <select x-model="filter.value" class="w-full text-sm border-slate-300 rounded-lg focus:ring-accent/40 focus:border-accent">
                                                     <option value="">— اختر —</option>
                                                     @foreach($statuses as $s)
                                                         <option value="{{ $s->value }}">{{ $s->label() }}</option>
@@ -123,7 +123,7 @@
                                             </template>
 
                                             <template x-if="filter.field === 'source'">
-                                                <select x-model="filter.value" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                                                <select x-model="filter.value" class="w-full text-sm border-slate-300 rounded-lg focus:ring-accent/40 focus:border-accent">
                                                     <option value="">— اختر —</option>
                                                     @foreach($sources as $src)
                                                         <option value="{{ $src->value }}">{{ $src->label() }}</option>
@@ -134,13 +134,13 @@
                                             <template x-if="filter.field === 'health_min' || filter.field === 'health_max'">
                                                 <div class="flex items-center gap-2">
                                                     <input type="number" x-model="filter.value" min="0" max="100" placeholder="0–100"
-                                                           class="w-24 text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-                                                    <span class="text-xs text-gray-400">/ 100</span>
+                                                           class="w-24 text-sm border-slate-300 rounded-lg focus:ring-accent/40 focus:border-accent">
+                                                    <span class="text-xs text-slate-400">/ 100</span>
                                                 </div>
                                             </template>
 
                                             <template x-if="filter.field === 'tag_ids'">
-                                                <select x-model="filter.value" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                                                <select x-model="filter.value" class="w-full text-sm border-slate-300 rounded-lg focus:ring-accent/40 focus:border-accent">
                                                     <option value="">— اختر وسماً —</option>
                                                     @foreach($tags as $tag)
                                                         <option value="{{ $tag->id }}">{{ $tag->icon ?? '' }} {{ $tag->name }}</option>
@@ -149,7 +149,7 @@
                                             </template>
 
                                             <template x-if="filter.field === 'has_follow_up'">
-                                                <select x-model="filter.value" class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                                                <select x-model="filter.value" class="w-full text-sm border-slate-300 rounded-lg focus:ring-accent/40 focus:border-accent">
                                                     <option value="">— اختر —</option>
                                                     <option value="1">نعم — لديه متابعة معلقة</option>
                                                     <option value="0">لا — بدون متابعة معلقة</option>
@@ -158,11 +158,11 @@
 
                                             <template x-if="filter.field === 'search'">
                                                 <input type="text" x-model="filter.value" placeholder="ابحث بالاسم أو الشركة..."
-                                                       class="w-full text-sm border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                                                       class="w-full text-sm border-slate-300 rounded-lg focus:ring-accent/40 focus:border-accent">
                                             </template>
 
                                             <template x-if="!filter.field">
-                                                <div class="text-xs text-gray-400 py-2 px-1">اختر حقلاً أولاً</div>
+                                                <div class="text-xs text-slate-400 py-2 px-1">اختر حقلاً أولاً</div>
                                             </template>
                                         </div>
 
@@ -175,13 +175,13 @@
                                     </div>
                                 </template>
 
-                                <div x-show="filters.length === 0" class="text-sm text-gray-400 py-4 text-center border-2 border-dashed border-gray-200 rounded-lg">
+                                <div x-show="filters.length === 0" class="text-sm text-slate-400 py-4 text-center border-2 border-dashed border-slate-200 rounded-lg">
                                     انقر «إضافة شرط» لبدء بناء الفلتر
                                 </div>
                             </div>
 
                             <button @click="filters.push({ field: '', value: '' }); previewCount = null"
-                                    class="mt-3 flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-medium transition">
+                                    class="mt-3 flex items-center gap-1.5 text-sm text-brand hover:text-brand-700 font-medium transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
@@ -189,11 +189,11 @@
                             </button>
 
                             {{-- Action Buttons --}}
-                            <div class="mt-5 pt-5 border-t border-gray-100 flex flex-wrap items-center gap-3">
+                            <div class="mt-5 pt-5 border-t border-slate-100 flex flex-wrap items-center gap-3">
 
                                 <button @click="previewResults()"
                                         :disabled="filters.length === 0 || previewing"
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition disabled:opacity-50">
+                                        class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition disabled:opacity-50">
                                     <template x-if="!previewing">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -210,7 +210,7 @@
 
                                 <div x-show="previewCount !== null"
                                      x-transition
-                                     class="px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-semibold rounded-lg">
+                                     class="px-4 py-2 bg-brand-50 text-brand-600 text-sm font-semibold rounded-lg">
                                     <span x-text="previewCount + ' عميل مطابق'"></span>
                                 </div>
 
@@ -218,7 +218,7 @@
 
                                 <button @click="$dispatch('open-save-modal')"
                                         :disabled="filters.length === 0"
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50">
+                                        class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition disabled:opacity-50">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
                                     </svg>
@@ -237,20 +237,20 @@
                         </div>
 
                         {{-- Preview Results List --}}
-                        <div x-show="previewClients.length > 0" x-transition class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <div x-show="previewClients.length > 0" x-transition class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                                 نتائج المعاينة
-                                <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full" x-text="previewCount"></span>
+                                <span class="bg-brand-100 text-brand-600 text-xs font-bold px-2 py-0.5 rounded-full" x-text="previewCount"></span>
                             </h4>
-                            <div class="divide-y divide-gray-100">
+                            <div class="divide-y divide-slate-100">
                                 <template x-for="client in previewClients" :key="client.id">
                                     <div class="flex items-center justify-between py-2.5">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold"
+                                            <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-xs font-bold"
                                                  x-text="client.name ? client.name[0].toUpperCase() : '?'"></div>
                                             <div>
-                                                <div class="text-sm font-medium text-gray-800" x-text="client.name"></div>
-                                                <div class="text-xs text-gray-400" x-text="client.company || ''"></div>
+                                                <div class="text-sm font-medium text-slate-800" x-text="client.name"></div>
+                                                <div class="text-xs text-slate-400" x-text="client.company || ''"></div>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-3">
@@ -263,12 +263,12 @@
                                                       x-text="client.health_score + '/100'"></span>
                                             </template>
                                             <a :href="'{{ url('/clients') }}/' + client.public_id"
-                                               class="text-xs text-indigo-600 hover:underline">عرض</a>
+                                               class="text-xs text-brand hover:underline">عرض</a>
                                         </div>
                                     </div>
                                 </template>
                             </div>
-                            <div x-show="previewCount > previewClients.length" class="mt-3 text-xs text-gray-400 text-center">
+                            <div x-show="previewCount > previewClients.length" class="mt-3 text-xs text-slate-400 text-center">
                                 + <span x-text="previewCount - previewClients.length"></span> عميل آخر — انقر «تطبيق على القائمة» لعرض الجميع
                             </div>
                         </div>
@@ -276,20 +276,20 @@
 
                     {{-- Saved Segments Sidebar --}}
                     <div class="space-y-4">
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                            <h3 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h3 class="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                                 </svg>
                                 الشرائح المحفوظة
-                                <span class="mr-auto bg-indigo-50 text-indigo-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                <span class="mr-auto bg-brand-50 text-brand text-xs font-semibold px-2 py-0.5 rounded-full">
                                     {{ $segments->count() }}
                                 </span>
                             </h3>
 
                             @if($segments->isEmpty())
-                                <div class="text-center py-8 text-gray-400">
-                                    <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="text-center py-8 text-slate-400">
+                                    <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                                     </svg>
                                     <p class="text-sm">لا توجد شرائح محفوظة بعد</p>
@@ -298,7 +298,7 @@
                             @else
                                 <div class="space-y-2">
                                     @foreach($segments as $seg)
-                                        <div class="group flex items-center gap-2 p-3 rounded-lg border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50 transition"
+                                        <div class="group flex items-center gap-2 p-3 rounded-lg border border-slate-100 hover:border-brand/30 hover:bg-brand-50 transition"
                                              x-data="{ removing: false }">
 
                                             {{-- Pin --}}
@@ -310,7 +310,7 @@
                                                         <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
                                                     </svg>
                                                 @else
-                                                    <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                                                    <svg class="w-4 h-4 text-slate-300 group-hover:text-slate-400" viewBox="0 0 24 24" fill="currentColor">
                                                         <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
                                                     </svg>
                                                 @endif
@@ -318,8 +318,8 @@
 
                                             {{-- Info --}}
                                             <div class="flex-1 min-w-0">
-                                                <div class="text-sm font-medium text-gray-800 truncate">{{ $seg->name }}</div>
-                                                <div class="text-xs text-gray-400">
+                                                <div class="text-sm font-medium text-slate-800 truncate">{{ $seg->name }}</div>
+                                                <div class="text-xs text-slate-400">
                                                     @if($seg->client_count !== null)
                                                         {{ $seg->client_count }} عميل
                                                         @if($seg->last_executed_at)
@@ -335,7 +335,7 @@
                                             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
                                                 <button @click="$dispatch('load-segment', { filters: {{ json_encode($seg->filters ?? new stdClass) }} })"
                                                         title="تحميل الفلاتر"
-                                                        class="p-1 text-indigo-500 hover:text-indigo-700 rounded">
+                                                        class="p-1 text-brand hover:text-brand-600 rounded">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                                                     </svg>
@@ -364,14 +364,14 @@
                         </div>
 
                         {{-- Tips --}}
-                        <div class="bg-indigo-50 rounded-xl border border-indigo-100 p-4 space-y-2">
-                            <div class="text-sm font-semibold text-indigo-800 flex items-center gap-2">
+                        <div class="bg-brand-50 rounded-xl border border-brand-100 p-4 space-y-2">
+                            <div class="text-sm font-semibold text-brand-700 flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 نصائح
                             </div>
-                            <ul class="text-xs text-indigo-600 space-y-1 list-disc list-inside">
+                            <ul class="text-xs text-brand space-y-1 list-disc list-inside">
                                 <li>أضف شروطاً متعددة لتصفية دقيقة</li>
                                 <li>«معاينة» تُظهر عدد العملاء المطابقين</li>
                                 <li>«تطبيق» يفتح قائمة العملاء بالفلاتر</li>
@@ -405,24 +405,24 @@
                         <div class="bg-white rounded-xl border {{ $grade['border'] }} p-4 shadow-sm">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-sm font-semibold {{ $grade['text'] }}">{{ $grade['label'] }}</span>
-                                <span class="text-2xl font-bold text-gray-800">{{ number_format($count) }}</span>
+                                <span class="text-2xl font-bold text-slate-800">{{ number_format($count) }}</span>
                             </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2 mb-1">
+                            <div class="w-full bg-slate-100 rounded-full h-2 mb-1">
                                 <div class="{{ $grade['bar'] }} h-2 rounded-full transition-all" style="width: {{ $percent }}%"></div>
                             </div>
-                            <div class="text-xs text-gray-400">{{ $percent }}%</div>
+                            <div class="text-xs text-slate-400">{{ $percent }}%</div>
                         </div>
                     @endforeach
                 </div>
 
                 @if($total > 0)
                     {{-- Distribution Bar --}}
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 mb-6">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-semibold text-gray-700">توزيع درجات الصحة</h3>
-                            <div class="text-sm text-gray-500">
+                            <h3 class="text-sm font-semibold text-slate-700">توزيع درجات الصحة</h3>
+                            <div class="text-sm text-slate-500">
                                 متوسط الدرجة:
-                                <span class="font-bold text-gray-800 mr-1">{{ $distribution->avg_score ?? '—' }}/100</span>
+                                <span class="font-bold text-slate-800 mr-1">{{ $distribution->avg_score ?? '—' }}/100</span>
                                 @if($withoutScore > 0)
                                     · <span class="text-amber-600 text-xs">{{ $withoutScore }} بدون تقييم</span>
                                 @endif
@@ -434,13 +434,13 @@
                             $fa = $distribution->fair ?? 0;
                             $po = $distribution->poor ?? 0;
                         @endphp
-                        <div class="flex h-7 rounded-full overflow-hidden gap-px bg-gray-100">
+                        <div class="flex h-7 rounded-full overflow-hidden gap-px bg-slate-100">
                             @if($ex > 0)<div class="bg-emerald-500 transition-all flex items-center justify-center text-white text-xs font-bold" style="width: {{ ($ex/$total)*100 }}%">@if(($ex/$total)*100 > 8){{ $ex }}@endif</div>@endif
                             @if($go > 0)<div class="bg-blue-500 transition-all flex items-center justify-center text-white text-xs font-bold" style="width: {{ ($go/$total)*100 }}%">@if(($go/$total)*100 > 8){{ $go }}@endif</div>@endif
                             @if($fa > 0)<div class="bg-amber-400 transition-all flex items-center justify-center text-white text-xs font-bold" style="width: {{ ($fa/$total)*100 }}%">@if(($fa/$total)*100 > 8){{ $fa }}@endif</div>@endif
                             @if($po > 0)<div class="bg-red-500 transition-all flex items-center justify-center text-white text-xs font-bold" style="width: {{ ($po/$total)*100 }}%">@if(($po/$total)*100 > 8){{ $po }}@endif</div>@endif
                         </div>
-                        <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                        <div class="flex items-center gap-4 mt-2 text-xs text-slate-500">
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>ممتاز (80+)</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>جيد (60–79)</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>مقبول (40–59)</span>
@@ -468,7 +468,7 @@
                             <span class="mr-auto text-xs text-red-500 font-medium">{{ $worstClients->count() }}</span>
                         </div>
                         @if($worstClients->isEmpty())
-                            <div class="py-10 text-center text-gray-400 text-sm">✅ لا يوجد عملاء بتقييم ضعيف</div>
+                            <div class="py-10 text-center text-slate-400 text-sm">✅ لا يوجد عملاء بتقييم ضعيف</div>
                         @else
                             <div class="divide-y divide-red-50">
                                 @foreach($worstClients as $cl)
@@ -478,11 +478,11 @@
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <a href="{{ route('clients.show', $cl->public_id) }}"
-                                               class="text-sm font-medium text-gray-800 hover:text-red-700 truncate block">
+                                               class="text-sm font-medium text-slate-800 hover:text-red-700 truncate block">
                                                 {{ $cl->name }}
                                             </a>
                                             @if($cl->last_contact_at)
-                                                <div class="text-xs text-gray-400">آخر تواصل: {{ $cl->last_contact_at->diffForHumans() }}</div>
+                                                <div class="text-xs text-slate-400">آخر تواصل: {{ $cl->last_contact_at->diffForHumans() }}</div>
                                             @else
                                                 <div class="text-xs text-red-400">لا يوجد تواصل مسجل</div>
                                             @endif
@@ -511,7 +511,7 @@
                             <span class="mr-auto text-xs text-emerald-600 font-medium">{{ $bestClients->count() }}</span>
                         </div>
                         @if($bestClients->isEmpty())
-                            <div class="py-10 text-center text-gray-400 text-sm">لم يبلغ أي عميل مستوى ممتاز بعد</div>
+                            <div class="py-10 text-center text-slate-400 text-sm">لم يبلغ أي عميل مستوى ممتاز بعد</div>
                         @else
                             <div class="divide-y divide-emerald-50">
                                 @foreach($bestClients as $cl)
@@ -521,10 +521,10 @@
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <a href="{{ route('clients.show', $cl->public_id) }}"
-                                               class="text-sm font-medium text-gray-800 hover:text-emerald-700 truncate block">
+                                               class="text-sm font-medium text-slate-800 hover:text-emerald-700 truncate block">
                                                 {{ $cl->name }}
                                             </a>
-                                            <div class="text-xs text-gray-400">
+                                            <div class="text-xs text-slate-400">
                                                 إيراد: {{ number_format((float)$cl->total_revenue, 2) }}
                                             </div>
                                         </div>
@@ -547,7 +547,7 @@
 
                 @if($withoutScore > 0)
                 <div x-data="{ loading: false, done: false, processed: 0, error: '' }"
-                     class="mt-4 bg-amber-50 rounded-xl border border-amber-200 p-4 flex items-start gap-3 text-sm text-gray-700">
+                     class="mt-4 bg-amber-50 rounded-xl border border-amber-200 p-4 flex items-start gap-3 text-sm text-slate-700">
                     <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>

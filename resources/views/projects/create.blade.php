@@ -3,18 +3,15 @@
 @section('title', 'مشروع جديد')
 
 @section('breadcrumb')
-    <span class="text-gray-300">/</span>
-    <a href="{{ route('projects.index') }}" class="text-gray-500 hover:text-gray-700">المشاريع</a>
-    <span class="text-gray-300">/</span>
-    <span class="text-gray-700">مشروع جديد</span>
+    <span class="text-muted/60">/</span>
+    <a href="{{ route('projects.index') }}" class="text-muted hover:text-ink transition-colors">المشاريع</a>
+    <span class="text-muted/60">/</span>
+    <span class="text-ink">مشروع جديد</span>
 @endsection
 
 @section('content')
-<div class="max-w-2xl">
-    <div class="mb-5">
-        <h1 class="text-xl font-bold text-gray-900">إنشاء مشروع جديد</h1>
-        <p class="mt-1 text-sm text-gray-500">حدد تفاصيل المشروع لتبدأ بتتبع أرباحه وتكاليفه</p>
-    </div>
+<div class="max-w-2xl mx-auto space-y-5">
+    <x-page-header title="إنشاء مشروع جديد" subtitle="حدد تفاصيل المشروع لتبدأ بتتبع أرباحه وتكاليفه" />
 
     <form method="POST" action="{{ route('projects.store') }}">
         @csrf

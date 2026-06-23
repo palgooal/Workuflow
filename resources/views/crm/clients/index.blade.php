@@ -8,14 +8,14 @@
     {{-- ==================== Header ==================== --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-bold text-gray-900">العملاء</h1>
-            <p class="mt-0.5 text-sm text-gray-500">إدارة قاعدة عملائك وتتبع علاقاتك التجارية</p>
+            <h1 class="text-xl font-bold text-ink tracking-tight">العملاء</h1>
+            <p class="mt-0.5 text-sm text-slate-500">إدارة قاعدة عملائك وتتبع علاقاتك التجارية</p>
         </div>
         <div class="flex items-center gap-2">
             @can('exportClients', App\Models\Client::class)
             <a href="{{ route('clients.export.download', ['format' => 'xlsx']) }}"
-               class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border
-                      border-gray-200 rounded-xl hover:bg-gray-50 transition">
+               class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 bg-white border
+                      border-slate-200 rounded-xl hover:bg-slate-50 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -26,8 +26,8 @@
 
             @can('importClients', App\Models\Client::class)
             <button @click="$dispatch('open-import-modal')"
-                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border
-                           border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 bg-white border
+                           border-slate-200 rounded-xl hover:bg-slate-50 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/>
@@ -38,7 +38,7 @@
 
             @can('create', App\Models\Client::class)
             <a href="{{ route('clients.create') }}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700
+               class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-600
                       text-white text-sm font-medium rounded-xl transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -46,7 +46,7 @@
                 عميل جديد
             </a>
             @else
-            <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400
                         text-sm font-medium rounded-xl cursor-not-allowed"
                  title="وصلت للحد الأقصى من العملاء في خطتك">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,25 +63,25 @@
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {{-- الكل --}}
         <a href="{{ route('clients.index') }}"
-           class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100
-                  hover:border-indigo-200 hover:shadow-sm transition group
-                  {{ !$filters->status && !$filters->isArchived ? 'border-indigo-300 ring-1 ring-indigo-200' : '' }}">
-            <div class="flex-shrink-0 w-9 h-9 bg-indigo-50 rounded-lg flex items-center justify-center
-                        group-hover:bg-indigo-100 transition">
-                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="flex items-center gap-3 p-3 dash-card
+                  hover:border-brand/30 hover:shadow-sm transition group
+                  {{ !$filters->status && !$filters->isArchived ? 'border-brand/40 ring-1 ring-accent/30' : '' }}">
+            <div class="flex-shrink-0 w-9 h-9 bg-brand-50 rounded-lg flex items-center justify-center
+                        group-hover:bg-brand-100 transition">
+                <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </div>
             <div>
-                <p class="text-xs text-gray-500">الكل</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($stats['total']) }}</p>
+                <p class="text-xs text-slate-500">الكل</p>
+                <p class="text-lg font-bold text-slate-900">{{ number_format($stats['total']) }}</p>
             </div>
         </a>
 
         {{-- نشط --}}
         <a href="{{ route('clients.index', ['status' => 'active']) }}"
-           class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100
+           class="flex items-center gap-3 p-3 dash-card
                   hover:border-teal-200 hover:shadow-sm transition group
                   {{ $filters->status?->value === 'active' ? 'border-teal-300 ring-1 ring-teal-200' : '' }}">
             <div class="flex-shrink-0 w-9 h-9 bg-teal-50 rounded-lg flex items-center justify-center
@@ -89,14 +89,14 @@
                 <span class="w-2.5 h-2.5 bg-teal-500 rounded-full"></span>
             </div>
             <div>
-                <p class="text-xs text-gray-500">نشط</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($stats['active']) }}</p>
+                <p class="text-xs text-slate-500">نشط</p>
+                <p class="text-lg font-bold text-slate-900">{{ number_format($stats['active']) }}</p>
             </div>
         </a>
 
         {{-- محتمل --}}
         <a href="{{ route('clients.index', ['status' => 'prospect']) }}"
-           class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100
+           class="flex items-center gap-3 p-3 dash-card
                   hover:border-blue-200 hover:shadow-sm transition group
                   {{ $filters->status?->value === 'prospect' ? 'border-blue-300 ring-1 ring-blue-200' : '' }}">
             <div class="flex-shrink-0 w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center
@@ -107,14 +107,14 @@
                 </svg>
             </div>
             <div>
-                <p class="text-xs text-gray-500">محتمل</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($stats['prospects']) }}</p>
+                <p class="text-xs text-slate-500">محتمل</p>
+                <p class="text-lg font-bold text-slate-900">{{ number_format($stats['prospects']) }}</p>
             </div>
         </a>
 
         {{-- متابعات --}}
         <a href="{{ route('clients.index', ['has_follow_up' => '1']) }}"
-           class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100
+           class="flex items-center gap-3 p-3 dash-card
                   hover:border-amber-200 hover:shadow-sm transition group
                   {{ $filters->hasPendingFollowUp ? 'border-amber-300 ring-1 ring-amber-200' : '' }}">
             <div class="flex-shrink-0 w-9 h-9 bg-amber-50 rounded-lg flex items-center justify-center
@@ -125,39 +125,39 @@
                 </svg>
             </div>
             <div>
-                <p class="text-xs text-gray-500">متابعات</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($stats['with_follow_up']) }}</p>
+                <p class="text-xs text-slate-500">متابعات</p>
+                <p class="text-lg font-bold text-slate-900">{{ number_format($stats['with_follow_up']) }}</p>
             </div>
         </a>
 
         {{-- مؤرشف --}}
         <a href="{{ route('clients.index', ['is_archived' => '1']) }}"
-           class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100
-                  hover:border-gray-300 hover:shadow-sm transition group
-                  {{ $filters->isArchived ? 'border-gray-300 ring-1 ring-gray-200' : '' }}">
-            <div class="flex-shrink-0 w-9 h-9 bg-gray-50 rounded-lg flex items-center justify-center
-                        group-hover:bg-gray-100 transition">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="flex items-center gap-3 p-3 dash-card
+                  hover:border-slate-300 hover:shadow-sm transition group
+                  {{ $filters->isArchived ? 'border-slate-300 ring-1 ring-slate-200' : '' }}">
+            <div class="flex-shrink-0 w-9 h-9 bg-slate-50 rounded-lg flex items-center justify-center
+                        group-hover:bg-slate-100 transition">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                 </svg>
             </div>
             <div>
-                <p class="text-xs text-gray-500">مؤرشف</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($stats['archived']) }}</p>
+                <p class="text-xs text-slate-500">مؤرشف</p>
+                <p class="text-lg font-bold text-slate-900">{{ number_format($stats['archived']) }}</p>
             </div>
         </a>
     </div>
 
     {{-- ==================== Filters ==================== --}}
-    <div class="bg-white rounded-xl border border-gray-100 p-4">
+    <div class="dash-card p-4">
         <form method="GET" action="{{ route('clients.index') }}" class="flex flex-wrap gap-3 items-end">
 
             {{-- حقل البحث --}}
             <div class="flex-1 min-w-48">
-                <label class="block text-xs font-medium text-gray-600 mb-1">بحث</label>
+                <label class="block text-xs font-medium text-slate-600 mb-1">بحث</label>
                 <div class="relative">
-                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -166,17 +166,17 @@
                            placeholder="الاسم، الشركة، البريد، الهاتف…"
                            x-on:input.debounce.350ms="liveSearch($event.target.value)"
                            x-on:keydown.enter.prevent="liveSearch($event.target.value)"
-                           class="w-full pr-9 pl-4 py-2 text-sm border border-gray-200 rounded-lg
-                                  focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 outline-none">
+                           class="w-full pr-9 pl-4 py-2 text-sm border border-slate-200 rounded-lg
+                                  focus:ring-2 focus:ring-accent/40 focus:border-accent outline-none">
                 </div>
             </div>
 
             {{-- فلتر الحالة --}}
             <div class="min-w-36">
-                <label class="block text-xs font-medium text-gray-600 mb-1">الحالة</label>
+                <label class="block text-xs font-medium text-slate-600 mb-1">الحالة</label>
                 <select name="status"
-                        class="w-full py-2 px-3 text-sm border border-gray-200 rounded-lg
-                               focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                        class="w-full py-2 px-3 text-sm border border-slate-200 rounded-lg
+                               focus:ring-2 focus:ring-accent/40 outline-none bg-white">
                     <option value="">الكل</option>
                     <option value="active"   {{ $filters->status?->value === 'active'   ? 'selected' : '' }}>نشط</option>
                     <option value="prospect" {{ $filters->status?->value === 'prospect' ? 'selected' : '' }}>محتمل</option>
@@ -188,10 +188,10 @@
             {{-- فلتر الوسوم --}}
             @if($tags->isNotEmpty())
             <div class="min-w-36">
-                <label class="block text-xs font-medium text-gray-600 mb-1">الوسم</label>
+                <label class="block text-xs font-medium text-slate-600 mb-1">الوسم</label>
                 <select name="tag_ids[]"
-                        class="w-full py-2 px-3 text-sm border border-gray-200 rounded-lg
-                               focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                        class="w-full py-2 px-3 text-sm border border-slate-200 rounded-lg
+                               focus:ring-2 focus:ring-accent/40 outline-none bg-white">
                     <option value="">كل الوسوم</option>
                     @foreach($tags as $tag)
                     <option value="{{ $tag->id }}"
@@ -205,10 +205,10 @@
 
             {{-- ترتيب --}}
             <div class="min-w-40">
-                <label class="block text-xs font-medium text-gray-600 mb-1">ترتيب حسب</label>
+                <label class="block text-xs font-medium text-slate-600 mb-1">ترتيب حسب</label>
                 <select name="sort_by"
-                        class="w-full py-2 px-3 text-sm border border-gray-200 rounded-lg
-                               focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                        class="w-full py-2 px-3 text-sm border border-slate-200 rounded-lg
+                               focus:ring-2 focus:ring-accent/40 outline-none bg-white">
                     <option value="created_at"    {{ $filters->sortBy === 'created_at'    ? 'selected' : '' }}>تاريخ الإضافة</option>
                     <option value="name"          {{ $filters->sortBy === 'name'          ? 'selected' : '' }}>الاسم</option>
                     <option value="health_score"  {{ $filters->sortBy === 'health_score'  ? 'selected' : '' }}>نقاط الصحة</option>
@@ -219,10 +219,10 @@
 
             {{-- اتجاه الترتيب --}}
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">الاتجاه</label>
+                <label class="block text-xs font-medium text-slate-600 mb-1">الاتجاه</label>
                 <select name="sort_dir"
-                        class="py-2 px-3 text-sm border border-gray-200 rounded-lg
-                               focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                        class="py-2 px-3 text-sm border border-slate-200 rounded-lg
+                               focus:ring-2 focus:ring-accent/40 outline-none bg-white">
                     <option value="desc" {{ $filters->sortDir === 'desc' ? 'selected' : '' }}>↓ تنازلي</option>
                     <option value="asc"  {{ $filters->sortDir === 'asc'  ? 'selected' : '' }}>↑ تصاعدي</option>
                 </select>
@@ -231,13 +231,13 @@
             {{-- أزرار --}}
             <div class="flex gap-2">
                 <button type="submit"
-                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm
+                        class="px-4 py-2 bg-brand hover:bg-brand-600 text-white text-sm
                                font-medium rounded-lg transition">
                     بحث
                 </button>
                 @if($filters->hasFilters())
                 <a href="{{ route('clients.index') }}"
-                   class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm rounded-lg transition">
+                   class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm rounded-lg transition">
                     مسح
                 </a>
                 @endif
@@ -248,7 +248,7 @@
 
     {{-- ==================== Bulk Toolbar ==================== --}}
     <div x-show="selectedIds.length > 0" x-cloak x-transition
-         class="bg-indigo-600 text-white rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
+         class="bg-brand text-white rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
         <span class="text-sm font-medium" x-text="selectedIds.length + ' عملاء محددين'"></span>
         <div class="flex items-center gap-2 mr-auto">
             <button x-on:click="bulkAction('archive')"
@@ -264,11 +264,11 @@
                     </svg>
                 </button>
                 <div x-show="openTag" x-on:click.away="openTag=false"
-                     class="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 min-w-44"
+                     class="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 min-w-44"
                      style="top: calc(100% + 4px)">
                     @foreach($tags as $tag)
                     <button x-on:click="bulkAction('tag', {{ $tag->id }}); openTag=false"
-                            class="w-full text-right px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            class="w-full text-right px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full inline-block" style="background:{{ $tag->color ?? '#6366f1' }}"></span>
                         {{ $tag->name }}
                     </button>
@@ -283,27 +283,27 @@
     </div>
 
     {{-- ==================== جدول العملاء ==================== --}}
-    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <div class="dash-card overflow-hidden">
 
         @if($clients->isEmpty())
         {{-- حالة فارغة --}}
         <div class="py-16 text-center">
-            <svg class="w-14 h-14 mx-auto text-gray-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-14 h-14 mx-auto text-slate-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
             @if($filters->hasFilters())
-            <p class="text-gray-500 font-medium">لا توجد نتائج تطابق الفلاتر المحددة</p>
-            <p class="text-sm text-gray-400 mt-1">جرّب تغيير معايير البحث</p>
+            <p class="text-slate-500 font-medium">لا توجد نتائج تطابق الفلاتر المحددة</p>
+            <p class="text-sm text-slate-400 mt-1">جرّب تغيير معايير البحث</p>
             <a href="{{ route('clients.index') }}"
-               class="inline-block mt-4 text-sm text-indigo-600 hover:underline">مسح الفلاتر</a>
+               class="inline-block mt-4 text-sm text-brand hover:underline">مسح الفلاتر</a>
             @else
-            <p class="text-gray-500 font-medium">لا يوجد عملاء بعد</p>
-            <p class="text-sm text-gray-400 mt-1">ابدأ بإضافة أول عميل لك</p>
+            <p class="text-slate-500 font-medium">لا يوجد عملاء بعد</p>
+            <p class="text-sm text-slate-400 mt-1">ابدأ بإضافة أول عميل لك</p>
             @can('create', App\Models\Client::class)
             <a href="{{ route('clients.create') }}"
-               class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-indigo-600 text-white
-                      text-sm font-medium rounded-xl hover:bg-indigo-700 transition">
+               class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-brand text-white
+                      text-sm font-medium rounded-xl hover:bg-brand-600 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -318,31 +318,31 @@
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="border-b border-gray-100 bg-gray-50">
+                    <tr class="border-b border-slate-100 bg-slate-50">
                         <th class="py-3 px-3 w-10">
                             <input type="checkbox"
                                    x-on:change="toggleAll($event.target.checked)"
                                    :checked="selectedIds.length > 0 && selectedIds.length === visibleCount"
-                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                   class="rounded border-slate-300 text-brand focus:ring-accent/40">
                         </th>
-                        <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap">العميل</th>
-                        <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap hidden md:table-cell">الحالة</th>
-                        <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap hidden lg:table-cell">الوسوم</th>
-                        <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap hidden xl:table-cell">الصحة</th>
-                        <th class="text-right py-3 px-4 font-medium text-gray-500 whitespace-nowrap hidden xl:table-cell">آخر تواصل</th>
+                        <th class="text-right py-3 px-4 font-medium text-slate-500 whitespace-nowrap">العميل</th>
+                        <th class="text-right py-3 px-4 font-medium text-slate-500 whitespace-nowrap hidden md:table-cell">الحالة</th>
+                        <th class="text-right py-3 px-4 font-medium text-slate-500 whitespace-nowrap hidden lg:table-cell">الوسوم</th>
+                        <th class="text-right py-3 px-4 font-medium text-slate-500 whitespace-nowrap hidden xl:table-cell">الصحة</th>
+                        <th class="text-right py-3 px-4 font-medium text-slate-500 whitespace-nowrap hidden xl:table-cell">آخر تواصل</th>
                         <th class="py-3 px-4"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
+                <tbody class="divide-y divide-slate-50">
                     @foreach($clients as $client)
-                    <tr class="hover:bg-gray-50 transition group"
-                        :class="selectedIds.includes({{ $client->id }}) ? 'bg-indigo-50/50' : ''">
+                    <tr class="hover:bg-slate-50 transition group"
+                        :class="selectedIds.includes({{ $client->id }}) ? 'bg-brand-50/50' : ''">
                         <td class="py-3 px-3">
                             <input type="checkbox"
                                    value="{{ $client->id }}"
                                    x-on:change="toggleClient({{ $client->id }}, $event.target.checked)"
                                    :checked="selectedIds.includes({{ $client->id }})"
-                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                   class="rounded border-slate-300 text-brand focus:ring-accent/40">
                         </td>
 
                         {{-- معلومات العميل --}}
@@ -350,18 +350,18 @@
                             <div class="flex items-center gap-3">
                                 {{-- الأفاتار --}}
                                 <div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold
-                                            {{ $client->is_archived ? 'bg-gray-100 text-gray-400' : 'bg-indigo-100 text-indigo-700' }}">
+                                            {{ $client->is_archived ? 'bg-slate-100 text-slate-400' : 'bg-brand-100 text-brand-600' }}">
                                     {{ mb_substr($client->name, 0, 1) }}
                                 </div>
                                 <div class="min-w-0">
                                     <a href="{{ route('clients.show', $client->public_id) }}"
-                                       class="font-medium text-gray-900 hover:text-indigo-600 transition truncate block">
+                                       class="font-medium text-slate-900 hover:text-brand transition truncate block">
                                         {{ $client->name }}
                                     </a>
                                     @if($client->company)
-                                    <p class="text-xs text-gray-400 truncate">{{ $client->company }}</p>
+                                    <p class="text-xs text-slate-400 truncate">{{ $client->company }}</p>
                                     @elseif($client->email)
-                                    <p class="text-xs text-gray-400 truncate">{{ $client->email }}</p>
+                                    <p class="text-xs text-slate-400 truncate">{{ $client->email }}</p>
                                     @endif
                                 </div>
                             </div>
@@ -385,10 +385,10 @@
                                     @if($tag->icon){{ $tag->icon }} @endif{{ $tag->name }}
                                 </span>
                                 @empty
-                                <span class="text-xs text-gray-300">—</span>
+                                <span class="text-xs text-slate-300">—</span>
                                 @endforelse
                                 @if($client->tags->count() > 3)
-                                <span class="text-xs text-gray-400">+{{ $client->tags->count() - 3 }}</span>
+                                <span class="text-xs text-slate-400">+{{ $client->tags->count() - 3 }}</span>
                                 @endif
                             </div>
                         </td>
@@ -409,19 +409,19 @@
                                 {{ $score }}
                             </span>
                             @else
-                            <span class="text-xs text-gray-300">—</span>
+                            <span class="text-xs text-slate-300">—</span>
                             @endif
                         </td>
 
                         {{-- آخر تواصل --}}
                         <td class="py-3 px-4 hidden xl:table-cell">
                             @if($client->last_contact_at)
-                            <span class="text-xs text-gray-500"
+                            <span class="text-xs text-slate-500"
                                   title="{{ $client->last_contact_at->format('Y-m-d') }}">
                                 {{ $client->last_contact_at->diffForHumans() }}
                             </span>
                             @else
-                            <span class="text-xs text-gray-300">لا يوجد</span>
+                            <span class="text-xs text-slate-300">لا يوجد</span>
                             @endif
                         </td>
 
@@ -429,7 +429,7 @@
                         <td class="py-3 px-4">
                             <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition">
                                 <a href="{{ route('clients.show', $client->public_id) }}"
-                                   class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                   class="p-1.5 text-slate-400 hover:text-brand hover:bg-brand-50 rounded-lg transition"
                                    title="عرض">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -440,7 +440,7 @@
                                 </a>
                                 @can('update', $client)
                                 <a href="{{ route('clients.edit', $client->public_id) }}"
-                                   class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
+                                   class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
                                    title="تعديل">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -468,7 +468,7 @@
                                       onsubmit="return confirm('هل تريد أرشفة هذا العميل؟')">
                                     @csrf
                                     <button type="submit"
-                                            class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition"
+                                            class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition"
                                             title="أرشفة">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -488,12 +488,12 @@
         </div>
 
         {{-- Footer: Count + Infinite Scroll --}}
-        <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-            <p class="text-sm text-gray-500">
+        <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+            <p class="text-sm text-slate-500">
                 عرض <span x-text="visibleCount"></span> عميل
-                <span x-show="loadingMore" class="mr-2 text-indigo-500 text-xs">جاري التحميل…</span>
+                <span x-show="loadingMore" class="mr-2 text-brand text-xs">جاري التحميل…</span>
             </p>
-            <p x-show="!hasMore && visibleCount > 0" class="text-xs text-gray-400">وصلت للنهاية ✓</p>
+            <p x-show="!hasMore && visibleCount > 0" class="text-xs text-slate-400">وصلت للنهاية ✓</p>
         </div>
         <div id="scroll-sentinel" class="h-1"></div>
         @endif
@@ -518,12 +518,12 @@
          @click.stop>
 
         {{-- Header --}}
-        <div class="flex items-center justify-between p-5 border-b border-gray-100">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100">
             <div>
-                <h3 class="text-base font-bold text-gray-900">استيراد العملاء</h3>
-                <p class="text-xs text-gray-500 mt-0.5">ارفع ملف Excel وسيتم إضافة العملاء تلقائياً</p>
+                <h3 class="text-base font-bold text-slate-900">استيراد العملاء</h3>
+                <p class="text-xs text-slate-500 mt-0.5">ارفع ملف Excel وسيتم إضافة العملاء تلقائياً</p>
             </div>
-            <button @click="closeModal()" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition">
+            <button @click="closeModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -538,16 +538,16 @@
                 <div class="space-y-4">
 
                     {{-- تنزيل القالب --}}
-                    <div class="flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <div class="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-100">
                         <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                       d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            <span class="text-sm text-indigo-700 font-medium">نموذج الاستيراد</span>
+                            <span class="text-sm text-brand-600 font-medium">نموذج الاستيراد</span>
                         </div>
                         <a href="{{ route('clients.import.template') }}"
-                           class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
+                           class="text-xs text-brand hover:text-brand-700 font-medium underline">
                             تحميل القالب (.xlsx)
                         </a>
                     </div>
@@ -557,20 +557,20 @@
                         <label
                             class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer transition"
                             :class="dragover
-                                ? 'border-indigo-400 bg-indigo-50'
-                                : (file ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50')"
+                                ? 'border-brand/60 bg-brand-50'
+                                : (file ? 'border-green-400 bg-green-50' : 'border-slate-200 bg-slate-50 hover:border-brand/40 hover:bg-brand-50')"
                             @dragover.prevent="dragover = true"
                             @dragleave.prevent="dragover = false"
                             @drop.prevent="handleDrop($event)">
 
                             <template x-if="!file">
                                 <div class="text-center">
-                                    <svg class="mx-auto w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="mx-auto w-8 h-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                     </svg>
-                                    <p class="text-sm text-gray-600">اسحب الملف هنا أو <span class="text-indigo-600 font-medium">اضغط للاختيار</span></p>
-                                    <p class="text-xs text-gray-400 mt-1">xlsx أو xls أو csv — حتى 10 ميجابايت</p>
+                                    <p class="text-sm text-slate-600">اسحب الملف هنا أو <span class="text-brand font-medium">اضغط للاختيار</span></p>
+                                    <p class="text-xs text-slate-400 mt-1">xlsx أو xls أو csv — حتى 10 ميجابايت</p>
                                 </div>
                             </template>
 
@@ -591,7 +591,7 @@
                         {{-- زر إزالة الملف --}}
                         <template x-if="file">
                             <button @click.prevent="file = null"
-                                    class="absolute top-2 left-2 p-1 bg-white rounded-full shadow text-gray-400 hover:text-red-500 transition">
+                                    class="absolute top-2 left-2 p-1 bg-white rounded-full shadow text-slate-400 hover:text-red-500 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
@@ -603,13 +603,13 @@
                     <div class="space-y-2">
                         <label class="flex items-center gap-2.5 cursor-pointer">
                             <input type="checkbox" x-model="skipDuplicates"
-                                   class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500">
-                            <span class="text-sm text-gray-700">تخطي العملاء المكررين (نفس البريد الإلكتروني)</span>
+                                   class="w-4 h-4 rounded text-brand border-slate-300 focus:ring-accent/40">
+                            <span class="text-sm text-slate-700">تخطي العملاء المكررين (نفس البريد الإلكتروني)</span>
                         </label>
                         <label class="flex items-center gap-2.5 cursor-pointer">
                             <input type="checkbox" x-model="updateExisting"
-                                   class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500">
-                            <span class="text-sm text-gray-700">تحديث العملاء الموجودين (إذا كان البريد مطابقاً)</span>
+                                   class="w-4 h-4 rounded text-brand border-slate-300 focus:ring-accent/40">
+                            <span class="text-sm text-slate-700">تحديث العملاء الموجودين (إذا كان البريد مطابقاً)</span>
                         </label>
                     </div>
 
@@ -629,24 +629,24 @@
             <template x-if="step === 'processing'">
                 <div class="space-y-4 py-2">
                     <div class="flex flex-col items-center text-center gap-3">
-                        <div class="w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center">
-                            <svg class="w-7 h-7 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <div class="w-14 h-14 bg-brand-50 rounded-full flex items-center justify-center">
+                            <svg class="w-7 h-7 text-brand animate-spin" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                             </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-800" x-text="statusLabel || 'جارٍ رفع الملف...'"></p>
-                            <p class="text-xs text-gray-500 mt-0.5">لا تغلق هذه النافذة</p>
+                            <p class="font-semibold text-slate-800" x-text="statusLabel || 'جارٍ رفع الملف...'"></p>
+                            <p class="text-xs text-slate-500 mt-0.5">لا تغلق هذه النافذة</p>
                         </div>
                     </div>
 
                     {{-- Progress bar --}}
-                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                        <div class="h-2 bg-indigo-500 rounded-full transition-all duration-500"
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div class="h-2 bg-brand rounded-full transition-all duration-500"
                              :style="'width:' + progress + '%'"></div>
                     </div>
-                    <p class="text-center text-xs text-gray-400" x-text="progress + '%'"></p>
+                    <p class="text-center text-xs text-slate-400" x-text="progress + '%'"></p>
                 </div>
             </template>
 
@@ -669,9 +669,9 @@
                             </template>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-800"
+                            <p class="font-semibold text-slate-800"
                                x-text="result.error_count === 0 ? 'تم الاستيراد بنجاح!' : 'اكتمل مع تحذيرات'"></p>
-                            <p class="text-xs text-gray-500 mt-0.5" x-text="result.summary || ''"></p>
+                            <p class="text-xs text-slate-500 mt-0.5" x-text="result.summary || ''"></p>
                         </div>
                     </div>
 
@@ -709,9 +709,9 @@
         </div>
 
         {{-- Footer --}}
-        <div class="flex items-center justify-between p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+        <div class="flex items-center justify-between p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
             <button @click="closeModal()"
-                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition">
+                    class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition">
                 <span x-text="step === 'done' ? 'إغلاق' : 'إلغاء'"></span>
             </button>
 
@@ -719,7 +719,7 @@
                 <button @click="submitImport()"
                         :disabled="!file || uploading"
                         class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white
-                               bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed
+                               bg-brand hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed
                                rounded-xl transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -820,7 +820,7 @@ window.clientList = function() {
 
             if (!append && clients.length === 0) {
                 tbody.innerHTML = `
-                    <tr><td colspan="7" class="py-12 text-center text-gray-400 text-sm">
+                    <tr><td colspan="7" class="py-12 text-center text-slate-400 text-sm">
                         لا توجد نتائج تطابق البحث
                     </td></tr>`;
                 return;
@@ -836,23 +836,23 @@ window.clientList = function() {
                     ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold
                         ${c.health_score >= 75 ? 'text-teal-600 bg-teal-50' : c.health_score >= 50 ? 'text-amber-600 bg-amber-50' : 'text-red-500 bg-red-50'}">
                         ★ ${c.health_score}</span>`
-                    : '<span class="text-xs text-gray-300">—</span>';
+                    : '<span class="text-xs text-slate-300">—</span>';
 
                 const status = c.status_label
                     ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${c.status_badge}">${c.status_label}</span>`
                     : '';
 
                 const initials = c.name ? c.name.charAt(0) : '?';
-                const avatarCls = c.is_archived ? 'bg-gray-100 text-gray-400' : 'bg-indigo-100 text-indigo-700';
+                const avatarCls = c.is_archived ? 'bg-slate-100 text-slate-400' : 'bg-brand-100 text-brand-600';
 
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50 transition group';
+                tr.className = 'hover:bg-slate-50 transition group';
                 tr.dataset.clientId = c.id;
                 tr.innerHTML = `
                     <td class="py-3 px-3">
                         <input type="checkbox" value="${c.id}"
                                onchange="document.querySelector('[x-data]').__x.$data.toggleClient(${c.id}, this.checked)"
-                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                               class="rounded border-slate-300 text-brand focus:ring-accent/40">
                     </td>
                     <td class="py-3 px-4">
                         <div class="flex items-center gap-3">
@@ -860,10 +860,10 @@ window.clientList = function() {
                                 ${initials}
                             </div>
                             <div class="min-w-0">
-                                <a href="${c.show_url}" class="font-medium text-gray-900 hover:text-indigo-600 transition truncate block">
+                                <a href="${c.show_url}" class="font-medium text-slate-900 hover:text-brand transition truncate block">
                                     ${c.name}
                                 </a>
-                                ${c.company ? `<p class="text-xs text-gray-400 truncate">${c.company}</p>` : (c.email ? `<p class="text-xs text-gray-400 truncate">${c.email}</p>` : '')}
+                                ${c.company ? `<p class="text-xs text-slate-400 truncate">${c.company}</p>` : (c.email ? `<p class="text-xs text-slate-400 truncate">${c.email}</p>` : '')}
                             </div>
                         </div>
                     </td>
@@ -871,17 +871,17 @@ window.clientList = function() {
                     <td class="py-3 px-4 hidden lg:table-cell"><div class="flex flex-wrap gap-1">${tags}</div></td>
                     <td class="py-3 px-4 hidden xl:table-cell">${health}</td>
                     <td class="py-3 px-4 hidden xl:table-cell">
-                        <span class="text-xs text-gray-500">${c.last_contact || '<span class="text-gray-300">لا يوجد</span>'}</span>
+                        <span class="text-xs text-slate-500">${c.last_contact || '<span class="text-slate-300">لا يوجد</span>'}</span>
                     </td>
                     <td class="py-3 px-4">
                         <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition">
-                            <a href="${c.show_url}" class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="عرض">
+                            <a href="${c.show_url}" class="p-1.5 text-slate-400 hover:text-brand hover:bg-brand-50 rounded-lg transition" title="عرض">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                 </svg>
                             </a>
-                            <a href="${c.edit_url}" class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="تعديل">
+                            <a href="${c.edit_url}" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="تعديل">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>

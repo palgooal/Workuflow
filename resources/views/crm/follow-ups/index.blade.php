@@ -3,9 +3,9 @@
 @section('title', 'لوحة المتابعات')
 
 @section('breadcrumb')
-    <a href="{{ route('clients.index') }}" class="hover:text-gray-600">العملاء</a>
-    <span class="text-gray-300">/</span>
-    <span class="text-gray-700">لوحة المتابعات</span>
+    <a href="{{ route('clients.index') }}" class="hover:text-slate-600">العملاء</a>
+    <span class="text-muted/60">/</span>
+    <span class="text-slate-700">لوحة المتابعات</span>
 @endsection
 
 @section('content')
@@ -14,9 +14,9 @@
 
         {{-- ==================== Header ==================== --}}
         <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-gray-900">📋 لوحة المتابعات</h2>
+            <h2 class="text-xl font-bold text-slate-900">📋 لوحة المتابعات</h2>
             <button @click="$dispatch('open-add-modal')"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition shadow-sm">
                 + إضافة متابعة
             </button>
         </div>
@@ -44,7 +44,7 @@
             <div class="space-y-3">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="text-lg">🚨</span>
-                    <h3 class="font-bold text-gray-800">متأخرة</h3>
+                    <h3 class="font-bold text-slate-800">متأخرة</h3>
                     @if($overdue->count())
                         <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $overdue->count() }}</span>
                     @endif
@@ -53,7 +53,7 @@
                 @forelse($overdue as $followUp)
                     <x-crm-follow-up-card :follow-up="$followUp" color="red" />
                 @empty
-                    <div class="bg-white border border-dashed border-gray-200 rounded-xl p-6 text-center text-gray-400">
+                    <div class="bg-white border border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-400">
                         <div class="text-2xl mb-1">✅</div>
                         <p class="text-sm">لا توجد متابعات متأخرة</p>
                     </div>
@@ -64,7 +64,7 @@
             <div class="space-y-3">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="text-lg">⏰</span>
-                    <h3 class="font-bold text-gray-800">اليوم</h3>
+                    <h3 class="font-bold text-slate-800">اليوم</h3>
                     @if($today->count())
                         <span class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $today->count() }}</span>
                     @endif
@@ -73,7 +73,7 @@
                 @forelse($today as $followUp)
                     <x-crm-follow-up-card :follow-up="$followUp" color="amber" />
                 @empty
-                    <div class="bg-white border border-dashed border-gray-200 rounded-xl p-6 text-center text-gray-400">
+                    <div class="bg-white border border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-400">
                         <div class="text-2xl mb-1">☀️</div>
                         <p class="text-sm">لا متابعات لليوم</p>
                     </div>
@@ -84,7 +84,7 @@
             <div class="space-y-3">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="text-lg">📅</span>
-                    <h3 class="font-bold text-gray-800">هذا الأسبوع</h3>
+                    <h3 class="font-bold text-slate-800">هذا الأسبوع</h3>
                     @if($thisWeek->count())
                         <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $thisWeek->count() }}</span>
                     @endif
@@ -93,7 +93,7 @@
                 @forelse($thisWeek as $followUp)
                     <x-crm-follow-up-card :follow-up="$followUp" color="blue" />
                 @empty
-                    <div class="bg-white border border-dashed border-gray-200 rounded-xl p-6 text-center text-gray-400">
+                    <div class="bg-white border border-dashed border-slate-200 rounded-xl p-6 text-center text-slate-400">
                         <div class="text-2xl mb-1">📆</div>
                         <p class="text-sm">لا متابعات هذا الأسبوع</p>
                     </div>
@@ -116,9 +116,9 @@
          @click.outside="open = false">
 
         {{-- Header --}}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 class="font-bold text-gray-900 text-lg">📋 إضافة متابعة جديدة</h3>
-            <button @click="open = false" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="font-bold text-slate-900 text-lg">📋 إضافة متابعة جديدة</h3>
+            <button @click="open = false" class="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
         </div>
 
         {{-- Form --}}
@@ -126,9 +126,9 @@
 
             {{-- العميل --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">العميل <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-ink mb-1">العميل <span class="text-red-500">*</span></label>
                 <select x-model="form.client_id"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/40 focus:border-accent"
                         required>
                     <option value="">— اختر عميلاً —</option>
                     @foreach($clients as $client)
@@ -141,31 +141,31 @@
 
             {{-- العنوان --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">عنوان المتابعة <span class="text-red-500">*</span></label>
+                <label class="block text-sm font-semibold text-ink mb-1">عنوان المتابعة <span class="text-red-500">*</span></label>
                 <input x-model="form.title"
                        type="text"
                        placeholder="مثال: متابعة الدفعة المعلقة"
                        maxlength="200"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                       class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/40"
                        required>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 {{-- تاريخ الاستحقاق --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستحقاق <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-semibold text-ink mb-1">تاريخ الاستحقاق <span class="text-red-500">*</span></label>
                     <input x-model="form.due_at"
                            type="datetime-local"
                            :min="minDate"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/40"
                            required>
                 </div>
 
                 {{-- النوع --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">النوع</label>
+                    <label class="block text-sm font-semibold text-ink mb-1">النوع</label>
                     <select x-model="form.type"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/40">
                         <option value="call">📞 مكالمة</option>
                         <option value="email">📧 بريد إلكتروني</option>
                         <option value="meeting">🤝 اجتماع</option>
@@ -178,9 +178,9 @@
             <div class="grid grid-cols-2 gap-4">
                 {{-- الأولوية --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
+                    <label class="block text-sm font-semibold text-ink mb-1">الأولوية</label>
                     <select x-model="form.priority"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/40">
                         <option value="1">🔴 عالية</option>
                         <option value="2" selected>🟡 متوسطة</option>
                         <option value="3">🟢 منخفضة</option>
@@ -189,20 +189,20 @@
 
                 {{-- تذكير --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">تذكيرني في</label>
+                    <label class="block text-sm font-semibold text-ink mb-1">تذكيرني في</label>
                     <input x-model="form.reminder_at"
                            type="datetime-local"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/40">
                 </div>
             </div>
 
             {{-- ملاحظات --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ملاحظات</label>
+                <label class="block text-sm font-semibold text-ink mb-1">ملاحظات</label>
                 <textarea x-model="form.notes"
                           rows="2"
                           placeholder="تفاصيل اختيارية…"
-                          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent/40 resize-none"></textarea>
             </div>
 
             {{-- Error --}}
@@ -211,11 +211,11 @@
             {{-- Buttons --}}
             <div class="flex gap-3 pt-1">
                 <button type="button" @click="open = false"
-                        class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
+                        class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition">
                     إلغاء
                 </button>
                 <button type="submit" :disabled="saving"
-                        class="flex-1 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                        class="flex-1 px-4 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand-600 disabled:opacity-50 transition">
                     <span x-show="!saving">+ حفظ المتابعة</span>
                     <span x-show="saving">جاري الحفظ…</span>
                 </button>
@@ -229,7 +229,7 @@
      x-on:show-toast.window="show = true; msg = $event.detail.msg; isError = !!$event.detail.error; setTimeout(() => show = false, 3500)"
      x-show="show" x-cloak x-transition
      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white"
-     :class="isError ? 'bg-red-600' : 'bg-gray-900'">
+     :class="isError ? 'bg-red-600' : 'bg-slate-900'">
     <span x-text="msg"></span>
 </div>
 

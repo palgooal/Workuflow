@@ -2,11 +2,11 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">⚙️ قواعد الأتمتة</h2>
-                <p class="text-sm text-gray-500 mt-0.5">أتمتة إجراءات تلقائية عند وقوع أحداث على العملاء</p>
+                <h2 class="font-semibold text-xl text-slate-800 leading-tight">⚙️ قواعد الأتمتة</h2>
+                <p class="text-sm text-slate-500 mt-0.5">أتمتة إجراءات تلقائية عند وقوع أحداث على العملاء</p>
             </div>
             <a href="{{ route('clients.index') }}"
-               class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+               class="text-sm text-muted hover:text-ink transition-colors flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -37,26 +37,26 @@
 
             {{-- ==================== Header Stats ==================== --}}
             <div class="grid grid-cols-3 gap-4">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-                    <div class="text-3xl font-bold text-gray-800" x-text="rules.length">{{ $rules->count() }}</div>
-                    <div class="text-sm text-gray-500 mt-1">إجمالي القواعد</div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center">
+                    <div class="text-3xl font-bold text-slate-800" x-text="rules.length">{{ $rules->count() }}</div>
+                    <div class="text-sm text-slate-500 mt-1">إجمالي القواعد</div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center">
                     <div class="text-3xl font-bold text-emerald-600" x-text="rules.filter(r => r.is_active).length">{{ $rules->where('is_active', true)->count() }}</div>
-                    <div class="text-sm text-gray-500 mt-1">قواعد نشطة</div>
+                    <div class="text-sm text-slate-500 mt-1">قواعد نشطة</div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-                    <div class="text-3xl font-bold text-indigo-600" x-text="rules.reduce((s,r) => s + r.run_count, 0)">{{ $rules->sum('run_count') }}</div>
-                    <div class="text-sm text-gray-500 mt-1">مرات التنفيذ</div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center">
+                    <div class="text-3xl font-bold text-brand" x-text="rules.reduce((s,r) => s + r.run_count, 0)">{{ $rules->sum('run_count') }}</div>
+                    <div class="text-sm text-slate-500 mt-1">مرات التنفيذ</div>
                 </div>
             </div>
 
             {{-- ==================== Toolbar ==================== --}}
             <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold text-gray-700">قواعدي</h3>
+                <h3 class="text-base font-semibold text-slate-700">قواعدي</h3>
                 <button
                     @click="openCreate()"
-                    class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition shadow-sm"
+                    class="inline-flex items-center gap-2 bg-brand hover:bg-brand-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition shadow-sm"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -69,19 +69,19 @@
             <div class="space-y-3">
 
                 {{-- Empty state --}}
-                <div x-show="rules.length === 0" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                <div x-show="rules.length === 0" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
                     <div class="text-5xl mb-4">⚙️</div>
-                    <h3 class="text-lg font-semibold text-gray-700 mb-2">لا توجد قواعد أتمتة بعد</h3>
-                    <p class="text-sm text-gray-500 mb-6">أنشئ قاعدة لأتمتة الإجراءات تلقائياً على عملائك</p>
+                    <h3 class="text-lg font-semibold text-slate-700 mb-2">لا توجد قواعد أتمتة بعد</h3>
+                    <p class="text-sm text-slate-500 mb-6">أنشئ قاعدة لأتمتة الإجراءات تلقائياً على عملائك</p>
                     <button @click="openCreate()"
-                            class="bg-indigo-600 text-white text-sm px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition">
+                            class="bg-brand text-white text-sm px-5 py-2.5 rounded-xl hover:bg-brand-600 transition">
                         + إنشاء أول قاعدة
                     </button>
                 </div>
 
                 {{-- Rule cards --}}
                 <template x-for="rule in rules" :key="rule.id">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 transition hover:shadow-md">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 transition hover:shadow-md">
                         <div class="flex items-start justify-between gap-4">
 
                             {{-- Info --}}
@@ -90,7 +90,7 @@
                                     {{-- Active toggle --}}
                                     <button
                                         @click="toggleRule(rule)"
-                                        :class="rule.is_active ? 'bg-emerald-500' : 'bg-gray-300'"
+                                        :class="rule.is_active ? 'bg-emerald-500' : 'bg-slate-300'"
                                         class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none"
                                         :title="rule.is_active ? 'إيقاف القاعدة' : 'تفعيل القاعدة'"
                                     >
@@ -99,17 +99,17 @@
                                             class="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
                                         ></span>
                                     </button>
-                                    <h4 class="font-semibold text-gray-800 truncate" x-text="rule.name"></h4>
+                                    <h4 class="font-semibold text-slate-800 truncate" x-text="rule.name"></h4>
                                     <span
-                                        :class="rule.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                                        :class="rule.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
                                         class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0"
                                         x-text="rule.is_active ? 'نشطة' : 'متوقفة'"
                                     ></span>
                                 </div>
 
-                                <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                                <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
                                     {{-- Trigger badge --}}
-                                    <span class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-medium">
+                                    <span class="inline-flex items-center gap-1.5 bg-brand-50 text-brand-600 px-2.5 py-1 rounded-lg text-xs font-medium">
                                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
                                         </svg>
@@ -117,17 +117,17 @@
                                     </span>
 
                                     {{-- Actions count --}}
-                                    <span class="text-xs text-gray-400">
+                                    <span class="text-xs text-slate-400">
                                         <span x-text="rule.actions ? rule.actions.length : 0"></span> إجراء
                                     </span>
 
                                     {{-- Run count --}}
-                                    <span class="text-xs text-gray-400" x-show="rule.run_count > 0">
+                                    <span class="text-xs text-slate-400" x-show="rule.run_count > 0">
                                         نُفِّذت <span x-text="rule.run_count"></span> مرة
                                     </span>
 
                                     {{-- Last run --}}
-                                    <span class="text-xs text-gray-400" x-show="rule.last_run_at">
+                                    <span class="text-xs text-slate-400" x-show="rule.last_run_at">
                                         آخر تشغيل: <span x-text="formatDate(rule.last_run_at)"></span>
                                     </span>
                                 </div>
@@ -135,7 +135,7 @@
                                 {{-- Actions preview --}}
                                 <div class="flex flex-wrap gap-1.5 mt-3" x-show="rule.actions && rule.actions.length > 0">
                                     <template x-for="(action, i) in rule.actions" :key="i">
-                                        <span class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-lg">
+                                        <span class="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-lg">
                                             <span x-text="actionIcon(action.type)"></span>
                                             <span x-text="actionLabel(action.type)"></span>
                                         </span>
@@ -147,7 +147,7 @@
                             <div class="flex items-center gap-2 shrink-0">
                                 <button
                                     @click="openEdit(rule)"
-                                    class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                    class="p-2 text-slate-400 hover:text-brand hover:bg-brand-50 rounded-lg transition"
                                     title="تعديل"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +156,7 @@
                                 </button>
                                 <button
                                     @click="deleteRule(rule)"
-                                    class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                                     title="حذف"
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,9 +182,9 @@
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8" @click.stop>
 
                 {{-- Modal Header --}}
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-800" x-text="editingId ? '✏️ تعديل القاعدة' : '➕ قاعدة أتمتة جديدة'"></h3>
-                    <button @click="closeModal()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800" x-text="editingId ? '✏️ تعديل القاعدة' : '➕ قاعدة أتمتة جديدة'"></h3>
+                    <button @click="closeModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -196,76 +196,76 @@
                     {{-- Name + Active --}}
                     <div class="flex items-end gap-4">
                         <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">اسم القاعدة <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-semibold text-ink mb-1.5">اسم القاعدة <span class="text-red-500">*</span></label>
                             <input
                                 type="text"
                                 x-model="form.name"
                                 placeholder="مثال: تنبيه عند انخفاض مؤشر الصحة"
                                 maxlength="120"
-                                class="w-full border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                class="w-full border-slate-300 rounded-xl focus:ring-accent/40 focus:border-accent text-sm"
                             >
                         </div>
                         <label class="flex items-center gap-2 cursor-pointer mb-2">
-                            <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded text-indigo-600 border-gray-300 focus:ring-indigo-500">
-                            <span class="text-sm text-gray-700">نشطة</span>
+                            <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded text-brand border-slate-300 focus:ring-accent/40">
+                            <span class="text-sm text-slate-700">نشطة</span>
                         </label>
                     </div>
 
                     {{-- Trigger --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">الحدث المُشغِّل <span class="text-red-500">*</span></label>
-                        <select x-model="form.trigger" class="w-full border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <label class="block text-sm font-semibold text-ink mb-1.5">الحدث المُشغِّل <span class="text-red-500">*</span></label>
+                        <select x-model="form.trigger" class="w-full border-slate-300 rounded-xl focus:ring-accent/40 focus:border-accent text-sm">
                             <option value="">— اختر الحدث —</option>
                             @foreach($triggers as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
                         </select>
-                        <p class="text-xs text-gray-400 mt-1">سيتم تشغيل هذه القاعدة عند وقوع هذا الحدث على أي عميل</p>
+                        <p class="text-xs text-slate-400 mt-1">سيتم تشغيل هذه القاعدة عند وقوع هذا الحدث على أي عميل</p>
                     </div>
 
                     {{-- Priority --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">الأولوية</label>
+                        <label class="block text-sm font-semibold text-ink mb-1.5">الأولوية</label>
                         <div class="flex items-center gap-3">
-                            <input type="range" x-model.number="form.priority" min="1" max="100" step="1" class="flex-1 accent-indigo-600">
-                            <span class="text-sm font-medium text-indigo-600 w-8 text-center" x-text="form.priority"></span>
+                            <input type="range" x-model.number="form.priority" min="1" max="100" step="1" class="flex-1 accent-brand">
+                            <span class="text-sm font-medium text-brand w-8 text-center" x-text="form.priority"></span>
                         </div>
-                        <p class="text-xs text-gray-400 mt-1">رقم أصغر = تنفيذ أسبق عند تعدد القواعد</p>
+                        <p class="text-xs text-slate-400 mt-1">رقم أصغر = تنفيذ أسبق عند تعدد القواعد</p>
                     </div>
 
                     {{-- Conditions (simple UI) --}}
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">الشروط <span class="text-gray-400 font-normal">(اختياري)</span></label>
+                            <label class="text-sm font-medium text-slate-700">الشروط <span class="text-slate-400 font-normal">(اختياري)</span></label>
                             <button @click="addCondition()" type="button"
-                                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                    class="text-xs text-brand hover:text-brand-700 font-medium">
                                 + إضافة شرط
                             </button>
                         </div>
 
-                        <div x-show="form.conditions.length === 0" class="text-xs text-gray-400 bg-gray-50 rounded-xl p-3 text-center">
+                        <div x-show="form.conditions.length === 0" class="text-xs text-slate-400 bg-slate-50 rounded-xl p-3 text-center">
                             بدون شروط — ستُطبَّق القاعدة على جميع العملاء عند وقوع الحدث
                         </div>
 
                         <div class="space-y-2">
                             <template x-for="(cond, i) in form.conditions" :key="i">
-                                <div class="flex items-center gap-2 bg-gray-50 rounded-xl p-3">
-                                    <select x-model="cond.field" class="flex-1 border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                <div class="flex items-center gap-2 bg-slate-50 rounded-xl p-3">
+                                    <select x-model="cond.field" class="flex-1 border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                         <option value="health_score">مؤشر الصحة</option>
                                         <option value="status">الحالة</option>
                                         <option value="source">المصدر</option>
                                         <option value="days_since_contact">أيام بدون تواصل</option>
                                     </select>
-                                    <select x-model="cond.op" class="border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                    <select x-model="cond.op" class="border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                         <option value="equals">يساوي</option>
                                         <option value="not_equals">لا يساوي</option>
                                         <option value="less_than">أقل من</option>
                                         <option value="greater_than">أكبر من</option>
                                     </select>
                                     <input type="text" x-model="cond.value" placeholder="القيمة"
-                                           class="flex-1 border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                           class="flex-1 border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                     <button @click="removeCondition(i)" type="button"
-                                            class="text-gray-400 hover:text-red-500 p-1 rounded transition">
+                                            class="text-slate-400 hover:text-red-500 p-1 rounded transition">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
@@ -278,9 +278,9 @@
                     {{-- Actions --}}
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">الإجراءات <span class="text-red-500">*</span></label>
+                            <label class="text-sm font-medium text-slate-700">الإجراءات <span class="text-red-500">*</span></label>
                             <button @click="addAction()" type="button"
-                                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                    class="text-xs text-brand hover:text-brand-700 font-medium">
                                 + إضافة إجراء
                             </button>
                         </div>
@@ -291,17 +291,17 @@
 
                         <div class="space-y-3">
                             <template x-for="(action, i) in form.actions" :key="i">
-                                <div class="bg-indigo-50 rounded-xl p-4 space-y-3">
+                                <div class="bg-brand-50 rounded-xl p-4 space-y-3">
                                     <div class="flex items-center gap-3">
                                         <select x-model="action.type" @change="resetActionParams(action)"
-                                                class="flex-1 border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                                class="flex-1 border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                             <option value="">— اختر الإجراء —</option>
                                             @foreach($actionTypes as $at)
                                                 <option value="{{ $at['type'] }}">{{ $at['label'] }}</option>
                                             @endforeach
                                         </select>
                                         <button @click="removeAction(i)" type="button"
-                                                class="text-gray-400 hover:text-red-500 p-1.5 rounded transition shrink-0">
+                                                class="text-slate-400 hover:text-red-500 p-1.5 rounded transition shrink-0">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                             </svg>
@@ -311,23 +311,23 @@
                                     {{-- Params per action type --}}
                                     <div x-show="action.type === 'assign_tag'">
                                         <input type="text" x-model="action.params.tag_slug" placeholder="slug الوسم (مثال: vip)"
-                                               class="w-full border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                               class="w-full border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                     </div>
                                     <div x-show="action.type === 'create_follow_up'" class="grid grid-cols-2 gap-2">
                                         <input type="text" x-model="action.params.message" placeholder="رسالة المتابعة"
-                                               class="border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                               class="border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                         <div class="flex items-center gap-2">
                                             <input type="number" x-model.number="action.params.days_from_now" min="1" max="90"
-                                                   placeholder="الأيام" class="w-24 border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
-                                            <span class="text-xs text-gray-500">يوم من الآن</span>
+                                                   placeholder="الأيام" class="w-24 border-slate-300 rounded-lg text-sm focus:ring-accent/40">
+                                            <span class="text-xs text-slate-500">يوم من الآن</span>
                                         </div>
                                     </div>
                                     <div x-show="action.type === 'send_notification'">
                                         <input type="text" x-model="action.params.message" placeholder="نص الإشعار"
-                                               class="w-full border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                               class="w-full border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                     </div>
                                     <div x-show="action.type === 'update_status'">
-                                        <select x-model="action.params.status" class="w-full border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                        <select x-model="action.params.status" class="w-full border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                             <option value="">— اختر الحالة الجديدة —</option>
                                             <option value="active">نشط</option>
                                             <option value="inactive">غير نشط</option>
@@ -337,7 +337,7 @@
                                     </div>
                                     <div x-show="action.type === 'log_note'">
                                         <input type="text" x-model="action.params.note" placeholder="نص الملاحظة"
-                                               class="w-full border-gray-300 rounded-lg text-sm focus:ring-indigo-500">
+                                               class="w-full border-slate-300 rounded-lg text-sm focus:ring-accent/40">
                                     </div>
                                 </div>
                             </template>
@@ -350,14 +350,14 @@
                 </div>
 
                 {{-- Modal Footer --}}
-                <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-                    <button @click="closeModal()" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-white transition">
+                <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+                    <button @click="closeModal()" class="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-xl hover:bg-white transition">
                         إلغاء
                     </button>
                     <button
                         @click="submit()"
                         :disabled="saving"
-                        class="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+                        class="px-5 py-2 bg-brand text-white text-sm font-medium rounded-xl hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
                     >
                         <svg x-show="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

@@ -7,23 +7,23 @@
 
     {{-- Header --}}
     <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">الاشتراك والفوترة</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">اختر الخطة المناسبة لاحتياجاتك</p>
+        <h1 class="text-2xl font-bold text-ink tracking-tight">الاشتراك والفوترة</h1>
+        <p class="text-sm text-muted mt-1">اختر الخطة المناسبة لاحتياجاتك</p>
     </div>
 
     {{-- Current Plan Banner --}}
     @if($subscription && $subscription->isActive())
-        <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-4 flex items-center justify-between gap-4">
+        <div class="bg-brand-50 dark:bg-brand-900/20 border border-brand/30 dark:border-brand-700 rounded-2xl p-4 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center">
-                    <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 bg-brand-100 dark:bg-brand-900/40 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-brand dark:text-brand/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                     </svg>
                 </div>
                 <div>
-                    <p class="font-semibold text-indigo-900 dark:text-indigo-100">اشتراك {{ $currentPlan->label() }} نشط</p>
+                    <p class="font-semibold text-brand-900 dark:text-brand-100">اشتراك {{ $currentPlan->label() }} نشط</p>
                     @if($subscription->ends_at)
-                        <p class="text-sm text-indigo-600 dark:text-indigo-400">
+                        <p class="text-sm text-brand dark:text-brand/70">
                             يتجدد في {{ $subscription->ends_at->translatedFormat('d M Y') }}
                         </p>
                     @endif
@@ -32,7 +32,7 @@
             <form action="{{ route('billing.portal') }}" method="POST">
                 @csrf
                 <button type="submit"
-                        class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition font-medium">
+                        class="px-4 py-2 bg-brand text-white text-sm rounded-xl hover:bg-brand-600 transition font-medium">
                     إدارة الاشتراك
                 </button>
             </form>
@@ -83,24 +83,24 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {{-- Free Plan --}}
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border-2 {{ $currentPlan->value === 'free' ? 'border-indigo-500' : 'border-gray-200 dark:border-gray-800' }} p-6 relative">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'free' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative">
             @if($currentPlan->value === 'free')
-                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-600 text-white text-xs font-medium rounded-full">
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                     خطتك الحالية
                 </span>
             @endif
 
             <div class="mb-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">مجاني</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">للأفراد والمستقلين المبتدئين</p>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">مجاني</h3>
+                <p class="text-sm text-muted mt-1">للأفراد والمستقلين المبتدئين</p>
             </div>
 
             <div class="mb-6">
-                <span class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
-                <span class="text-gray-500 dark:text-gray-400"> SAR / شهر</span>
+                <span class="text-3xl font-bold text-slate-900 dark:text-white">0</span>
+                <span class="text-slate-500 dark:text-slate-400"> SAR / شهر</span>
             </div>
 
-            <ul class="space-y-2 mb-6 text-sm text-gray-600 dark:text-gray-400">
+            <ul class="space-y-2 mb-6 text-sm text-slate-600 dark:text-slate-400">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     حتى 2 مشروع
@@ -114,44 +114,44 @@
                     إدارة الميزانية
                 </li>
                 <li class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    <span class="text-gray-400">التقارير المتقدمة</span>
+                    <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span class="text-slate-400">التقارير المتقدمة</span>
                 </li>
                 <li class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    <span class="text-gray-400">تصدير البيانات</span>
+                    <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span class="text-slate-400">تصدير البيانات</span>
                 </li>
             </ul>
 
             <button disabled
-                    class="w-full py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 rounded-xl text-sm font-medium cursor-not-allowed">
+                    class="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 rounded-xl text-sm font-medium cursor-not-allowed">
                 الخطة الحالية
             </button>
         </div>
 
         {{-- Pro Plan --}}
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border-2 {{ $currentPlan->value === 'pro' ? 'border-indigo-500' : 'border-gray-200 dark:border-gray-800' }} p-6 relative shadow-lg">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'pro' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative shadow-lg">
             @if($currentPlan->value === 'pro')
-                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-600 text-white text-xs font-medium rounded-full">
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                     خطتك الحالية
                 </span>
             @else
-                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand-100 text-brand-600 text-xs font-medium rounded-full">
                     الأكثر شيوعاً
                 </span>
             @endif
 
             <div class="mb-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Pro</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">للمستقلين المحترفين</p>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Pro</h3>
+                <p class="text-sm text-muted mt-1">للمستقلين المحترفين</p>
             </div>
 
             <div class="mb-6">
-                <span class="text-3xl font-bold text-gray-900 dark:text-white">99</span>
-                <span class="text-gray-500 dark:text-gray-400"> SAR / شهر</span>
+                <span class="text-3xl font-bold text-slate-900 dark:text-white">99</span>
+                <span class="text-slate-500 dark:text-slate-400"> SAR / شهر</span>
             </div>
 
-            <ul class="space-y-2 mb-6 text-sm text-gray-600 dark:text-gray-400">
+            <ul class="space-y-2 mb-6 text-sm text-slate-600 dark:text-slate-400">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     حتى 10 مشاريع
@@ -169,45 +169,45 @@
                     تصدير البيانات
                 </li>
                 <li class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    <span class="text-gray-400">API Access</span>
+                    <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span class="text-slate-400">API Access</span>
                 </li>
             </ul>
 
             @if($currentPlan->value === 'pro')
                 <form action="{{ route('billing.portal') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full py-2.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl text-sm font-medium hover:bg-indigo-200 transition">
+                    <button type="submit" class="w-full py-2.5 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand/50 rounded-xl text-sm font-medium hover:bg-brand-100 transition">
                         إدارة الاشتراك
                     </button>
                 </form>
             @else
                 <a href="{{ route('billing.upgrade') }}"
-                   class="block w-full py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition text-center">
+                   class="block w-full py-2.5 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand-600 transition text-center">
                     الترقية إلى Pro
                 </a>
             @endif
         </div>
 
         {{-- Business Plan --}}
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border-2 {{ $currentPlan->value === 'business' ? 'border-indigo-500' : 'border-gray-200 dark:border-gray-800' }} p-6 relative">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'business' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative">
             @if($currentPlan->value === 'business')
-                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-600 text-white text-xs font-medium rounded-full">
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                     خطتك الحالية
                 </span>
             @endif
 
             <div class="mb-4">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Business</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">للأعمال والفرق الصغيرة</p>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Business</h3>
+                <p class="text-sm text-muted mt-1">للأعمال والفرق الصغيرة</p>
             </div>
 
             <div class="mb-6">
-                <span class="text-3xl font-bold text-gray-900 dark:text-white">299</span>
-                <span class="text-gray-500 dark:text-gray-400"> SAR / شهر</span>
+                <span class="text-3xl font-bold text-slate-900 dark:text-white">299</span>
+                <span class="text-slate-500 dark:text-slate-400"> SAR / شهر</span>
             </div>
 
-            <ul class="space-y-2 mb-6 text-sm text-gray-600 dark:text-gray-400">
+            <ul class="space-y-2 mb-6 text-sm text-slate-600 dark:text-slate-400">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     مشاريع غير محدودة
@@ -233,13 +233,13 @@
             @if($currentPlan->value === 'business')
                 <form action="{{ route('billing.portal') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full py-2.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl text-sm font-medium hover:bg-indigo-200 transition">
+                    <button type="submit" class="w-full py-2.5 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand/50 rounded-xl text-sm font-medium hover:bg-brand-100 transition">
                         إدارة الاشتراك
                     </button>
                 </form>
             @else
                 <a href="{{ route('billing.upgrade') }}"
-                   class="block w-full py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-100 transition text-center">
+                   class="block w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-medium hover:bg-slate-700 dark:hover:bg-slate-100 transition text-center">
                     الترقية إلى Business
                 </a>
             @endif
@@ -247,19 +247,19 @@
     </div>
 
     {{-- FAQ --}}
-    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
-        <h2 class="font-semibold text-gray-900 dark:text-white mb-4">أسئلة شائعة</h2>
-        <div class="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+        <h2 class="font-semibold text-slate-900 dark:text-white mb-4">أسئلة شائعة</h2>
+        <div class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
             <div>
-                <p class="font-medium text-gray-900 dark:text-white">هل يمكنني إلغاء الاشتراك في أي وقت؟</p>
+                <p class="font-medium text-slate-900 dark:text-white">هل يمكنني إلغاء الاشتراك في أي وقت؟</p>
                 <p class="mt-1">نعم، يمكنك إلغاء اشتراكك وسيستمر حتى نهاية الفترة المدفوعة.</p>
             </div>
             <div>
-                <p class="font-medium text-gray-900 dark:text-white">كيف أدفع؟</p>
+                <p class="font-medium text-slate-900 dark:text-white">كيف أدفع؟</p>
                 <p class="mt-1">حالياً عبر التحويل البنكي اليدوي — تواصل معنا على واتساب وسنرسل لك التعليمات.</p>
             </div>
             <div>
-                <p class="font-medium text-gray-900 dark:text-white">ماذا يحدث لبياناتي عند إلغاء الاشتراك؟</p>
+                <p class="font-medium text-slate-900 dark:text-white">ماذا يحدث لبياناتي عند إلغاء الاشتراك؟</p>
                 <p class="mt-1">تبقى بياناتك محفوظة وتعود لخطة المجاني مع الحدود المعتادة.</p>
             </div>
         </div>

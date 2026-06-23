@@ -12,25 +12,25 @@
         </svg>
     </div>
 
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
         تم الاشتراك بنجاح! 🎉
     </h1>
 
-    <p class="text-gray-500 dark:text-gray-400 mb-2">
-        تم تفعيل خطة <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $plan->label() }}</span> على حسابك.
+    <p class="text-slate-500 dark:text-slate-400 mb-2">
+        تم تفعيل خطة <span class="font-semibold text-brand dark:text-brand/70">{{ $plan->label() }}</span> على حسابك.
     </p>
 
-    <p class="text-sm text-gray-400 dark:text-gray-500 mb-8">
+    <p class="text-sm text-slate-400 dark:text-slate-500 mb-8">
         قد يستغرق تحديث بيانات الاشتراك بضع ثوانٍ. أعد تحميل الصفحة إذا لم يظهر التغيير فوراً.
     </p>
 
     <div class="flex flex-col sm:flex-row gap-3 justify-center">
         <a href="{{ route('dashboard') }}"
-           class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition text-sm">
+           class="px-6 py-2.5 bg-brand text-white rounded-xl font-medium hover:bg-brand-600 transition text-sm">
             العودة للوحة التحكم
         </a>
         <a href="{{ route('billing.index') }}"
-           class="px-6 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition text-sm">
+           class="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm">
             إدارة الاشتراك
         </a>
     </div>

@@ -5,16 +5,19 @@
      x-transition:leave="transition ease-in duration-200"
      x-transition:leave-start="opacity-100 translate-y-0"
      x-transition:leave-end="opacity-0 -translate-y-2"
-     class="bg-white border border-indigo-100 rounded-2xl overflow-hidden shadow-sm">
+     class="dash-card overflow-hidden">
 
     {{-- Header --}}
-    <div class="bg-gradient-to-l from-indigo-600 to-violet-600 px-5 py-4">
+    <div class="relative overflow-hidden px-5 py-4"
+         style="background: linear-gradient(120deg, #310E8E 0%, #0C8567 140%);">
+        <div class="pointer-events-none absolute -top-14 -left-10 w-44 h-44 rounded-full bg-accent/20 blur-3xl"></div>
+        <div class="relative">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-lg">🚀</div>
                 <div>
                     <h3 class="text-sm font-bold text-white">ابدأ رحلتك مع دراهم</h3>
-                    <p class="text-xs text-indigo-200 mt-0.5">
+                    <p class="text-xs text-white/70 mt-0.5">
                         {{ $completed }} من {{ $total }} خطوات مكتملة
                     </p>
                 </div>
@@ -37,14 +40,15 @@
 
         {{-- Progress Bar --}}
         <div class="mt-3">
-            <div class="flex justify-between text-xs text-indigo-200 mb-1.5">
+            <div class="flex justify-between text-xs text-white/70 mb-1.5">
                 <span>التقدم</span>
                 <span>{{ $progress }}%</span>
             </div>
             <div class="h-2 bg-white/20 rounded-full overflow-hidden">
-                <div class="h-full bg-white rounded-full transition-all duration-700"
+                <div class="h-full bg-accent rounded-full transition-all duration-700"
                      style="width: {{ $progress }}%"></div>
             </div>
+        </div>
         </div>
     </div>
 
@@ -54,8 +58,8 @@
             @foreach($steps as $index => $step)
                 <div class="flex items-start gap-3 p-3 rounded-xl
                             {{ $step['completed']
-                                ? 'bg-green-50 border border-green-100'
-                                : 'bg-gray-50 border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition' }}">
+                                ? 'bg-success-soft border border-success/20'
+                                : 'bg-slate-50 border border-subtle hover:border-brand/30 hover:bg-brand-50/50 transition' }}">
 
                     {{-- Icon / Checkmark --}}
                     <div class="shrink-0 mt-0.5">
@@ -84,8 +88,8 @@
                                 {{ $step['description'] }}
                             </p>
                             <a href="{{ route($step['url_name']) }}"
-                               class="inline-flex items-center gap-1 mt-2 text-xs font-medium
-                                      text-indigo-600 hover:text-indigo-800 transition">
+                               class="inline-flex items-center gap-1 mt-2 text-xs font-semibold
+                                      text-brand hover:text-brand-600 transition">
                                 {{ $step['url_label'] }}
                                 <svg class="w-3 h-3 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>

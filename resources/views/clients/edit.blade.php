@@ -3,17 +3,15 @@
 @section('title', 'تعديل عميل')
 
 @section('breadcrumb')
-    <span class="text-gray-300">/</span>
-    <a href="{{ route('clients.index') }}" class="text-gray-500 hover:text-gray-700">العملاء</a>
-    <span class="text-gray-300">/</span>
-    <span class="text-gray-700">تعديل: {{ $client->name }}</span>
+    <span class="text-muted/60">/</span>
+    <a href="{{ route('clients.index') }}" class="text-muted hover:text-ink transition-colors">العملاء</a>
+    <span class="text-muted/60">/</span>
+    <span class="text-ink">تعديل: {{ $client->name }}</span>
 @endsection
 
 @section('content')
-<div class="max-w-xl">
-    <div class="mb-5">
-        <h1 class="text-xl font-bold text-gray-900">تعديل بيانات العميل</h1>
-    </div>
+<div class="max-w-xl space-y-5">
+    <x-page-header title="تعديل بيانات العميل" :subtitle="$client->name" />
 
     <form method="POST" action="{{ route('clients.update', $client) }}">
         @csrf
