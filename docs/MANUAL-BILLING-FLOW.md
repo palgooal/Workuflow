@@ -1,8 +1,8 @@
 # توثيق — Manual Billing Flow (قبل Payment Gateway)
 
-> **آخر تحديث:** 9 يونيو 2026
+> **آخر تحديث:** 23 يونيو 2026
 > **المرحلة:** Phase A — ما قبل الإطلاق الرسمي
-> **الحالة:** ✅ مكتمل ومفعّل
+> **الحالة:** ⚠️ تم تجاوزه — Togo Payment Gateway مُفعَّل الآن (راجع `docs/TOGO-PAYMENT-GATEWAY.md`)
 
 ---
 
@@ -119,16 +119,15 @@ $atLimit   = ($projPct >= 100 || $txPct >= 100); // بانر أحمر
 
 ---
 
-## المرحلة التالية — Payment Gateway
+## المرحلة التالية — Payment Gateway ✅ منجز
 
-عند الجاهزية لربط مزود دفع:
+تم ربط **Togo Payment Gateway** (togo.ps) في 23 يونيو 2026:
 
-1. عيّن `BILLING_PROVIDER=stripe` (أو `paddle`) في `.env`
-2. طبّق `PaymentProviderInterface` في `app/Modules/Billing/`
-3. `BillingController::checkout()` يستدعي `createCheckoutUrl()`
-4. صفحة `/billing/upgrade` تُوجَّه تلقائياً للـ checkout بدلاً من واتساب
+- `BILLING_PROVIDER=togo` في `.env`
+- `TogoPaymentService` يُطبّق `PaymentProviderInterface`
+- `BillingController::checkout()` يستدعي `createCheckoutUrl()` وتُحوَّل لصفحة Togo
 
-> الكود مُهيَّأ مسبقاً لهذا الانتقال — `PaymentProviderInterface` موجود ولا يحتاج تغييراً في الـ views.
+> راجع التوثيق الكامل: **`docs/TOGO-PAYMENT-GATEWAY.md`**
 
 ---
 

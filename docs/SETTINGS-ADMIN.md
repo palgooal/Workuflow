@@ -1,12 +1,12 @@
 # موديول إعدادات النظام (Admin Settings)
 
-> آخر تحديث: 30 مايو 2026 | الإصدار: 1.0.0
+> آخر تحديث: 23 يونيو 2026 | الإصدار: 1.1.0
 
 ---
 
 ## Overview
 
-يتيح هذا الموديول للمدير التحكم الكامل في إعدادات النظام — البريد الإلكتروني وقوالب الرسائل — مباشرةً من لوحة الإدارة Filament دون الحاجة لتعديل `.env` أو إعادة نشر الكود.
+يتيح هذا الموديول للمدير التحكم الكامل في إعدادات النظام — البريد الإلكتروني وقوالب الرسائل وبوابة الدفع — مباشرةً من لوحة الإدارة Filament دون الحاجة لتعديل `.env` أو إعادة نشر الكود.
 
 ---
 
@@ -19,6 +19,7 @@
 | معاينة القالب قبل الإرسال | modal معاينة في Filament |
 | اختبار الإرسال الفعلي | زر "تجربة" بمتغيرات افتراضية |
 | تطبيق الإعدادات فوراً | AppServiceProvider يقرأ من DB في كل request |
+| إعدادات بوابة الدفع بدون .env | PaymentSettings Page + applyPaymentSettings() |
 
 ---
 
@@ -34,6 +35,7 @@
 | created_at / updated_at | timestamps | |
 
 **مجموعة `mail` — المفاتيح المستخدمة:**
+
 
 | key | المقابل في .env |
 |-----|----------------|
@@ -112,6 +114,28 @@ $result = EmailTemplate::render('password_reset', [
 
 ## Services / Providers
 
+### AppServiceProvider — applyPaymentSettings() *(جديد — 23 يونيو 2026)*
+
+**الموقع:** `app/Providers/AppServiceProvider.php`
+
+يُشغَّل في `boot()` مع كل request بعد `applyMailSettings()`:
+
+```
+Setting::group('payment')
+  ↓
+Config::set('billing.provider', ...)              // togo | null
+Config::set('billing.togo.api_key', ...)
+Config::set('billing.togo.receiver_address_id', ...)
+Config::set('billing.togo.currency', ...)
+Config::set('billing.plans.pro.price', ...)
+Config::set('billing.plans.business.price', ...)
+```
+
+**الأولوية:** DB > .env — الإعدادات في DB تتجاوز .env.  
+**راجع:** `docs/TOGO-PAYMENT-GATEWAY.md` للتفاصيل الكاملة.
+
+---
+
 ### AppServiceProvider — applyMailSettings()
 
 **الموقع:** `app/Providers/AppServiceProvider.php`
@@ -179,6 +203,28 @@ public function sendPasswordResetNotification($token): void {
 **منطق الـ Encryption:**
 - اختيار `SSL` → Port يتغير تلقائياً إلى 465, scheme=smtps
 - اختيار `TLS` → Port يتغير تلقائياً إلى 587, scheme=null
+
+---
+
+### صفحة إعدادات بوابة الدفع *(جديد — 23 يونيو 2026)*
+
+**الموقع:** `app/Filament/Pages/PaymentSettings.php`  
+**المسار:** `/admin/payment-settings`  
+**المجموعة:** الإعدادات
+
+**الحقول:**
+- مزود الدفع: Select (togo / فارغ)
+- Togo: API Key (password)، Receiver Address ID، العملة (ILS/USD/JOD)
+- إنشاء Receiver Address: نموذج قابل للطي (مطلوب ASCII فقط)
+- أسعار الخطط: Pro، Business، عملة العرض
+
+**إجراءات Header:**
+- **حفظ الإعدادات** — يحفظ في جدول `settings` group=payment
+- **اختبار الاتصال** — GET /api/v1/currency-exchange للتحقق من API Key
+- **إنشاء Receiver Address** — POST /api/v1/receivers-addresses + يحفظ الـ ID
+- **مسح الـ ID** — يُفرّغ receiver_address_id من DB
+
+> راجع `docs/TOGO-PAYMENT-GATEWAY.md` للتفاصيل الكاملة.
 
 ---
 
