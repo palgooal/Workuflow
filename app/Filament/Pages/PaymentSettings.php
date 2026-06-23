@@ -113,31 +113,51 @@ class PaymentSettings extends Page
                     ->collapsed(fn () => ! empty($this->data['togo_receiver_address_id']))
                     ->columns(2)
                     ->schema([
+                        Forms\Components\Placeholder::make('ascii_warning')
+                            ->label('')
+                            ->content('⚠️  جميع الحقول أدناه يجب إدخالها بالإنجليزية فقط (Latin characters). Togo API لا يقبل الحروف العربية.')
+                            ->columnSpan(2),
+
                         Forms\Components\TextInput::make('receiver_name')
                             ->label('الاسم الكامل')
-                            ->placeholder('أحمد محمود')
+                            ->placeholder('Ahmad Mahmoud')
+                            ->helperText('بالإنجليزية فقط')
+                            ->rules(['regex:/^[\x20-\x7E]*$/'])
+                            ->validationMessages(['regex' => 'الاسم يجب أن يكون بالإنجليزية فقط (بدون حروف عربية).'])
                             ->columnSpan(2),
 
                         Forms\Components\TextInput::make('receiver_phone')
                             ->label('رقم الهاتف')
-                            ->placeholder('+970591234567'),
+                            ->placeholder('+970591234567')
+                            ->helperText('أرقام فقط مع كود الدولة'),
 
                         Forms\Components\TextInput::make('receiver_country_code')
                             ->label('كود الدولة')
                             ->placeholder('PS')
-                            ->default('PS'),
+                            ->default('PS')
+                            ->helperText('PS أو JO أو ...'),
 
                         Forms\Components\TextInput::make('receiver_country_name')
                             ->label('اسم الدولة')
                             ->placeholder('Palestine')
-                            ->default('Palestine'),
+                            ->default('Palestine')
+                            ->helperText('بالإنجليزية فقط')
+                            ->rules(['regex:/^[\x20-\x7E]*$/'])
+                            ->validationMessages(['regex' => 'اسم الدولة يجب أن يكون بالإنجليزية فقط.']),
 
                         Forms\Components\TextInput::make('receiver_city')
                             ->label('المدينة')
-                            ->placeholder('رام الله'),
+                            ->placeholder('Ramallah')
+                            ->helperText('بالإنجليزية فقط')
+                            ->rules(['regex:/^[\x20-\x7E]*$/'])
+                            ->validationMessages(['regex' => 'المدينة يجب أن تكون بالإنجليزية فقط.']),
 
                         Forms\Components\TextInput::make('receiver_details')
                             ->label('تفاصيل إضافية (اختياري)')
+                            ->placeholder('West Bank')
+                            ->helperText('بالإنجليزية فقط إن وُجدت')
+                            ->rules(['nullable', 'regex:/^[\x20-\x7E]*$/'])
+                            ->validationMessages(['regex' => 'التفاصيل يجب أن تكون بالإنجليزية فقط.'])
                             ->columnSpan(2),
 
                         Forms\Components\Toggle::make('receiver_whatsapp')
