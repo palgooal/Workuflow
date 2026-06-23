@@ -89,9 +89,9 @@ class PaymentSettings extends Page
                             ->schema([
                                 Forms\Components\TextInput::make('togo_receiver_address_id')
                                     ->label('Receiver Address ID')
-                                    ->placeholder('سيظهر هنا بعد الإنشاء')
-                                    ->helperText('أنشئ العنوان من القسم أدناه إذا لم يكن موجوداً')
-                                    ->required(),
+                                    ->placeholder('سيظهر هنا تلقائياً بعد الإنشاء')
+                                    ->helperText('أنشئ العنوان من القسم أدناه أولاً ثم احفظ')
+                                    ->nullable(),
 
                                 Forms\Components\Select::make('togo_currency')
                                     ->label('عملة الدفع')
