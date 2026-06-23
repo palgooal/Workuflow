@@ -163,6 +163,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/checkout', [BillingController::class, 'checkout'])->name('checkout');
         Route::get('/success',   [BillingController::class, 'success'])->name('success');
         Route::post('/portal',   [BillingController::class, 'portal'])->name('portal');
+
+        // Togo Payment Gateway — redirect callbacks (بعد الدفع أو الإلغاء)
+        Route::get('/togo/callback', [BillingController::class, 'togoCallback'])->name('togo.callback');
+        Route::get('/togo/cancel',   [BillingController::class, 'togoCancel'])->name('togo.cancel');
     });
 
     // Profile (Breeze)

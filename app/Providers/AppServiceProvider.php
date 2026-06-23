@@ -17,6 +17,8 @@ use App\Policies\RecurringPolicy;
 use App\Policies\TransactionPolicy;
 use App\Policies\WalletPolicy;
 use App\Models\Setting;
+use App\Modules\Billing\Contracts\PaymentProviderInterface;
+use App\Modules\Billing\Services\TogoPaymentService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -28,7 +30,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // ── ربط مزود الدفع النشط ───────────────────────────────────────
+        $this->app->bind(PaymentProviderInterface::class, function () {
+            return match (config('billing.provider')) {
+                'togo'  => new TogoPaymentService(),
+                default => throw new \RuntimeException(
+                    'لا يوجد مزود دفع مفعّل. اضبط BILLING_PROVIDER في .env'
+                ),
+            };
+        });
     }
 
     /**
@@ -46,6 +56,47 @@ class AppServiceProvider extends ServiceProvider
 
         // ── تطبيق إعدادات البريد من قاعدة البيانات ──────────────────────
         $this->applyMailSettings();
+
+        // ── تطبيق إعدادات بوابة الدفع من قاعدة البيانات ─────────────────
+        $this->applyPaymentSettings();
+    }
+
+    private function applyPaymentSettings(): void
+    {
+        try {
+            $p = Setting::group('payment');
+            if (empty($p)) return;
+
+            // مزود الدفع
+            if (! empty($p['billing_provider'])) {
+                Config::set('billing.provider', $p['billing_provider']);
+            }
+
+            // Togo credentials
+            if (! empty($p['togo_api_key'])) {
+                Config::set('billing.togo.api_key', $p['togo_api_key']);
+            }
+            if (! empty($p['togo_receiver_address_id'])) {
+                Config::set('billing.togo.receiver_address_id', $p['togo_receiver_address_id']);
+            }
+            if (! empty($p['togo_currency'])) {
+                Config::set('billing.togo.currency', $p['togo_currency']);
+            }
+
+            // أسعار الخطط
+            if (! empty($p['billing_price_pro'])) {
+                Config::set('billing.plans.pro.price', $p['billing_price_pro']);
+            }
+            if (! empty($p['billing_price_business'])) {
+                Config::set('billing.plans.business.price', $p['billing_price_business']);
+            }
+            if (! empty($p['billing_currency_display'])) {
+                Config::set('billing.plans.pro.currency',      $p['billing_currency_display']);
+                Config::set('billing.plans.business.currency', $p['billing_currency_display']);
+            }
+        } catch (\Throwable) {
+            // تجاهل إذا كان الجدول غير موجود بعد (أول migrate)
+        }
     }
 
     private function applyMailSettings(): void

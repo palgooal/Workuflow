@@ -1,5 +1,5 @@
 @props([
-    'head' => null,   // محتوى <thead> (صف من <x-table-th>) — يُمرَّر كـ named slot
+    'head' => null,   // محتوى <thead> (صف من table-th) — يُمرَّر كـ named slot
 ])
 {{--
     جدول بيانات موحّد. الاستخدام:

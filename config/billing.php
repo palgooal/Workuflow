@@ -11,7 +11,7 @@ return [
     | اتركه null حتى يتم ربط مزود الدفع.
     */
 
-    'provider' => env('BILLING_PROVIDER', null),
+    'provider' => env('BILLING_PROVIDER', null), // 'togo' | 'stripe' | null
 
     /*
     |--------------------------------------------------------------------------
@@ -52,6 +52,20 @@ return [
         'key'            => env('PAYMENT_KEY'),
         'secret'         => env('PAYMENT_SECRET'),
         'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Togo Payment Gateway (togo.ps)
+    |--------------------------------------------------------------------------
+    | الخطوة 1 (مرة واحدة): php artisan togo:setup-receiver
+    | ثم أضف TOGO_RECEIVER_ADDRESS_ID للـ .env
+    */
+
+    'togo' => [
+        'api_key'             => env('TOGO_API_KEY'),
+        'receiver_address_id' => env('TOGO_RECEIVER_ADDRESS_ID'),
+        'currency'            => env('TOGO_CURRENCY', 'ILS'), // ILS | USD
     ],
 
 ];
