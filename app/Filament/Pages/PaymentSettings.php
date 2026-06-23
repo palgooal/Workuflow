@@ -217,8 +217,10 @@ class PaymentSettings extends Page
             'billing_currency_display' => $data['billing_currency_display'],
         ];
 
-        // لا نحفظ حقول receiver المؤقتة
-        Setting::setGroup('payment', array_filter($toSave, fn ($v) => $v !== null && $v !== ''));
+        // احفظ كل قيمة بشكل مستقل حتى تُحفظ القيم الفارغة (مثل مسح togo_receiver_address_id)
+        foreach ($toSave as $key => $value) {
+            Setting::set($key, $value ?? '', 'payment');
+        }
 
         Notification::make()
             ->title('✅ تم حفظ إعدادات بوابة الدفع')
@@ -272,10 +274,13 @@ class PaymentSettings extends Page
     {
         $data = $this->form->getState();
 
-        $name    = trim($data['receiver_name']    ?? '');
-        $phone   = trim($data['receiver_phone']   ?? '');
-        $city    = trim($data['receiver_city']    ?? '');
-        $apiKey  = trim($data['togo_api_key']     ?? '');
+        $name        = trim($data['receiver_name']         ?? '');
+        $phone       = trim($data['receiver_phone']        ?? '');
+        $city        = trim($data['receiver_city']         ?? '');
+        $countryCode = strtoupper(trim($data['receiver_country_code'] ?? 'PS'));
+        $countryName = trim($data['receiver_country_name'] ?? 'Palestine');
+        $details     = trim($data['receiver_details']      ?? '');
+        $apiKey      = trim($data['togo_api_key']          ?? '');
 
         if (empty($name) || empty($phone) || empty($city)) {
             Notification::make()
@@ -293,20 +298,39 @@ class PaymentSettings extends Page
             return;
         }
 
-        try {
-            // إنشاء service مؤقت بالـ API key من النموذج
-            $togo = new TogoPaymentService();
+        // تحقق يدوي من ASCII قبل الإرسال — Togo لا يقبل الحروف العربية
+        $fieldsToCheck = [
+            'الاسم'    => $name,
+            'المدينة'  => $city,
+            'الدولة'   => $countryName,
+            'التفاصيل' => $details,
+        ];
+        foreach ($fieldsToCheck as $label => $value) {
+            for ($i = 0; $i < strlen($value); $i++) {
+                if (ord($value[$i]) > 127) {
+                    Notification::make()
+                        ->title("❌ حقل [{$label}] يحتوي على حروف عربية")
+                        ->body("Togo يقبل الإنجليزية فقط. الحرف المشكل: \"{$value[$i]}\" — أدخل القيمة بالإنجليزية.")
+                        ->danger()
+                        ->persistent()
+                        ->send();
+                    return;
+                }
+            }
+        }
 
-            // نضبط الـ key مؤقتاً عبر config
+        try {
+            // اضبط الـ key في config أولاً ثم أنشئ الـ service
             config(['billing.togo.api_key' => $apiKey]);
+            $togo = new TogoPaymentService();
 
             $result = $togo->createReceiverAddress(
                 name: $name,
                 phone: $phone,
-                countryCode: strtoupper($data['receiver_country_code'] ?? 'PS'),
-                countryName: $data['receiver_country_name'] ?? 'Palestine',
+                countryCode: $countryCode,
+                countryName: $countryName,
                 city: $city,
-                details: $data['receiver_details'] ?? '',
+                details: $details,
                 phoneConnectedToWhatsapp: (bool) ($data['receiver_whatsapp'] ?? true),
             );
 
@@ -329,6 +353,18 @@ class PaymentSettings extends Page
                 ->persistent()
                 ->send();
         }
+    }
+
+    public function clearReceiverId(): void
+    {
+        $this->data['togo_receiver_address_id'] = '';
+        $this->form->fill($this->data);
+        Setting::set('togo_receiver_address_id', '', 'payment');
+
+        Notification::make()
+            ->title('تم مسح Receiver Address ID')
+            ->success()
+            ->send();
     }
 
     protected function getHeaderActions(): array
@@ -355,6 +391,16 @@ class PaymentSettings extends Page
                 ->modalDescription('سيتم إرسال البيانات لـ Togo API لإنشاء receiver address. تأكد من صحة البيانات في القسم الثالث أدناه.')
                 ->modalSubmitActionLabel('إنشاء')
                 ->action('createReceiverAddress'),
+
+            \Filament\Actions\Action::make('clearReceiverId')
+                ->label('مسح الـ ID')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('مسح Receiver Address ID')
+                ->modalDescription('سيتم مسح الـ ID الحالي. ستحتاج لإنشاء عنوان جديد.')
+                ->modalSubmitActionLabel('مسح')
+                ->action('clearReceiverId'),
         ];
     }
 }
