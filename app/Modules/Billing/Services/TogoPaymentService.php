@@ -163,6 +163,12 @@ class TogoPaymentService implements PaymentProviderInterface
             throw new \RuntimeException('TOGO_API_KEY غير مضبوط في .env');
         }
 
+        // Togo API يقبل ASCII فقط — تحقق من كل الحقول النصية
+        $this->assertAscii($name,        'الاسم الكامل (receiver_name)');
+        $this->assertAscii($countryName, 'اسم الدولة (country_name)');
+        $this->assertAscii($city,        'المدينة (city)');
+        $this->assertAscii($details,     'التفاصيل (details)');
+
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(15)
             ->post(self::BASE_URL . '/api/v1/receivers-addresses', [
@@ -193,6 +199,26 @@ class TogoPaymentService implements PaymentProviderInterface
     // ──────────────────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────────────────
+
+    /**
+     * Togo API يقبل ASCII فقط (قيم ≤ 255).
+     * يرمي استثناءً واضحاً إذا وُجد حرف عربي أو غير ASCII.
+     */
+    private function assertAscii(string $value, string $fieldLabel): void
+    {
+        if ($value === '') return;
+
+        for ($i = 0; $i < mb_strlen($value, 'UTF-8'); $i++) {
+            $char = mb_substr($value, $i, 1, 'UTF-8');
+            if (ord($char) > 127 || mb_ord($char) > 127) {
+                throw new \RuntimeException(
+                    "حقل [{$fieldLabel}] يحتوي على حروف غير مقبولة.\n"
+                    . "Togo API يقبل الإنجليزية فقط (ASCII).\n"
+                    . "الحرف المشكل: \"{$char}\""
+                );
+            }
+        }
+    }
 
     private function assertConfigured(): void
     {
