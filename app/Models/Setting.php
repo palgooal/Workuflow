@@ -31,6 +31,7 @@ class Setting extends Model
             ['value' => $value, 'group' => $group]
         );
         Cache::forget("setting:{$key}");
+        Cache::forget("settings:group:{$group}");
     }
 
     /** جلب مجموعة كاملة كـ array ['key' => 'value'] */
