@@ -50,6 +50,7 @@
                 المعاملات
             </x-nav-item>
 
+            @if(auth()->user()->currentPlan()->can('wallets'))
             <x-nav-item href="{{ route('wallets.index') }}" :active="request()->routeIs('wallets.*')">
                 <x-slot name="icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
@@ -59,6 +60,22 @@
                 </x-slot>
                 الصناديق
             </x-nav-item>
+            @else
+            {{-- Free plan: Wallets locked → billing.upgrade --}}
+            <a href="{{ route('billing.upgrade') }}"
+               class="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] min-h-[42px]
+                      transition-all duration-150 text-slate-400 font-medium hover:bg-slate-50 hover:text-slate-500">
+                <span class="shrink-0 text-slate-300 group-hover:text-slate-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                </span>
+                <span class="truncate flex-1">الصناديق</span>
+                <span class="text-xs bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400
+                             px-1.5 py-0.5 rounded-md font-semibold shrink-0">Pro</span>
+            </a>
+            @endif
 
             <x-nav-item href="{{ route('debts.index') }}" :active="request()->routeIs('debts.*')">
                 <x-slot name="icon">
@@ -186,6 +203,55 @@
         </div>
 
     </nav>
+
+    {{-- Plan Badge / Upgrade CTA --}}
+    @php $plan = auth()->user()->currentPlan(); @endphp
+    <div class="px-3 pb-2 shrink-0">
+        @if($plan->value === 'free')
+            {{-- Free: Upgrade CTA --}}
+            <a href="{{ route('billing.upgrade') }}"
+               class="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl
+                      bg-gradient-to-l from-indigo-50 to-purple-50
+                      dark:from-indigo-900/30 dark:to-purple-900/20
+                      border border-indigo-100 dark:border-indigo-800/50
+                      hover:from-indigo-100 hover:to-purple-100
+                      dark:hover:from-indigo-900/50 dark:hover:to-purple-900/40
+                      transition group">
+                <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-indigo-700 dark:text-indigo-300 leading-tight">ترقّ إلى Pro</p>
+                    <p class="text-[10px] text-indigo-500 dark:text-indigo-400 leading-tight">افتح كل الميزات</p>
+                </div>
+                <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition shrink-0 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
+        @elseif($plan->value === 'pro')
+            {{-- Pro Badge --}}
+            <div class="flex items-center gap-2 px-3 py-2 rounded-xl
+                        bg-indigo-50 dark:bg-indigo-900/30
+                        border border-indigo-100 dark:border-indigo-800/50">
+                <span class="text-indigo-500 dark:text-indigo-400 text-sm leading-none">⚡</span>
+                <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">خطة {{ $plan->label() }}</span>
+                <span class="ms-auto inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold
+                             bg-indigo-200 dark:bg-indigo-800 text-indigo-800 dark:text-indigo-200">نشطة</span>
+            </div>
+        @else
+            {{-- Business Badge --}}
+            <div class="flex items-center gap-2 px-3 py-2 rounded-xl
+                        bg-purple-50 dark:bg-purple-900/30
+                        border border-purple-100 dark:border-purple-800/50">
+                <span class="text-purple-500 dark:text-purple-400 text-sm leading-none">⚡</span>
+                <span class="text-xs font-bold text-purple-700 dark:text-purple-300">خطة {{ $plan->label() }}</span>
+                <span class="ms-auto inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold
+                             bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200">نشطة</span>
+            </div>
+        @endif
+    </div>
 
     {{-- User Info --}}
     <div class="p-3 border-t border-subtle shrink-0">

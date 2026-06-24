@@ -58,7 +58,7 @@
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>حتى مشروعَين نشطَين</span>
+                <span>حتى 3 مشاريع نشطة</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
@@ -81,7 +81,7 @@
                 <span>دعم عبر البريد</span>
               </li>
             </ul>
-            <a href="#"
+            <a href="{{ auth()->check() ? route('dashboard') : route('register') }}"
               class="mt-8 block rounded-lg border border-g-border px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:border-g-purple hover:bg-g-light2">اشترك
               الآن</a>
           </article>
@@ -97,7 +97,7 @@
               <span
                 class="inline-flex rounded-full bg-g-green/10 px-3 py-1 text-xs font-semibold text-g-green">الإحترافية</span>
               <div class="mt-4 flex items-end gap-2">
-                <span data-plan="pro" class="pricing-price text-[44px] font-bold leading-none text-g-green">18</span>
+                <span data-plan="pro" class="pricing-price text-[44px] font-bold leading-none text-g-green">17</span>
                 <span class="mb-1 text-sm text-g-muted">$ / شهرياً</span>
               </div>
             </div>
@@ -105,12 +105,12 @@
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>حتى 10 مشاريع نشطة</span>
+                <span>مشاريع غير محدودة</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>500 معاملة شهرياً</span>
+                <span>1,000 معاملة شهرياً</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
@@ -133,7 +133,7 @@
                 <span>دعم فني ذو أولوية</span>
               </li>
             </ul>
-            <a href="#"
+            <a href="{{ auth()->check() ? route('billing.upgrade') : route('register') }}"
               class="mt-8 block rounded-lg bg-g-green px-4 py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-90">اشترك
               الآن</a>
           </article>
@@ -145,7 +145,7 @@
               <span
                 class="inline-flex rounded-full bg-g-purple/10 px-3 py-1 text-xs font-semibold text-g-purple">الأعمال</span>
               <div class="mt-4 flex items-end gap-2">
-                <span data-plan="team" class="pricing-price text-[44px] font-bold leading-none text-g-purple">29</span>
+                <span data-plan="team" class="pricing-price text-[44px] font-bold leading-none text-g-purple">45</span>
                 <span class="mb-1 text-sm text-g-muted">$ / شهرياً</span>
               </div>
             </div>
@@ -176,7 +176,7 @@
                 <span>مدير حساب مخصص + أولوية قصوى</span>
               </li>
             </ul>
-            <a href="#"
+            <a href="{{ auth()->check() ? route('billing.upgrade') : route('register') }}"
               class="mt-8 block rounded-lg border-2 border-g-purple px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:bg-g-light2">تواصل
               مع المبيعات</a>
           </article>
@@ -210,14 +210,14 @@
               </tr>
               <tr class="border-b border-g-border/60 transition-colors duration-150 hover:bg-g-light2/70">
                 <td class="px-6 py-4 text-start text-g-dark">عدد المشاريع</td>
-                <td class="px-6 py-4 text-center text-g-body">2</td>
-                <td class="bg-g-mint-soft/30 px-6 py-4 text-center text-g-body">10</td>
+                <td class="px-6 py-4 text-center text-g-body">3</td>
+                <td class="bg-g-mint-soft/30 px-6 py-4 text-center text-g-body">غير محدود</td>
                 <td class="px-6 py-4 text-center text-g-body">غير محدود</td>
               </tr>
               <tr class="border-b border-g-border/60 transition-colors duration-150 hover:bg-g-light2/70">
                 <td class="px-6 py-4 text-start text-g-dark">المعاملات الشهرية</td>
                 <td class="px-6 py-4 text-center text-g-body">50</td>
-                <td class="bg-g-mint-soft/30 px-6 py-4 text-center text-g-body">500</td>
+                <td class="bg-g-mint-soft/30 px-6 py-4 text-center text-g-body">1,000</td>
                 <td class="px-6 py-4 text-center text-g-body">غير محدود</td>
               </tr>
               <tr class="border-b border-g-border/60 transition-colors duration-150 hover:bg-g-light2/70">
@@ -460,12 +460,12 @@
           جاهز لتنظيم
           <span class="block text-g-orange">حياتك المالية؟</span>
         </h2>
-        <p class="max-w-[672px] pt-2 text-base leading-8 text-white/70 sm:text-lg">انضم إلى آلاف المستقلين الذين يديرون
-          أعمالهم بثقة وسهولة. ابدأ اليوم مجاناً لمدة 14 يوماً.</p>
+        <p class="max-w-[672px] pt-2 text-base leading-8 text-white/70 sm:text-lg">انضم إلى مستقلين يديرون
+          أعمالهم بثقة وسهولة. ابدأ مجاناً — لا بطاقة ائتمان، لا التزامات.</p>
         <div class="mt-8 flex flex-col gap-4 sm:flex-row">
-          <a href="#"
+          <a href="{{ auth()->check() ? route('dashboard') : route('register') }}"
             class="rounded bg-g-orange px-10 py-5 text-lg font-bold text-white hover:opacity-90 transition-opacity">ابدأ
-            الآن</a>
+            مجاناً</a>
           <a href="#"
             class="rounded border-2 border-white/20 px-10 py-5 text-lg font-bold text-white hover:bg-white/10 transition-colors">احجز
             جلسة استشارية</a>

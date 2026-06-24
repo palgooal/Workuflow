@@ -3,6 +3,31 @@
 @section('content')
 <div class="space-y-6">
 
+    {{-- Fallback upgrade banner (belt-and-suspenders — controller redirects Free users before reaching here) --}}
+    @if(! auth()->user()->currentPlan()->can('wallets'))
+    <div class="rounded-2xl bg-gradient-to-l from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/20
+                border border-indigo-100 dark:border-indigo-800/50 p-5 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-indigo-800 dark:text-indigo-200">الصناديق المالية — ميزة Pro</p>
+                <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
+                    ترقّ إلى Pro لإدارة صناديقك وحساباتك البنكية ومحافظك الإلكترونية ⚡
+                </p>
+            </div>
+        </div>
+        <a href="{{ route('billing.upgrade') }}"
+           class="shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition">
+            ترقية الآن
+        </a>
+    </div>
+    @endif
+
     {{-- Header --}}
     <x-page-header title="الصناديق والخزائن" subtitle="تتبع كاشك وحساباتك البنكية ومحافظك">
         <x-slot name="actions">

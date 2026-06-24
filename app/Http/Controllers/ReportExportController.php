@@ -20,9 +20,9 @@ class ReportExportController extends Controller
     ) {}
 
     // ─── PDF ──────────────────────────────────────────────────
-    public function pdf(Request $request): Response
+    public function pdf(Request $request)
     {
-        $this->checkExportAccess();
+        if ($redirect = $this->checkExportAccess()) { return $redirect; }
 
         ['from' => $from, 'to' => $to] = $this->getDateRange($request);
 
@@ -80,9 +80,9 @@ class ReportExportController extends Controller
     }
 
     // ─── Excel ────────────────────────────────────────────────
-    public function excel(Request $request): BinaryFileResponse
+    public function excel(Request $request)
     {
-        $this->checkExportAccess();
+        if ($redirect = $this->checkExportAccess()) { return $redirect; }
 
         ['from' => $from, 'to' => $to] = $this->getDateRange($request);
 
@@ -96,11 +96,17 @@ class ReportExportController extends Controller
 
     // ─── Helpers ──────────────────────────────────────────────
 
-    private function checkExportAccess(): void
+    private function checkExportAccess(): ?\Illuminate\Http\RedirectResponse
     {
-        if (! auth()->user()->currentPlan()->canExport()) {
-            abort(403, 'تصدير التقارير متاح لمشتركي Pro وBusiness فقط. يرجى ترقية خطتك.');
+        if (! auth()->user()->currentPlan()->can('export_data')) {
+            return redirect()->route('billing.upgrade')
+                ->with('upgrade_prompt', [
+                    'resource' => 'export_data',
+                    'message'  => 'تصدير التقارير متاح في خطة Pro أو Business.',
+                    'hint'     => 'ترقّ إلى Pro للوصول إلى تصدير PDF و Excel ⚡',
+                ]);
         }
+        return null;
     }
 
     private function getDateRange(Request $request): array

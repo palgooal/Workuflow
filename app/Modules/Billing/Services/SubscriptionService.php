@@ -66,18 +66,7 @@ class SubscriptionService
      */
     public function getPlanPrices(): array
     {
-        return config('billing.plans', [
-            'pro' => [
-                'label'    => 'Pro',
-                'price'    => '99',
-                'currency' => 'SAR',
-            ],
-            'business' => [
-                'label'    => 'Business',
-                'price'    => '299',
-                'currency' => 'SAR',
-            ],
-        ]);
+        return config('billing.plans', []);
     }
 
     /**

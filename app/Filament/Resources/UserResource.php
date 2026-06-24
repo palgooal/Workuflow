@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use App\Mail\ReEngagementEmail;
+use App\Modules\Billing\Services\SubscriptionService;
 use Illuminate\Support\Facades\Mail;
 
 class UserResource extends Resource
@@ -215,18 +216,65 @@ class UserResource extends Resource
                     ->modalSubmitActionLabel('نعم، أعد الضبط')
                     ->visible(fn (User $record) => $record->subscription_plan !== SubscriptionPlan::Free)
                     ->action(function (User $record): void {
-                        // إلغاء الاشتراك النشط
                         $record->subscriptions()
                             ->where('status', 'active')
                             ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
 
-                        // إعادة الخطة إلى Free
                         $record->update(['subscription_plan' => SubscriptionPlan::Free]);
 
                         Notification::make()
                             ->title('تم إعادة الضبط')
                             ->body("تم تحويل {$record->name} إلى الخطة المجانية.")
                             ->warning()
+                            ->send();
+                    }),
+
+                // ─── تفعيل خطة مدفوعة ────────────────────────────────
+                Tables\Actions\Action::make('activatePlan')
+                    ->label('تفعيل خطة')
+                    ->icon('heroicon-o-star')
+                    ->color('success')
+                    ->tooltip('تفعيل اشتراك مدفوع لهذا المستخدم')
+                    ->visible(fn (User $record) => $record->subscription_plan === SubscriptionPlan::Free)
+                    ->form([
+                        Forms\Components\Select::make('plan')
+                            ->label('الخطة')
+                            ->options([
+                                'pro'      => 'Pro — $17/شهر',
+                                'business' => 'Business — $45/شهر',
+                            ])
+                            ->required(),
+
+                        Forms\Components\DatePicker::make('ends_at')
+                            ->label('تاريخ انتهاء الاشتراك')
+                            ->default(now()->addMonth())
+                            ->minDate(now()->addDay())
+                            ->required(),
+
+                        Forms\Components\TextInput::make('notes')
+                            ->label('ملاحظة الدفع')
+                            ->placeholder('مثال: تحويل بنكي — 64 SAR — 24 يونيو 2026')
+                            ->helperText('للمراجعة الإدارية فقط — لا تُحفظ في قاعدة البيانات (لا يوجد حقل notes في جدول subscriptions)'),
+                    ])
+                    ->modalHeading(fn (User $record) => "تفعيل خطة مدفوعة لـ {$record->name}")
+                    ->modalSubmitActionLabel('تفعيل الاشتراك')
+                    ->action(function (User $record, array $data): void {
+                        // معرّف ثابت وفريد لتجنب updateOrCreate بمصفوفة مطابقة فارغة
+                        $providerSubscriptionId = 'manual-' . $record->id . '-' . now()->timestamp;
+
+                        $service      = app(SubscriptionService::class);
+                        $subscription = $service->activatePlan($record, $data['plan'], $providerSubscriptionId);
+
+                        // تحديث ends_at فقط — provider_subscription_id مضبوط أعلاه
+                        // ملاحظة الأدمن في $data['notes'] للمراجعة فقط (لا يوجد حقل notes في DB)
+                        $subscription->update([
+                            'ends_at' => $data['ends_at'],
+                        ]);
+
+                        Notification::make()
+                            ->title("تم تفعيل خطة {$data['plan']} للمستخدم {$record->name}")
+                            ->body("تنتهي في: " . \Carbon\Carbon::parse($data['ends_at'])->format('d/m/Y'))
+                            ->success()
                             ->send();
                     }),
 
@@ -306,7 +354,7 @@ class UserResource extends Resource
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalHeading('حذف بيانات المستخدم')
-                    ->modalDescription(fn (User $record) => "⚠️ سيتم حذف جميع بيانات {$record->name} (المشاريع، المعاملات، الديون، الميزانيات، الإشعارات). هذا الإجراء لا يمكن التراجع عنه!")
+                    ->modalDescription(fn (User $record) => "سيتم حذف جميع بيانات {$record->name} (المشاريع، المعاملات، الديون، الميزانيات، الإشعارات). هذا الإجراء لا يمكن التراجع عنه!")
                     ->modalSubmitActionLabel('نعم، احذف كل البيانات')
                     ->form([
                         Forms\Components\Checkbox::make('confirm')
@@ -315,17 +363,14 @@ class UserResource extends Resource
                             ->accepted(),
                     ])
                     ->action(function (User $record): void {
-                        // حذف جميع البيانات المرتبطة (مع الحفاظ على الحساب)
                         $record->transactions()->delete();
                         $record->debts()->delete();
                         $record->budgets()->delete();
                         $record->recurringTransactions()->delete();
                         $record->subscriptions()->delete();
                         $record->notifications()->delete();
-                        // الفئات والمشاريع تُحذف أخيراً (لأن المعاملات مرتبطة بها)
                         $record->categories()->delete();
                         $record->projects()->delete();
-                        // إعادة الخطة إلى Free
                         $record->update([
                             'subscription_plan' => SubscriptionPlan::Free,
                         ]);
@@ -405,7 +450,7 @@ class UserResource extends Resource
                             }
                             Notification::make()
                                 ->title('اكتمل الإرسال')
-                                ->body("✅ أُرسل: {$sent}" . ($failed ? " | ✗ فشل: {$failed}" : ''))
+                                ->body("أُرسل: {$sent}" . ($failed ? " | فشل: {$failed}" : ''))
                                 ->success()
                                 ->send();
                         }),

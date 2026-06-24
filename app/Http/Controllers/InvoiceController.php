@@ -347,6 +347,15 @@ class InvoiceController extends Controller
 
     public function sendToClient(Request $request, string $ulid): RedirectResponse
     {
+        if (! $request->user()->currentPlan()->can('send_invoice_email')) {
+            return redirect()->route('billing.upgrade')
+                ->with('upgrade_prompt', [
+                    'resource' => 'send_invoice_email',
+                    'message'  => 'إرسال الفواتير بالبريد الإلكتروني متاح في خطة Pro أو Business.',
+                    'hint'     => 'ترقّ إلى Pro للوصول إلى إرسال الفواتير بالبريد ⚡',
+                ]);
+        }
+
         $invoice = Invoice::where('ulid', $ulid)
             ->where('user_id', $request->user()->id)
             ->with(['client', 'project'])

@@ -34,7 +34,7 @@ Route::middleware(['auth', 'active.account'])->group(function () {
 
         Route::get('/',       [ClientController::class, 'index'])->name('index');
         Route::get('/create', [ClientController::class, 'create'])->name('create');
-        Route::post('/',      [ClientController::class, 'store'])->name('store');
+        Route::post('/',      [ClientController::class, 'store'])->middleware('subscription:clients')->name('store');
 
         // ==================== الوسوم ====================
 

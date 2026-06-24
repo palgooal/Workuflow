@@ -14,8 +14,17 @@ class WalletController extends Controller
 {
     // ==================== Index ====================
 
-    public function index(): View
+    public function index()
     {
+        if (! auth()->user()->currentPlan()->can('wallets')) {
+            return redirect()->route('billing.upgrade')
+                ->with('upgrade_prompt', [
+                    'resource' => 'wallets',
+                    'message'  => 'الصناديق المالية متاحة في خطة Pro أو Business.',
+                    'hint'     => 'ترقّ إلى Pro لإدارة صناديقك وحساباتك البنكية ⚡',
+                ]);
+        }
+
         $wallets = Wallet::withCount('transactions')
             ->orderBy('is_active', 'desc')
             ->orderBy('created_at')

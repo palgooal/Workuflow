@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="space-y-6">
+@php $canAdvancedReports = auth()->user()->currentPlan()->can('advanced_reports'); @endphp
 
     {{-- Header + Filters --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -13,7 +14,7 @@
 
             {{-- أزرار التصدير --}}
             <div class="flex items-center gap-2 mt-3">
-                @if(auth()->user()->currentPlan()->canExport())
+                @if(auth()->user()->currentPlan()->can('export_data'))
                     {{-- PDF --}}
                     <a href="{{ route('reports.export.pdf', ['from' => $from, 'to' => $to]) }}"
                        target="_blank"
@@ -55,10 +56,10 @@
                             <p class="text-xs text-slate-500 mb-3">
                                 تصدير التقارير متاح لمشتركي <strong>Pro</strong> و<strong>Business</strong> فقط.
                             </p>
-                            <a href="{{ route('billing.index') }}"
+                            <a href="{{ route('billing.upgrade') }}"
                                class="block text-center px-3 py-2 bg-brand hover:bg-brand-600
                                       text-white text-xs font-medium rounded-lg transition">
-                                ترقية الخطة الآن
+                                ترقية الخطة الآن ⚡
                             </a>
                         </div>
                     </div>
@@ -212,37 +213,56 @@
         </div>
 
         {{-- Project Profitability --}}
-        <div class="dash-card p-5">
-            <h2 class="text-base font-semibold text-slate-900 mb-4">ربحية المشاريع</h2>
+        <div class="relative">
+            <div class="dash-card p-5 {{ $canAdvancedReports ? '' : 'blur-sm pointer-events-none select-none' }}">
+                <h2 class="text-base font-semibold text-slate-900 mb-4">ربحية المشاريع</h2>
 
-            @if($projects->isEmpty())
-                <div class="py-10 text-center text-sm text-muted">لا توجد مشاريع نشطة في هذه الفترة</div>
-            @else
-                <div class="space-y-3">
-                    @foreach($projects as $proj)
-                        <div class="flex items-center gap-3">
-                            <div class="w-2.5 h-2.5 rounded-full shrink-0"
-                                 style="background-color:{{ $proj['color'] }}"></div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between mb-1">
-                                    <span class="text-sm text-slate-700 truncate font-medium">{{ $proj['name'] }}</span>
-                                    <span class="text-sm font-bold shrink-0 mr-2
-                                                 {{ $proj['net'] >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                                        {{ $proj['net'] >= 0 ? '+' : '' }}{{ number_format($proj['net'], 0) }}
-                                    </span>
-                                </div>
-                                <div class="flex gap-3 text-xs text-slate-400">
-                                    <span class="text-green-500">↑ {{ number_format($proj['income'], 0) }}</span>
-                                    <span class="text-red-400">↓ {{ number_format($proj['expenses'], 0) }}</span>
-                                    <span>{{ $proj['tx_count'] }} معاملة</span>
-                                    @if($proj['income'] > 0)
-                                        <span class="text-brand/70">هامش {{ $proj['margin'] }}%</span>
-                                    @endif
+                @if($projects->isEmpty())
+                    <div class="py-10 text-center text-sm text-muted">لا توجد مشاريع نشطة في هذه الفترة</div>
+                @else
+                    <div class="space-y-3">
+                        @foreach($projects as $proj)
+                            <div class="flex items-center gap-3">
+                                <div class="w-2.5 h-2.5 rounded-full shrink-0"
+                                     style="background-color:{{ $proj['color'] }}"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-sm text-slate-700 truncate font-medium">{{ $proj['name'] }}</span>
+                                        <span class="text-sm font-bold shrink-0 mr-2
+                                                     {{ $proj['net'] >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                                            {{ $proj['net'] >= 0 ? '+' : '' }}{{ number_format($proj['net'], 0) }}
+                                        </span>
+                                    </div>
+                                    <div class="flex gap-3 text-xs text-slate-400">
+                                        <span class="text-green-500">↑ {{ number_format($proj['income'], 0) }}</span>
+                                        <span class="text-red-400">↓ {{ number_format($proj['expenses'], 0) }}</span>
+                                        <span>{{ $proj['tx_count'] }} معاملة</span>
+                                        @if($proj['income'] > 0)
+                                            <span class="text-brand/70">هامش {{ $proj['margin'] }}%</span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+            @if(! $canAdvancedReports)
+            <div class="absolute inset-0 flex items-center justify-center z-10 rounded-2xl bg-white/40 dark:bg-gray-900/40">
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-5 text-center max-w-xs border border-indigo-100 dark:border-indigo-800">
+                    <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <p class="text-sm font-bold text-slate-800 dark:text-white mb-1">التقارير المتقدمة متاحة في خطة Pro</p>
+                    <a href="{{ route('billing.upgrade') }}"
+                       class="inline-block mt-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition">
+                        ترقية للاحترافي ⚡
+                    </a>
                 </div>
+            </div>
             @endif
         </div>
 
@@ -315,109 +335,147 @@
 
 {{-- ==================== ربحية الخدمات ==================== --}}
 @if($serviceMargins->isNotEmpty())
-<div class="dash-card overflow-hidden">
-    <div class="px-6 py-4 border-b border-subtle flex items-center justify-between">
-        <h2 class="font-bold text-ink flex items-center gap-2">
-            <span>📊</span> ربحية الخدمات
-        </h2>
-        <span class="text-xs text-muted">جميع المشاريع — بدون فلتر زمني</span>
+<div class="relative">
+    <div class="dash-card overflow-hidden {{ $canAdvancedReports ? '' : 'blur-sm pointer-events-none select-none' }}">
+        <div class="px-6 py-4 border-b border-subtle flex items-center justify-between">
+            <h2 class="font-bold text-ink flex items-center gap-2">
+                <span>📊</span> ربحية الخدمات
+            </h2>
+            <span class="text-xs text-muted">جميع المشاريع — بدون فلتر زمني</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-right text-sm">
+                <thead class="bg-slate-50 text-xs font-semibold text-slate-500">
+                    <tr>
+                        <th class="px-6 py-3">الخدمة</th>
+                        <th class="px-6 py-3 text-center">المشاريع</th>
+                        <th class="px-6 py-3">الإيراد</th>
+                        <th class="px-6 py-3">تكلفة الفريق</th>
+                        <th class="px-6 py-3">الهامش</th>
+                        <th class="px-6 py-3 text-center">النسبة</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-subtle/70">
+                    @foreach($serviceMargins as $svc)
+                    @php
+                        $pct = $svc['margin_pct'];
+                        $badgeClass = match(true) {
+                            $svc['is_loss']            => 'bg-red-100 text-red-700',
+                            $pct !== null && $pct < 20  => 'bg-orange-100 text-orange-700',
+                            $pct !== null && $pct < 40  => 'bg-amber-100 text-amber-700',
+                            default                     => 'bg-emerald-100 text-emerald-700',
+                        };
+                    @endphp
+                    <tr class="dash-row">
+                        <td class="px-6 py-3.5 font-medium text-slate-900">{{ $svc['name'] }}</td>
+                        <td class="px-6 py-3.5 text-center text-slate-500">{{ $svc['project_count'] }}</td>
+                        <td class="px-6 py-3.5 text-slate-700">{{ number_format($svc['revenue'], 2) }}</td>
+                        <td class="px-6 py-3.5 text-slate-700">
+                            {{ $svc['cost'] > 0 ? number_format($svc['cost'], 2) : '—' }}
+                        </td>
+                        <td class="px-6 py-3.5 font-semibold {{ $svc['is_loss'] ? 'text-red-600' : 'text-slate-900' }}">
+                            {{ number_format($svc['margin'], 2) }}
+                        </td>
+                        <td class="px-6 py-3.5 text-center">
+                            @if($pct !== null)
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {{ $badgeClass }}">
+                                {{ $svc['is_loss'] ? 'خسارة' : $pct . '%' }}
+                            </span>
+                            @else
+                            <span class="text-slate-400 text-xs">—</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
-    <div class="overflow-x-auto">
-        <table class="w-full text-right text-sm">
-            <thead class="bg-slate-50 text-xs font-semibold text-slate-500">
-                <tr>
-                    <th class="px-6 py-3">الخدمة</th>
-                    <th class="px-6 py-3 text-center">المشاريع</th>
-                    <th class="px-6 py-3">الإيراد</th>
-                    <th class="px-6 py-3">تكلفة الفريق</th>
-                    <th class="px-6 py-3">الهامش</th>
-                    <th class="px-6 py-3 text-center">النسبة</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-subtle/70">
-                @foreach($serviceMargins as $svc)
-                @php
-                    $pct = $svc['margin_pct'];
-                    $badgeClass = match(true) {
-                        $svc['is_loss']            => 'bg-red-100 text-red-700',
-                        $pct !== null && $pct < 20  => 'bg-orange-100 text-orange-700',
-                        $pct !== null && $pct < 40  => 'bg-amber-100 text-amber-700',
-                        default                     => 'bg-emerald-100 text-emerald-700',
-                    };
-                @endphp
-                <tr class="dash-row">
-                    <td class="px-6 py-3.5 font-medium text-slate-900">{{ $svc['name'] }}</td>
-                    <td class="px-6 py-3.5 text-center text-slate-500">{{ $svc['project_count'] }}</td>
-                    <td class="px-6 py-3.5 text-slate-700">{{ number_format($svc['revenue'], 2) }}</td>
-                    <td class="px-6 py-3.5 text-slate-700">
-                        {{ $svc['cost'] > 0 ? number_format($svc['cost'], 2) : '—' }}
-                    </td>
-                    <td class="px-6 py-3.5 font-semibold {{ $svc['is_loss'] ? 'text-red-600' : 'text-slate-900' }}">
-                        {{ number_format($svc['margin'], 2) }}
-                    </td>
-                    <td class="px-6 py-3.5 text-center">
-                        @if($pct !== null)
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {{ $badgeClass }}">
-                            {{ $svc['is_loss'] ? 'خسارة' : $pct . '%' }}
-                        </span>
-                        @else
-                        <span class="text-slate-400 text-xs">—</span>
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+    @if(! $canAdvancedReports)
+    <div class="absolute inset-0 flex items-center justify-center z-10 rounded-2xl bg-white/40 dark:bg-gray-900/40">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-5 text-center max-w-xs border border-indigo-100 dark:border-indigo-800">
+            <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <p class="text-sm font-bold text-slate-800 dark:text-white mb-1">التقارير المتقدمة متاحة في خطة Pro</p>
+            <a href="{{ route('billing.upgrade') }}"
+               class="inline-block mt-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition">
+                ترقية للاحترافي ⚡
+            </a>
+        </div>
     </div>
+    @endif
 </div>
 @endif
 
 {{-- ==================== كفاءة الفريق ==================== --}}
 @if($teamEfficiency->isNotEmpty())
-<div class="dash-card overflow-hidden">
-    <div class="px-6 py-4 border-b border-subtle">
-        <h2 class="font-bold text-ink flex items-center gap-2">
-            <span>👥</span> تكاليف الفريق على الخدمات
-        </h2>
-    </div>
-    <div class="divide-y divide-subtle/70">
-        @foreach($teamEfficiency as $member)
-        @php
-            $share = $member['cost_share_pct'];
-            $barColor = match(true) {
-                $share !== null && $share > 80 => 'bg-red-500',
-                $share !== null && $share > 60 => 'bg-amber-400',
-                default                        => 'bg-emerald-500',
-            };
-        @endphp
-        <div class="px-6 py-4">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center
-                                text-brand-600 font-bold text-sm flex-shrink-0">
-                        {{ mb_substr($member['name'], 0, 1) }}
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-slate-900">{{ $member['name'] }}</p>
-                        <p class="text-xs text-slate-400">{{ $member['services_count'] }} خدمة</p>
-                    </div>
-                </div>
-                <div class="text-left">
-                    <p class="text-sm font-bold text-slate-800">{{ number_format($member['total_cost'], 2) }}</p>
-                    @if($share !== null)
-                    <p class="text-xs text-slate-400">{{ $share }}% من إيراد خدماته</p>
-                    @endif
-                </div>
-            </div>
-            @if($share !== null)
-            <div class="h-1.5 rounded-full bg-slate-100">
-                <div class="{{ $barColor }} h-1.5 rounded-full transition-all"
-                     style="width: {{ min($share, 100) }}%"></div>
-            </div>
-            @endif
+<div class="relative">
+    <div class="dash-card overflow-hidden {{ $canAdvancedReports ? '' : 'blur-sm pointer-events-none select-none' }}">
+        <div class="px-6 py-4 border-b border-subtle">
+            <h2 class="font-bold text-ink flex items-center gap-2">
+                <span>👥</span> تكاليف الفريق على الخدمات
+            </h2>
         </div>
-        @endforeach
+        <div class="divide-y divide-subtle/70">
+            @foreach($teamEfficiency as $member)
+            @php
+                $share = $member['cost_share_pct'];
+                $barColor = match(true) {
+                    $share !== null && $share > 80 => 'bg-red-500',
+                    $share !== null && $share > 60 => 'bg-amber-400',
+                    default                        => 'bg-emerald-500',
+                };
+            @endphp
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center
+                                    text-brand-600 font-bold text-sm flex-shrink-0">
+                            {{ mb_substr($member['name'], 0, 1) }}
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">{{ $member['name'] }}</p>
+                            <p class="text-xs text-slate-400">{{ $member['services_count'] }} خدمة</p>
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-sm font-bold text-slate-800">{{ number_format($member['total_cost'], 2) }}</p>
+                        @if($share !== null)
+                        <p class="text-xs text-slate-400">{{ $share }}% من إيراد خدماته</p>
+                        @endif
+                    </div>
+                </div>
+                @if($share !== null)
+                <div class="h-1.5 rounded-full bg-slate-100">
+                    <div class="{{ $barColor }} h-1.5 rounded-full transition-all"
+                         style="width: {{ min($share, 100) }}%"></div>
+                </div>
+                @endif
+            </div>
+            @endforeach
+        </div>
     </div>
+    @if(! $canAdvancedReports)
+    <div class="absolute inset-0 flex items-center justify-center z-10 rounded-2xl bg-white/40 dark:bg-gray-900/40">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-5 text-center max-w-xs border border-indigo-100 dark:border-indigo-800">
+            <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <p class="text-sm font-bold text-slate-800 dark:text-white mb-1">التقارير المتقدمة متاحة في خطة Pro</p>
+            <a href="{{ route('billing.upgrade') }}"
+               class="inline-block mt-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition">
+                ترقية للاحترافي ⚡
+            </a>
+        </div>
+    </div>
+    @endif
 </div>
 @endif
 

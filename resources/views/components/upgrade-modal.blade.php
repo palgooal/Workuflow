@@ -13,7 +13,7 @@
     x-data="{ open: true }"
     x-show="open"
     x-cloak
-    class="fixed inset-0 z-[999] flex items-center justify-center p-4"
+    class="fixed inset-0 z-[999] flex items-center justify-center p-4 print:hidden"
     role="dialog"
     aria-modal="true">
 
@@ -46,9 +46,11 @@
         </div>
 
         {{-- Hint --}}
+        @if(!empty($prompt['hint']))
         <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl px-4 py-3 text-sm text-indigo-700 dark:text-indigo-300 text-center">
             {{ $prompt['hint'] }}
         </div>
+        @endif
 
         {{-- Actions --}}
         <div class="flex flex-col gap-3">
@@ -61,7 +63,7 @@
                 تواصل معنا على واتساب للترقية
             </a>
             @endif
-            <a href="{{ route('billing.index') }}"
+            <a href="{{ route('billing.upgrade') }}"
                class="flex items-center justify-center gap-2 w-full py-2.5 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 font-medium rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-sm">
                 عرض خطط الاشتراك
             </a>

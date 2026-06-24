@@ -15,21 +15,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Plan Prices (Display Only)
+    | Plan Prices (Display Only) — USD-first
     |--------------------------------------------------------------------------
-    | الأسعار المعروضة في صفحة الأسعار — مستقلة عن مزود الدفع.
+    | مصدر الحقيقة: docs/PRICING-SOURCE-OF-TRUTH.md
+    | الفوترة بالدولار الأمريكي · المعادلات تقديرية (تُعرض للمستخدم)
+    | founder_* = أسعار المؤسسين الحصرية (Early Adopters)
     */
 
     'plans' => [
         'pro' => [
-            'label'    => 'Pro',
-            'price'    => env('BILLING_PRICE_PRO', '99'),
-            'currency' => env('BILLING_CURRENCY', 'SAR'),
+            'label'          => 'الاحترافي',
+            'monthly'        => ['price' => '17', 'currency' => 'USD', 'sar_equiv' => '64',  'jod_equiv' => '12', 'ils_equiv' => '63'],
+            'annual'         => ['price' => '13', 'currency' => 'USD', 'sar_equiv' => '49',  'jod_equiv' => '9',  'ils_equiv' => '48'],
+            'founder_monthly'=> ['price' => '10', 'currency' => 'USD'],
+            'founder_annual' => ['price' => '8',  'currency' => 'USD'],
         ],
         'business' => [
-            'label'    => 'Business',
-            'price'    => env('BILLING_PRICE_BUSINESS', '299'),
-            'currency' => env('BILLING_CURRENCY', 'SAR'),
+            'label'          => 'الأعمال',
+            'monthly'        => ['price' => '45', 'currency' => 'USD', 'sar_equiv' => '169', 'jod_equiv' => '32', 'ils_equiv' => '167'],
+            'annual'         => ['price' => '34', 'currency' => 'USD', 'sar_equiv' => '127', 'jod_equiv' => '24', 'ils_equiv' => '126'],
+            'founder_monthly'=> ['price' => '26', 'currency' => 'USD'],
+            'founder_annual' => ['price' => '21', 'currency' => 'USD'],
         ],
     ],
 

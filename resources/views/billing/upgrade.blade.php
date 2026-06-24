@@ -29,6 +29,12 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
         {{-- Pro --}}
+        @php
+            $proMonthly  = $planPrices['pro']['monthly']  ?? ['price' => '17', 'currency' => 'USD', 'sar_equiv' => '64',  'jod_equiv' => '12', 'ils_equiv' => '63'];
+            $proAnnual   = $planPrices['pro']['annual']   ?? ['price' => '13', 'currency' => 'USD'];
+            $proEmail    = auth()->user()->email ?? '';
+            $proWaMsg    = "مرحباً، أريد الاشتراك في خطة Pro (\${$proMonthly['price']}/شهر) - حسابي: {$proEmail}";
+        @endphp
         <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-brand/60 p-6 relative shadow-md">
             <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                 الأكثر شيوعاً
@@ -36,21 +42,32 @@
             <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Pro</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">للمستقلين المحترفين</p>
 
-            <div class="mb-5">
+            {{-- Primary price --}}
+            <div class="mb-1">
                 <span class="text-3xl font-bold text-slate-900 dark:text-white">
-                    {{ $planPrices['pro']['price'] ?? '99' }}
+                    ${{ $proMonthly['price'] }}
                 </span>
-                <span class="text-slate-500 dark:text-slate-400"> {{ $planPrices['pro']['currency'] ?? 'SAR' }} / شهر</span>
+                <span class="text-slate-500 dark:text-slate-400"> {{ $proMonthly['currency'] }} / شهر</span>
             </div>
+            {{-- Annual saving --}}
+            <p class="text-xs text-emerald-600 dark:text-emerald-400 mb-1">
+                أو ${{ $proAnnual['price'] }} / شهر عند الدفع سنوياً
+            </p>
+            {{-- Local equivalents --}}
+            <p class="text-xs text-slate-400 dark:text-slate-500 mb-5">
+                ≈ {{ $proMonthly['sar_equiv'] ?? '64' }} ريال
+                &nbsp;·&nbsp; ≈ {{ $proMonthly['jod_equiv'] ?? '12' }} دينار
+                &nbsp;·&nbsp; ≈ {{ $proMonthly['ils_equiv'] ?? '63' }} شيكل
+            </p>
 
             <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-6">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    حتى 10 مشاريع
+                    مشاريع غير محدودة
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    500 معاملة / شهر
+                    1,000 معاملة / شهر
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -63,7 +80,7 @@
             </ul>
 
             @if($ownerWhatsapp)
-            <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ urlencode('مرحباً، أريد الترقية إلى خطة Pro في دراهم') }}"
+            <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ urlencode($proWaMsg) }}"
                target="_blank"
                class="flex items-center justify-center gap-2 w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition text-sm">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -80,16 +97,33 @@
         </div>
 
         {{-- Business --}}
+        @php
+            $bizMonthly  = $planPrices['business']['monthly']  ?? ['price' => '45', 'currency' => 'USD', 'sar_equiv' => '169', 'jod_equiv' => '32', 'ils_equiv' => '167'];
+            $bizAnnual   = $planPrices['business']['annual']   ?? ['price' => '34', 'currency' => 'USD'];
+            $bizEmail    = auth()->user()->email ?? '';
+            $bizWaMsg    = "مرحباً، أريد الاشتراك في خطة Business (\${$bizMonthly['price']}/شهر) - حسابي: {$bizEmail}";
+        @endphp
         <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 p-6">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Business</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">للأعمال والفرق الصغيرة</p>
 
-            <div class="mb-5">
+            {{-- Primary price --}}
+            <div class="mb-1">
                 <span class="text-3xl font-bold text-slate-900 dark:text-white">
-                    {{ $planPrices['business']['price'] ?? '299' }}
+                    ${{ $bizMonthly['price'] }}
                 </span>
-                <span class="text-slate-500 dark:text-slate-400"> {{ $planPrices['business']['currency'] ?? 'SAR' }} / شهر</span>
+                <span class="text-slate-500 dark:text-slate-400"> {{ $bizMonthly['currency'] }} / شهر</span>
             </div>
+            {{-- Annual saving --}}
+            <p class="text-xs text-emerald-600 dark:text-emerald-400 mb-1">
+                أو ${{ $bizAnnual['price'] }} / شهر عند الدفع سنوياً
+            </p>
+            {{-- Local equivalents --}}
+            <p class="text-xs text-slate-400 dark:text-slate-500 mb-5">
+                ≈ {{ $bizMonthly['sar_equiv'] ?? '169' }} ريال
+                &nbsp;·&nbsp; ≈ {{ $bizMonthly['jod_equiv'] ?? '32' }} دينار
+                &nbsp;·&nbsp; ≈ {{ $bizMonthly['ils_equiv'] ?? '167' }} شيكل
+            </p>
 
             <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-400 mb-6">
                 <li class="flex items-center gap-2">
@@ -111,7 +145,7 @@
             </ul>
 
             @if($ownerWhatsapp)
-            <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ urlencode('مرحباً، أريد الترقية إلى خطة Business في دراهم') }}"
+            <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ urlencode($bizWaMsg) }}"
                target="_blank"
                class="flex items-center justify-center gap-2 w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition text-sm">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -127,6 +161,11 @@
             @endif
         </div>
     </div>
+
+    {{-- Currency Disclaimer --}}
+    <p class="text-center text-xs text-slate-400 dark:text-slate-500">
+        الفوترة بالدولار الأمريكي، والمعادلات المحلية تقديرية وقد تتفاوت حسب سعر الصرف.
+    </p>
 
     {{-- How it works --}}
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">

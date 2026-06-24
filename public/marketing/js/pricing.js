@@ -5,8 +5,8 @@
 
 $(document).ready(function () {
   const prices = {
-    monthly: { pro: "18", team: "29" },
-    yearly:  { pro: "14", team: "23" },
+    monthly: { pro: "17", team: "45" },
+    yearly:  { pro: "13", team: "34" },
   };
 
   $(".pricing-billing-toggle").on("click", function () {

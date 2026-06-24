@@ -49,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('quotes')->name('quotes.')->group(function () {
         Route::get('/',                          [QuoteController::class, 'index'])->name('index');
         Route::get('/create',                    [QuoteController::class, 'create'])->name('create');
-        Route::post('/',                         [QuoteController::class, 'store'])->name('store');
+        Route::post('/',                         [QuoteController::class, 'store'])->middleware('subscription:quotes')->name('store');
         Route::get('/{ulid}',                    [QuoteController::class, 'show'])->name('show');
         Route::get('/{ulid}/edit',               [QuoteController::class, 'edit'])->name('edit');
         Route::put('/{ulid}',                    [QuoteController::class, 'update'])->name('update');
@@ -62,7 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('invoices')->name('invoices.')->group(function () {
         Route::get('/',                    [InvoiceController::class, 'index'])->name('index');
         Route::get('/create',              [InvoiceController::class, 'create'])->name('create');
-        Route::post('/',                   [InvoiceController::class, 'store'])->name('store');
+        Route::post('/',                   [InvoiceController::class, 'store'])->middleware('subscription:invoices')->name('store');
         Route::get('/{invoice}',           [InvoiceController::class, 'show'])->name('show');
         Route::get('/{invoice}/edit',      [InvoiceController::class, 'edit'])->name('edit');
         Route::put('/{invoice}',           [InvoiceController::class, 'update'])->name('update');
