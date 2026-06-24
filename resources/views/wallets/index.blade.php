@@ -49,15 +49,7 @@
         </x-slot>
     </x-page-header>
 
-    {{-- Flash --}}
-    @if(session('success'))
-        <div class="bg-success-soft border border-success/30 text-success-700 rounded-xl px-4 py-3 text-sm flex items-center gap-2">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-            </svg>
-            {{ session('success') }}
-        </div>
-    @endif
+    {{-- Flash handled by layouts/app.blade.php --}}
 
     @if($wallets->isEmpty())
         <div class="dash-card py-16">
@@ -91,7 +83,7 @@
         <div x-data="{ view: 'cards' }">
 
             {{-- Tab switcher --}}
-            <div class="flex items-center justify-end mb-4 gap-1 bg-surface border border-subtle rounded-xl p-1 w-fit mr-auto">
+            <div class="flex items-center justify-end mb-4 gap-1 bg-surface border border-subtle rounded-xl p-1 w-fit ms-auto">
                 <button @click="view = 'cards'"
                         :class="view === 'cards' ? 'bg-brand text-white shadow-sm' : 'text-muted hover:text-ink'"
                         class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all">

@@ -129,7 +129,7 @@
                 <div class="col-span-2">المشروع</div>
                 <div class="col-span-2">الفئة</div>
                 <div class="col-span-2">التاريخ</div>
-                <div class="col-span-1 text-left">المبلغ</div>
+                <div class="col-span-1 text-end">المبلغ</div>
             </div>
 
             <div class="divide-y divide-subtle/70">
@@ -137,7 +137,7 @@
                 <div class="flex sm:grid sm:grid-cols-12 sm:gap-4 items-center px-5 py-3.5 dash-row group">
 
                     {{-- Type Icon --}}
-                    <div class="sm:col-span-1 shrink-0 ml-3 sm:ml-0">
+                    <div class="sm:col-span-1 shrink-0 ms-3 sm:ms-0">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center
                                     {{ $tx->isIncome() ? 'bg-success-soft' : 'bg-error-soft' }}">
                             <svg class="w-4 h-4 {{ $tx->isIncome() ? 'text-success-700' : 'text-red-600' }}"

@@ -46,18 +46,158 @@
                 عميل جديد
             </a>
             @else
-            <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400
-                        text-sm font-medium rounded-xl cursor-not-allowed"
-                 title="وصلت للحد الأقصى من العملاء في خطتك">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            {{-- شارة مضغوطة: الحد مكتمل --}}
+            <span class="inline-flex items-center gap-1.5 px-3 py-2
+                         bg-amber-50 border border-amber-200 text-amber-700
+                         text-xs font-medium rounded-btn select-none"
+                  aria-label="وصلت إلى الحد الأقصى: 5 عملاء في الخطة المجانية">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor"
+                     viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
                           d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
-                الحد الأقصى
-            </div>
+                5 / 5 عملاء
+            </span>
             @endcan
         </div>
     </div>
+
+    {{-- ================================================================ --}}
+    {{-- بطاقة الترقية — تظهر عند بلوغ حد العملاء في الخطة المجانية     --}}
+    {{-- لا تُعدّل منطق الاشتراك أو الحدود — تحسين تجربة التحويل فقط  --}}
+    {{-- ================================================================ --}}
+    @cannot('create', App\Models\Client::class)
+    @php
+        $proMonthly  = config('billing.plans.pro.monthly.price', '17');
+        $proCurrency = config('billing.plans.pro.monthly.currency', 'USD');
+        $proAnnual   = config('billing.plans.pro.annual.price', '13');
+    @endphp
+
+    <div class="rounded-2xl border border-indigo-100 bg-white shadow-card overflow-hidden"
+         role="region"
+         aria-label="عرض الترقية إلى Pro">
+
+        {{-- شريط علوي بتدرج لوني --}}
+        <div class="h-1 bg-gradient-to-l from-indigo-500 to-violet-500" aria-hidden="true"></div>
+
+        <div class="p-5 sm:p-6">
+
+            {{-- العنوان --}}
+            <div class="flex items-start gap-3 mb-5">
+                <div class="shrink-0 w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl
+                            flex items-center justify-center" aria-hidden="true">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor"
+                         viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-ink leading-snug">
+                        🔒 وصلت إلى الحد الأقصى للخطة المجانية
+                    </h2>
+                    <p class="mt-0.5 text-sm text-muted">
+                        يمكنك إضافة حتى 5 عملاء في الخطة المجانية. ترقّ إلى Pro لإدارة عملاء غير محدودين.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Grid: الميزات | السعر + CTA --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
+
+                {{-- الميزات --}}
+                <div>
+                    <p class="text-[11px] font-semibold text-indigo-600 uppercase tracking-widest mb-3"
+                       aria-label="ما الذي ستفتحه بالترقية">
+                        ما الذي ستفتحه بالترقية؟
+                    </p>
+                    <ul class="space-y-2.5" role="list">
+                        @foreach([
+                            'عملاء غير محدودين',
+                            'CRM متقدم مع حقول مخصصة',
+                            'المتابعات والتصنيفات التلقائية',
+                            'بوابة العميل الإلكترونية',
+                        ] as $feature)
+                        <li class="flex items-center gap-2.5 text-sm text-ink">
+                            <span class="shrink-0 w-5 h-5 bg-indigo-100 rounded-full
+                                         flex items-center justify-center" aria-hidden="true">
+                                <svg class="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor"
+                                     viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </span>
+                            {{ $feature }}
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                {{-- السعر + CTA --}}
+                <div class="flex flex-col gap-4">
+
+                    {{-- السعر --}}
+                    <div>
+                        <p class="text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                            ابدأ من
+                        </p>
+                        <div class="flex items-end gap-1.5 leading-none">
+                            <span class="text-3xl font-bold text-ink nums">{{ $proMonthly }}</span>
+                            <span class="text-base font-semibold text-ink mb-0.5">{{ $proCurrency }}</span>
+                            <span class="text-sm text-muted mb-0.5">/ شهر</span>
+                        </div>
+                        <p class="mt-1.5 text-xs text-muted">
+                            أو {{ $proAnnual }} {{ $proCurrency }} / شهر عند الاشتراك السنوي
+                        </p>
+                    </div>
+
+                    {{-- أزرار CTA --}}
+                    <div class="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2">
+                        <a href="{{ route('billing.upgrade') }}"
+                           class="inline-flex items-center justify-center gap-2 px-5 py-2.5
+                                  bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+                                  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                                  text-white text-sm font-bold rounded-btn transition-colors duration-150"
+                           aria-label="ترقية إلى Pro لإدارة عملاء غير محدودين">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor"
+                                 viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            ⚡ ترقية الآن
+                        </a>
+                        <a href="{{ route('billing.upgrade') }}"
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2.5
+                                  border border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50
+                                  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                                  text-indigo-600 text-sm font-semibold rounded-btn transition-colors duration-150">
+                            مقارنة الخطط
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- نص الثقة --}}
+            <div class="mt-5 pt-4 border-t border-subtle
+                        flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                @foreach([
+                    'لا يوجد عقد',
+                    'ترقية خلال أقل من دقيقة',
+                    'الاحتفاظ بجميع بياناتك',
+                ] as $trust)
+                <span class="inline-flex items-center gap-1.5 text-xs text-muted">
+                    <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor"
+                         viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {{ $trust }}
+                </span>
+                @endforeach
+            </div>
+
+        </div>
+    </div>
+    @endcannot
 
     {{-- ==================== Stats Bar ==================== --}}
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -250,7 +390,7 @@
     <div x-show="selectedIds.length > 0" x-cloak x-transition
          class="bg-brand text-white rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap">
         <span class="text-sm font-medium" x-text="selectedIds.length + ' عملاء محددين'"></span>
-        <div class="flex items-center gap-2 mr-auto">
+        <div class="flex items-center gap-2 ms-auto">
             <button x-on:click="bulkAction('archive')"
                     class="px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-lg transition">
                 أرشفة
@@ -264,7 +404,7 @@
                     </svg>
                 </button>
                 <div x-show="openTag" x-on:click.away="openTag=false"
-                     class="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 min-w-44"
+                     class="absolute start-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50 min-w-44"
                      style="top: calc(100% + 4px)">
                     @foreach($tags as $tag)
                     <button x-on:click="bulkAction('tag', {{ $tag->id }}); openTag=false"

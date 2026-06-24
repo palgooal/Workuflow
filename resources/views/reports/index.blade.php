@@ -6,92 +6,86 @@
 <div class="space-y-6">
 @php $canAdvancedReports = auth()->user()->currentPlan()->can('advanced_reports'); @endphp
 
-    {{-- Header + Filters --}}
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-bold text-ink tracking-tight">التقارير والتحليلات</h1>
-            <p class="mt-1 text-sm text-muted">تحليل مالي شامل للفترة المحددة</p>
+    {{-- Header --}}
+    <x-page-header title="التقارير والتحليلات" subtitle="تحليل مالي شامل للفترة المحددة">
+        <x-slot name="actions">
+            @if(auth()->user()->currentPlan()->can('export_data'))
+                {{-- PDF --}}
+                <a href="{{ route('reports.export.pdf', ['from' => $from, 'to' => $to]) }}"
+                   target="_blank"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100
+                          text-red-700 text-xs font-medium rounded-lg border border-red-200 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    تصدير PDF
+                </a>
 
-            {{-- أزرار التصدير --}}
-            <div class="flex items-center gap-2 mt-3">
-                @if(auth()->user()->currentPlan()->can('export_data'))
-                    {{-- PDF --}}
-                    <a href="{{ route('reports.export.pdf', ['from' => $from, 'to' => $to]) }}"
-                       target="_blank"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100
-                              text-red-700 text-xs font-medium rounded-lg border border-red-200 transition">
+                {{-- Excel --}}
+                <a href="{{ route('reports.export.excel', ['from' => $from, 'to' => $to]) }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 hover:bg-green-100
+                          text-green-700 text-xs font-medium rounded-lg border border-green-200 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    تصدير Excel
+                </a>
+            @else
+                {{-- مستخدم Free — رسالة ترقية --}}
+                <div x-data="{ show: false }" class="relative">
+                    <button @click="show = !show"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-400
+                                   text-xs font-medium rounded-lg border border-slate-200 cursor-not-allowed">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                         </svg>
-                        تصدير PDF
-                    </a>
-
-                    {{-- Excel --}}
-                    <a href="{{ route('reports.export.excel', ['from' => $from, 'to' => $to]) }}"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 hover:bg-green-100
-                              text-green-700 text-xs font-medium rounded-lg border border-green-200 transition">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        تصدير Excel
-                    </a>
-                @else
-                    {{-- مستخدم Free — رسالة ترقية --}}
-                    <div x-data="{ show: false }" class="relative">
-                        <button @click="show = !show"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-400
-                                       text-xs font-medium rounded-lg border border-slate-200 cursor-not-allowed">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                            تصدير PDF / Excel
-                        </button>
-                        <div x-show="show" @click.outside="show = false"
-                             class="absolute top-full mt-2 right-0 bg-white border border-slate-200 rounded-xl
-                                    shadow-lg p-4 w-64 z-10 text-right">
-                            <p class="text-sm font-semibold text-slate-800 mb-1">ميزة مدفوعة 🔒</p>
-                            <p class="text-xs text-slate-500 mb-3">
-                                تصدير التقارير متاح لمشتركي <strong>Pro</strong> و<strong>Business</strong> فقط.
-                            </p>
-                            <a href="{{ route('billing.upgrade') }}"
-                               class="block text-center px-3 py-2 bg-brand hover:bg-brand-600
-                                      text-white text-xs font-medium rounded-lg transition">
-                                ترقية الخطة الآن ⚡
-                            </a>
-                        </div>
+                        تصدير PDF / Excel
+                    </button>
+                    <div x-show="show" @click.outside="show = false"
+                         class="absolute top-full mt-2 start-0 bg-white border border-slate-200 rounded-xl
+                                shadow-lg p-4 w-64 z-10 text-right">
+                        <p class="text-sm font-semibold text-slate-800 mb-1">ميزة مدفوعة 🔒</p>
+                        <p class="text-xs text-slate-500 mb-3">
+                            تصدير التقارير متاح لمشتركي <strong>Pro</strong> و<strong>Business</strong> فقط.
+                        </p>
+                        <a href="{{ route('billing.upgrade') }}"
+                           class="block text-center px-3 py-2 bg-brand hover:bg-brand-600
+                                  text-white text-xs font-medium rounded-lg transition">
+                            ترقية الخطة الآن ⚡
+                        </a>
                     </div>
-                @endif
-            </div>
-        </div>
+                </div>
+            @endif
+        </x-slot>
+    </x-page-header>
 
-        {{-- Period Filter --}}
-        <form method="GET" action="{{ route('reports.index') }}"
-              class="flex items-center gap-2 flex-wrap">
-            <input type="date" name="from" value="{{ $from }}"
-                   class="filter-field w-auto">
-            <span class="text-muted text-sm">—</span>
-            <input type="date" name="to" value="{{ $to }}"
-                   class="filter-field w-auto">
-            <input type="hidden" name="cat_type" value="{{ $catType }}">
-            <button type="submit"
-                    class="px-4 py-2 bg-brand hover:bg-brand-600 text-white text-sm font-semibold rounded-btn transition-colors">
-                تطبيق
-            </button>
-            {{-- Quick Year Buttons --}}
-            @foreach(array_reverse($years) as $yr)
-                @if($loop->index < 3)
-                    <a href="{{ route('reports.index', ['from' => $yr.'-01-01', 'to' => $yr.'-12-31']) }}"
-                       class="px-3 py-2 text-sm rounded-xl border transition
-                              {{ substr($from,0,4) == $yr && $to >= $yr.'-12-31' ? 'border-brand bg-brand-50 text-brand-600' : 'border-slate-200 text-slate-600 hover:border-slate-300' }}">
-                        {{ $yr }}
-                    </a>
-                @endif
-            @endforeach
-        </form>
-    </div>
+    {{-- Period Filter --}}
+    <form method="GET" action="{{ route('reports.index') }}"
+          class="flex items-center gap-2 flex-wrap">
+        <input type="date" name="from" value="{{ $from }}"
+               class="filter-field w-auto">
+        <span class="text-muted text-sm">—</span>
+        <input type="date" name="to" value="{{ $to }}"
+               class="filter-field w-auto">
+        <input type="hidden" name="cat_type" value="{{ $catType }}">
+        <button type="submit"
+                class="px-4 py-2 bg-brand hover:bg-brand-600 text-white text-sm font-semibold rounded-btn transition-colors">
+            تطبيق
+        </button>
+        {{-- Quick Year Buttons --}}
+        @foreach(array_reverse($years) as $yr)
+            @if($loop->index < 3)
+                <a href="{{ route('reports.index', ['from' => $yr.'-01-01', 'to' => $yr.'-12-31']) }}"
+                   class="px-3 py-2 text-sm rounded-xl border transition
+                          {{ substr($from,0,4) == $yr && $to >= $yr.'-12-31' ? 'border-brand bg-brand-50 text-brand-600' : 'border-slate-200 text-slate-600 hover:border-slate-300' }}">
+                    {{ $yr }}
+                </a>
+            @endif
+        @endforeach
+    </form>
 
     {{-- ==================== KPI Cards ==================== --}}
     <x-stat-grid cols="4">
@@ -196,7 +190,7 @@
                                         <span>{{ $cat['icon'] }}</span>
                                         <span>{{ $cat['name'] }}</span>
                                     </span>
-                                    <span class="text-xs font-semibold text-slate-800 shrink-0 mr-2">
+                                    <span class="text-xs font-semibold text-slate-800 shrink-0 me-2">
                                         {{ $pct }}%
                                     </span>
                                 </div>
@@ -228,7 +222,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-1">
                                         <span class="text-sm text-slate-700 truncate font-medium">{{ $proj['name'] }}</span>
-                                        <span class="text-sm font-bold shrink-0 mr-2
+                                        <span class="text-sm font-bold shrink-0 me-2
                                                      {{ $proj['net'] >= 0 ? 'text-green-600' : 'text-red-600' }}">
                                             {{ $proj['net'] >= 0 ? '+' : '' }}{{ number_format($proj['net'], 0) }}
                                         </span>
@@ -442,7 +436,7 @@
                             <p class="text-xs text-slate-400">{{ $member['services_count'] }} خدمة</p>
                         </div>
                     </div>
-                    <div class="text-left">
+                    <div class="text-end">
                         <p class="text-sm font-bold text-slate-800">{{ number_format($member['total_cost'], 2) }}</p>
                         @if($share !== null)
                         <p class="text-xs text-slate-400">{{ $share }}% من إيراد خدماته</p>

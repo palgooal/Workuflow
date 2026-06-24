@@ -29,21 +29,7 @@
     {{-- Actions --}}
     <div class="flex items-center gap-1.5 sm:gap-2">
 
-        {{-- Flash Success (desktop) --}}
-        @if(session('success'))
-            <div
-                x-data="{ show: true }"
-                x-show="show"
-                x-init="setTimeout(() => show = false, 4000)"
-                x-transition
-                class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-success-soft border border-success/30 text-success-700 rounded-lg text-sm"
-            >
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                {{ session('success') }}
-            </div>
-        @endif
+        {{-- Flash Success handled in app.blade.php body (all screen sizes) --}}
 
         {{-- Notifications --}}
         <a href="{{ route('notifications.index') }}"
@@ -55,7 +41,7 @@
             </svg>
             @php $unread = auth()->user()->unreadNotifications()->count() @endphp
             @if($unread > 0)
-                <span class="absolute top-1 left-1 min-w-[17px] h-[17px] px-1 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center nums ring-2 ring-surface">
+                <span class="absolute top-1 end-1 min-w-[17px] h-[17px] px-1 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center nums ring-2 ring-surface">
                     {{ $unread > 9 ? '9+' : $unread }}
                 </span>
             @endif
@@ -86,7 +72,7 @@
                 x-transition:leave="transition ease-in duration-100"
                 x-transition:leave-start="opacity-100 scale-100"
                 x-transition:leave-end="opacity-0 scale-95"
-                class="absolute left-0 mt-2 w-64 bg-surface rounded-2xl shadow-pop border border-subtle p-1.5 z-dropdown"
+                class="absolute end-0 mt-2 w-64 bg-surface rounded-2xl shadow-pop border border-subtle p-1.5 z-dropdown"
                 style="display:none"
                 x-cloak
             >

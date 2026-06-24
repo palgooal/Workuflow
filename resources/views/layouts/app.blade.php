@@ -47,14 +47,14 @@
 
         @include('layouts.partials.navbar')
 
-        {{-- Flash (mobile) --}}
+        {{-- Flash (all screen sizes — desktop flash removed from navbar) --}}
         @if(session('success'))
             <div
                 x-data="{ show: true }"
                 x-show="show"
                 x-init="setTimeout(() => show = false, 4000)"
                 x-transition
-                class="sm:hidden mx-4 mt-4 flex items-center gap-2 px-4 py-3 bg-success-soft border border-success/30 text-success-700 rounded-xl text-sm"
+                class="mx-4 mt-4 flex items-center gap-2 px-4 py-3 bg-success-soft border border-success/30 text-success-700 rounded-xl text-sm"
             >
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>

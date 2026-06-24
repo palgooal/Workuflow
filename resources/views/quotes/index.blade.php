@@ -20,27 +20,56 @@
     </x-page-header>
 
     {{-- إحصائيات --}}
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div class="dash-card p-4 text-center">
-            <div class="text-2xl font-bold text-ink nums">{{ $stats->total ?? 0 }}</div>
-            <div class="text-xs text-muted mt-0.5">إجمالي العروض</div>
-        </div>
-        <div class="dash-card p-4 text-center">
-            <div class="text-2xl font-bold text-blue-700 nums">{{ $stats->pending ?? 0 }}</div>
-            <div class="text-xs text-muted mt-0.5">في الانتظار</div>
-        </div>
-        <div class="dash-card p-4 text-center">
-            <div class="text-2xl font-bold text-teal-700 nums">{{ $stats->accepted ?? 0 }}</div>
-            <div class="text-xs text-muted mt-0.5">مقبولة</div>
-        </div>
-        <div class="dash-card p-4 text-center">
-            <div class="text-2xl font-bold text-red-600 nums">{{ $stats->rejected ?? 0 }}</div>
-            <div class="text-xs text-muted mt-0.5">مرفوضة</div>
-        </div>
-        <div class="dash-card p-4 text-center">
-            <div class="text-2xl font-bold text-purple-700 nums">{{ $stats->converted ?? 0 }}</div>
-            <div class="text-xs text-muted mt-0.5">محوّلة لفاتورة</div>
-        </div>
+    {{-- 5 بطاقات: لا يدعم x-stat-grid أكثر من 4 أعمدة، نستخدم grid مباشرةً --}}
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+
+        <x-stats-card title="إجمالي العروض" color="brand" :value="$stats->total ?? 0">
+            <x-slot name="icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586
+                             a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </x-slot>
+        </x-stats-card>
+
+        <x-stats-card title="في الانتظار" color="yellow" :value="$stats->pending ?? 0">
+            <x-slot name="icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </x-slot>
+        </x-stats-card>
+
+        <x-stats-card title="مقبولة" color="green" :value="$stats->accepted ?? 0">
+            <x-slot name="icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </x-slot>
+        </x-stats-card>
+
+        <x-stats-card title="مرفوضة" color="red" :value="$stats->rejected ?? 0">
+            <x-slot name="icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </x-slot>
+        </x-stats-card>
+
+        <x-stats-card title="محوّلة لفاتورة" color="accent" :value="$stats->converted ?? 0">
+            <x-slot name="icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9
+                             m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </x-slot>
+        </x-stats-card>
+
     </div>
 
     {{-- الجدول --}}

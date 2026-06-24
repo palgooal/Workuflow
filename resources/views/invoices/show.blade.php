@@ -220,23 +220,7 @@
         </div>
     </div>
 
-    {{-- رسائل النجاح والخطأ --}}
-    @if(session('success'))
-    <div class="flex items-center gap-2 bg-success-soft border border-success/30 text-success-700 rounded-xl px-4 py-3 text-sm print:hidden">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-        </svg>
-        {{ session('success') }}
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="flex items-center gap-2 bg-error-soft border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm print:hidden">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        {{ session('error') }}
-    </div>
-    @endif
+    {{-- Flash handled globally by layouts/app.blade.php --}}
 
     {{-- ورقة الفاتورة --}}
     <div class="dash-card p-8 shadow-sm print:shadow-none print:border-0" id="invoice-paper">
