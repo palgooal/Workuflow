@@ -279,7 +279,7 @@ class PaymentSettings extends Page
         $city        = trim($data['receiver_city']         ?? '');
         $countryCode = strtoupper(trim($data['receiver_country_code'] ?? 'PS'));
         $countryName = trim($data['receiver_country_name'] ?? 'Palestine');
-        $details     = trim($data['receiver_details']      ?? '');
+        $details     = trim($data['receiver_details']      ?? '') ?: 'N/A';
         $apiKey      = trim($data['togo_api_key']          ?? '');
 
         if (empty($name) || empty($phone) || empty($city)) {

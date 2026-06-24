@@ -47,7 +47,7 @@ class TogoSetupReceiverCommand extends Command
         $countryCode = $this->ask('كود الدولة (مثال: PS أو JO)', 'PS');
         $countryName = $this->ask('اسم الدولة (مثال: Palestine)', 'Palestine');
         $city        = $this->ask('المدينة');
-        $details     = $this->ask('تفاصيل إضافية (اختياري)', '');
+        $details     = $this->ask('تفاصيل إضافية (اختياري)', 'N/A') ?: 'N/A';
         $whatsapp    = $this->confirm('هل الرقم متصل بواتساب؟', true);
 
         $this->newLine();
