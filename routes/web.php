@@ -165,9 +165,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/failed',    [BillingController::class, 'failed'])->name('failed');
         Route::post('/portal',   [BillingController::class, 'portal'])->name('portal');
 
-        // Togo Payment Gateway — redirect callbacks (بعد الدفع أو الإلغاء)
-        Route::get('/togo/callback', [BillingController::class, 'togoCallback'])->name('togo.callback');
-        Route::get('/togo/cancel',   [BillingController::class, 'togoCancel'])->name('togo.cancel');
+        // Togo Payment Gateway
+        Route::get('/togo/pending',  [BillingController::class, 'togoPending'])->name('togo.pending');   // صفحة تأكيد ما قبل الدفع
+        Route::get('/togo/callback', [BillingController::class, 'togoCallback'])->name('togo.callback'); // بعد نجاح الدفع
+        Route::get('/togo/cancel',   [BillingController::class, 'togoCancel'])->name('togo.cancel');     // بعد إلغاء الدفع
     });
 
     // Profile (Breeze)

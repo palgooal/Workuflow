@@ -85,6 +85,12 @@ class TogoPaymentService implements PaymentProviderInterface
             throw new \RuntimeException('استجابة Togo غير مكتملة.');
         }
 
+        // بناء رابط صفحة الدفع مسبقاً — يُخزَّن في metadata لاستخدامه في صفحة التأكيد
+        $checkoutUrl = self::BASE_URL
+            . '/api/v1/direct-pay'
+            . '?orderId=' . urlencode($data['hashed_id'])
+            . '&receiverEmail=' . urlencode($user->email);
+
         // إنشاء سجل PaymentOrder في DB — يُستخدم لاحقاً في الـ callback
         $order = PaymentOrder::create([
             'user_id'            => $user->id,
@@ -102,6 +108,8 @@ class TogoPaymentService implements PaymentProviderInterface
                 'charged_months'          => $cycle === 'annual' ? 12 : 1,
                 'displayed_monthly_price' => $this->getPlanMonthlyDisplayPrice($plan, $cycle),
                 'plan'                    => $plan,
+                // رابط الدفع — يُستخدم في صفحة تأكيد ما قبل الدفع
+                'checkout_url'            => $checkoutUrl,
             ]),
         ]);
 
@@ -119,10 +127,7 @@ class TogoPaymentService implements PaymentProviderInterface
         ]);
 
         // الخطوة 3: رابط صفحة الدفع
-        return self::BASE_URL
-            . '/api/v1/direct-pay'
-            . '?orderId=' . urlencode($data['hashed_id'])
-            . '&receiverEmail=' . urlencode($user->email);
+        return $checkoutUrl;
     }
 
     /**

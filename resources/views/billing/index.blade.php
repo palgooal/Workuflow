@@ -243,6 +243,9 @@
                         اشترك في Pro ⚡
                     </button>
                 </form>
+                <p class="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
+                    سيتم تحويلك إلى بوابة Togo.ps الآمنة لإتمام الدفع.
+                </p>
             @else
                 {{-- Manual fallback: WhatsApp/upgrade page --}}
                 <a href="{{ route('billing.upgrade') }}"
@@ -341,6 +344,9 @@
                         اشترك في Business 🚀
                     </button>
                 </form>
+                <p class="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
+                    سيتم تحويلك إلى بوابة Togo.ps الآمنة لإتمام الدفع.
+                </p>
             @else
                 {{-- Manual fallback --}}
                 <a href="{{ route('billing.upgrade') }}"

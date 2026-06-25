@@ -115,6 +115,9 @@
                         x-text="cycle === 'monthly' ? 'الدفع الآن — Pro شهري' : 'الدفع الآن — Pro سنوي'">
                 </button>
             </form>
+            <p class="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
+                سيتم تحويلك إلى بوابة Togo.ps الآمنة لإتمام الدفع.
+            </p>
             @elseif($ownerWhatsapp)
             {{-- WhatsApp monthly --}}
             <a x-show="cycle === 'monthly'"
@@ -228,6 +231,9 @@
                         x-text="cycle === 'monthly' ? 'الدفع الآن — Business شهري' : 'الدفع الآن — Business سنوي'">
                 </button>
             </form>
+            <p class="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
+                سيتم تحويلك إلى بوابة Togo.ps الآمنة لإتمام الدفع.
+            </p>
             @elseif($ownerWhatsapp)
             {{-- WhatsApp monthly --}}
             <a x-show="cycle === 'monthly'"
@@ -265,6 +271,23 @@
 
     {{-- How it works --}}
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+        @if($providerReady)
+        <h2 class="font-semibold text-slate-900 dark:text-white mb-4 text-sm">كيف تعمل الترقية عبر بوابة الدفع؟</h2>
+        <ol class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+            <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 bg-brand-100 dark:bg-brand-900/40 text-brand dark:text-brand/70 rounded-full flex items-center justify-center text-xs font-bold">١</span>
+                <span>اختر الخطة المناسبة وحدد شهري أو سنوي</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 bg-brand-100 dark:bg-brand-900/40 text-brand dark:text-brand/70 rounded-full flex items-center justify-center text-xs font-bold">٢</span>
+                <span>اضغط على زر "الدفع الآن" وسيتم تحويلك إلى بوابة الدفع الآمنة</span>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-6 h-6 bg-brand-100 dark:bg-brand-900/40 text-brand dark:text-brand/70 rounded-full flex items-center justify-center text-xs font-bold">٣</span>
+                <span>بعد نجاح الدفع، سيتم تفعيل خطتك تلقائياً فوراً</span>
+            </li>
+        </ol>
+        @else
         <h2 class="font-semibold text-slate-900 dark:text-white mb-4 text-sm">كيف تعمل الترقية اليدوية؟</h2>
         <ol class="space-y-3 text-sm text-slate-600 dark:text-slate-400">
             <li class="flex items-start gap-3">
@@ -280,6 +303,7 @@
                 <span>بعد تأكيد الدفع نفعّل خطتك فوراً — خلال دقائق</span>
             </li>
         </ol>
+        @endif
     </div>
 
     {{-- Back link --}}

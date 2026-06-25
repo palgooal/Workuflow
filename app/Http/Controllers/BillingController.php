@@ -52,10 +52,13 @@ class BillingController extends Controller
         }
 
         try {
-            $url = app(PaymentProviderInterface::class)
+            // createCheckoutUrl ينشئ PaymentOrder ويخزّن checkout_url في metadata
+            // لا نحتاج الـ URL هنا — سيقرأه togoPending() من PaymentOrder مباشرة
+            app(PaymentProviderInterface::class)
                 ->createCheckoutUrl(auth()->user(), $request->plan, $cycle);
 
-            return redirect()->away($url);
+            // أرسل المستخدم لصفحة تأكيد ما قبل الدفع (Darahum-branded)
+            return redirect()->route('billing.togo.pending');
         } catch (\RuntimeException $e) {
             Log::error('Togo checkout error', [
                 'user'  => auth()->id(),
@@ -65,6 +68,59 @@ class BillingController extends Controller
             ]);
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * صفحة تأكيد ما قبل الدفع — تُعرض بين checkout وبوابة Togo.
+     *
+     * تعرض ملخص الطلب (خطة، دورة، مبلغ) وزر "متابعة إلى الدفع"
+     * الذي يأخذ المستخدم مباشرة لـ checkout_url المخزّن في PaymentOrder.
+     */
+    public function togoPending(): View|RedirectResponse
+    {
+        $paymentOrderId = session('payment_order_id');
+
+        if (! $paymentOrderId) {
+            return redirect()->route('billing.index')
+                ->with('info', 'لم يُعثر على جلسة دفع نشطة. اختر خطتك وابدأ من جديد.');
+        }
+
+        $order = PaymentOrder::where('id', $paymentOrderId)
+            ->where('user_id', auth()->id())
+            ->where('status', 'pending')
+            ->first();
+
+        if (! $order) {
+            return redirect()->route('billing.index')
+                ->with('info', 'انتهت جلسة الدفع أو اكتملت. اختر خطتك للمتابعة.');
+        }
+
+        $checkoutUrl = $order->metadata['checkout_url'] ?? null;
+
+        if (! $checkoutUrl) {
+            Log::error('togoPending: checkout_url missing from PaymentOrder metadata', [
+                'order_id' => $order->id,
+                'user'     => auth()->id(),
+            ]);
+            return redirect()->route('billing.index')
+                ->with('error', 'تعذّر استرداد رابط الدفع. حاول مجدداً.');
+        }
+
+        $planLabels = [
+            'pro'      => 'Pro ⚡',
+            'business' => 'Business 🚀',
+        ];
+        $cycleLabels = [
+            'monthly' => 'شهري',
+            'annual'  => 'سنوي (12 شهراً)',
+        ];
+
+        return view('billing.togo-pending', [
+            'order'       => $order,
+            'checkoutUrl' => $checkoutUrl,
+            'planLabel'   => $planLabels[$order->plan]  ?? $order->plan,
+            'cycleLabel'  => $cycleLabels[$order->cycle] ?? $order->cycle,
+        ]);
     }
 
     /**
