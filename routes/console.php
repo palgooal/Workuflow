@@ -83,6 +83,22 @@ Schedule::command('crm:send-follow-up-reminders')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/crm-follow-up-reminders.log'));
 
+// ==================== Billing — انتهاء الاشتراكات ====================
+
+// إنهاء الاشتراكات المنتهية ومزامنة خطط المستخدمين يومياً الساعة 00:10
+Schedule::command('subscriptions:expire')
+    ->dailyAt('00:10')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/subscriptions-expire.log'));
+
+// تذكيرات الاشتراكات التي ستنتهي خلال 7 أيام — يومياً الساعة 09:30
+Schedule::command('subscriptions:send-expiry-reminders --days=7')
+    ->dailyAt('09:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/subscriptions-expiry-reminders.log'));
+
 // ==================== Invoices — تذكيرات الفواتير ====================
 
 // تذكيرات الفواتير المستحقة والمتأخرة كل صباح الساعة 09:00

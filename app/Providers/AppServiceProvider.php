@@ -18,6 +18,9 @@ use App\Policies\TransactionPolicy;
 use App\Policies\WalletPolicy;
 use App\Models\Setting;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
+use App\Modules\Billing\Contracts\RenewalServiceInterface;
+use App\Modules\Billing\Services\ManualRenewalService;
+use App\Modules\Billing\Services\SubscriptionService;
 use App\Modules\Billing\Services\TogoPaymentService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
@@ -30,6 +33,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // ── ربط خدمة التجديد ───────────────────────────────────────────
+        $this->app->bind(RenewalServiceInterface::class, function ($app) {
+            return new ManualRenewalService(
+                $app->make(SubscriptionService::class)
+            );
+        });
+
         // ── ربط مزود الدفع النشط ───────────────────────────────────────
         $this->app->bind(PaymentProviderInterface::class, function () {
             return match (config('billing.provider')) {

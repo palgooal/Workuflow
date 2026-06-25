@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PaymentSucceeded;
+use App\Events\PaymentFailed as PaymentFailedEvent;
 use App\Models\PaymentOrder;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
 use App\Modules\Billing\Services\SubscriptionService;
 use App\Modules\Billing\Services\TogoPaymentService;
+use App\Notifications\PaymentSuccessfulNotification;
+use App\Notifications\PaymentFailedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -177,6 +181,10 @@ class BillingController extends Controller
 
                 session()->forget('payment_order_id');
 
+                // ── إطلاق حدث + إشعار نجاح الدفع ──────────────────────
+                event(new PaymentSucceeded($paymentOrder));
+                auth()->user()->notify(new PaymentSuccessfulNotification($paymentOrder));
+
                 Log::info('Togo payment succeeded — subscription activated', [
                     'payment_order_id'  => $paymentOrder->id,
                     'provider_order_id' => $paymentOrder->provider_order_id,
@@ -189,6 +197,10 @@ class BillingController extends Controller
 
             // ── 4b. الدفع غير مكتمل ─────────────────────────────────────
             $paymentOrder->markAsFailed($togoData);
+
+            // ── إطلاق حدث + إشعار فشل الدفع ───────────────────────────
+            event(new PaymentFailedEvent($paymentOrder, "Togo status: {$status}"));
+            auth()->user()->notify(new PaymentFailedNotification($paymentOrder, "Togo status: {$status}"));
 
             Log::warning('Togo callback: payment not PAID', [
                 'payment_order_id' => $paymentOrder->id,
