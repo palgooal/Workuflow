@@ -85,7 +85,7 @@ class SubscriptionResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('المستخدم')
-                    ->searchable()
+                    ->searchable(['users.name', 'users.email'])
                     ->sortable()
                     ->description(fn (Subscription $record): string => $record->user?->email ?? ''),
 
@@ -140,6 +140,33 @@ class SubscriptionResource extends Resource
                             : 'ينتهي ' . $record->ends_at->diffForHumans())
                         : ''),
 
+                Tables\Columns\TextColumn::make('remaining_days')
+                    ->label('الأيام المتبقية')
+                    ->getStateUsing(function (Subscription $record): string {
+                        if (! $record->ends_at) {
+                            return '∞';
+                        }
+                        if ($record->ends_at->isPast()) {
+                            return '0';
+                        }
+                        return (string) (int) now()->diffInDays($record->ends_at, false);
+                    })
+                    ->color(function (Subscription $record): ?string {
+                        if (! $record->ends_at) return null;
+                        if ($record->ends_at->isPast()) return 'danger';
+                        if ($record->ends_at->diffInDays(now()) <= 7) return 'warning';
+                        return 'success';
+                    })
+                    ->badge()
+                    ->suffix(fn (Subscription $record): string => $record->ends_at && ! $record->ends_at->isPast() ? ' يوم' : ''),
+
+                Tables\Columns\TextColumn::make('provider_subscription_id')
+                    ->label('Subscription ID')
+                    ->copyable()
+                    ->copyMessage('تم النسخ')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime('d/m/Y')
@@ -170,6 +197,15 @@ class SubscriptionResource extends Resource
                         ->where('status', 'active')
                         ->whereBetween('ends_at', [now(), now()->addDays(7)])
                     ),
+
+                Tables\Filters\Filter::make('expired_active')
+                    ->label('منتهية وما زالت نشطة')
+                    ->query(fn ($query) => $query
+                        ->where('status', 'active')
+                        ->whereNotNull('ends_at')
+                        ->where('ends_at', '<', now())
+                    )
+                    ->indicateUsing(fn () => 'منتهية وما زالت نشطة'),
             ])
             ->actions([
                 // ── تفعيل خطة ──
@@ -233,19 +269,83 @@ class SubscriptionResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('إلغاء الاشتراك')
-                    ->modalDescription('سيُرجَع المستخدم للخطة المجانية فوراً. هل أنت متأكد؟')
-                    ->modalSubmitActionLabel('نعم، إلغِ الاشتراك')
+                    ->modalHeading('تأكيد إلغاء الاشتراك')
+                    ->modalDescription(fn (Subscription $record): string =>
+                        "ستُلغي اشتراك {$record->user->name} ({$record->user->email}) فوراً. "
+                        . "سيفقد المستخدم صلاحيات خطة {$record->plan?->label()} ويُرجَع للخطة المجانية. "
+                        . 'لا يمكن التراجع عن هذا الإجراء تلقائياً.'
+                    )
+                    ->modalSubmitActionLabel('نعم، ألغِ الاشتراك')
+                    ->modalCancelActionLabel('تراجع')
                     ->action(function (Subscription $record): void {
                         app(SubscriptionService::class)->cancelPlan($record->user);
 
                         Notification::make()
                             ->title('تم إلغاء الاشتراك')
-                            ->body("تم إلغاء اشتراك {$record->user->name} وإرجاعه للخطة المجانية")
+                            ->body("تم إلغاء اشتراك {$record->user->name} وإرجاعه للخطة المجانية.")
                             ->warning()
                             ->send();
                     })
                     ->visible(fn (Subscription $record) => $record->status === 'active'),
+
+                // ── إعادة تفعيل ──
+                Tables\Actions\Action::make('reactivate')
+                    ->label('إعادة تفعيل')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->form([
+                        Forms\Components\Select::make('months')
+                            ->label('مدة التجديد')
+                            ->options([
+                                1  => 'شهر واحد',
+                                2  => 'شهرين',
+                                3  => '3 أشهر',
+                                6  => '6 أشهر',
+                                12 => 'سنة كاملة',
+                            ])
+                            ->default(1)
+                            ->required(),
+                    ])
+                    ->action(function (Subscription $record, array $data): void {
+                        app(SubscriptionService::class)->reactivatePlan(
+                            $record->user,
+                            (int) $data['months'],
+                        );
+
+                        Notification::make()
+                            ->title('تم إعادة التفعيل')
+                            ->body("تم إعادة تفعيل اشتراك {$record->user->name} لمدة {$data['months']} شهر/أشهر.")
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Subscription $record) => in_array($record->status, ['cancelled', 'expired'])),
+
+                // ── تخفيض للمجاني ──
+                Tables\Actions\Action::make('downgrade')
+                    ->label('تخفيض للمجاني')
+                    ->icon('heroicon-o-arrow-down-circle')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('تخفيض للخطة المجانية')
+                    ->modalDescription(fn (Subscription $record): string =>
+                        "سيُخفَّض {$record->user->name} ({$record->user->email}) من خطة {$record->plan?->label()} "
+                        . 'إلى الخطة المجانية فوراً وتُلغى جلسته المدفوعة النشطة.'
+                    )
+                    ->modalSubmitActionLabel('نعم، خفِّض للمجاني')
+                    ->modalCancelActionLabel('تراجع')
+                    ->action(function (Subscription $record): void {
+                        app(SubscriptionService::class)->downgradePlan($record->user);
+
+                        Notification::make()
+                            ->title('تم التخفيض للمجاني')
+                            ->body("تم تخفيض {$record->user->name} للخطة المجانية.")
+                            ->warning()
+                            ->send();
+                    })
+                    ->visible(fn (Subscription $record) =>
+                        $record->status === 'active'
+                        && $record->plan !== \App\Support\Enums\SubscriptionPlan::Free
+                    ),
 
                 Tables\Actions\EditAction::make()->label('تعديل'),
             ])

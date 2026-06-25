@@ -218,7 +218,7 @@ class UserResource extends Resource
                     ->action(function (User $record): void {
                         $record->subscriptions()
                             ->where('status', 'active')
-                            ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+                            ->update(['status' => 'cancelled', 'ends_at' => now()]);
 
                         $record->update(['subscription_plan' => SubscriptionPlan::Free]);
 

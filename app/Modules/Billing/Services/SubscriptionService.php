@@ -91,6 +91,54 @@ class SubscriptionService
     }
 
     /**
+     * إعادة تفعيل اشتراك ملغى أو منتهي (يُستدعى من Admin يدوياً)
+     *
+     * يُعيد تفعيل آخر سجل اشتراك للمستخدم بدلاً من إنشاء سجل جديد.
+     * إذا لم يوجد سجل أصلاً يُنشئ واحداً بخطة المستخدم الحالية.
+     */
+    public function reactivatePlan(User $user, int $months = 1): Subscription
+    {
+        $subscription = Subscription::where('user_id', $user->id)->latest()->first();
+
+        if ($subscription) {
+            $subscription->update([
+                'status'    => 'active',
+                'starts_at' => now(),
+                'ends_at'   => now()->addMonths($months),
+            ]);
+
+            // تأكد أن user.subscription_plan يطابق الخطة المُعاد تفعيلها
+            $user->update(['subscription_plan' => $subscription->plan]);
+
+            return $subscription->fresh();
+        }
+
+        // لا يوجد سجل — أنشئ جديداً بخطة Pro افتراضياً
+        return $this->activatePlan(
+            $user,
+            $user->subscription_plan?->value ?? SubscriptionPlan::Pro->value,
+        );
+    }
+
+    /**
+     * تخفيض المستخدم للخطة المجانية (يُستدعى من Admin يدوياً)
+     *
+     * يُلغي الاشتراك النشط ويُحدّث خطة المستخدم لـ Free.
+     */
+    public function downgradePlan(User $user): void
+    {
+        $user->update(['subscription_plan' => SubscriptionPlan::Free]);
+
+        Subscription::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->update([
+                'plan'    => SubscriptionPlan::Free->value,
+                'status'  => 'cancelled',
+                'ends_at' => now(),
+            ]);
+    }
+
+    /**
      * هل مزود الدفع مفعّل؟
      */
     public function isPaymentProviderConfigured(): bool
