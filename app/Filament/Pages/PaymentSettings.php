@@ -33,11 +33,6 @@ class PaymentSettings extends Page
             'togo_receiver_address_id'     => $saved['togo_receiver_address_id']     ?? config('billing.togo.receiver_address_id', ''),
             'togo_currency'                => $saved['togo_currency']                ?? config('billing.togo.currency', 'ILS'),
 
-            // أسعار الخطط
-            'billing_price_pro'            => $saved['billing_price_pro']            ?? config('billing.plans.pro.price', '99'),
-            'billing_price_business'       => $saved['billing_price_business']       ?? config('billing.plans.business.price', '299'),
-            'billing_currency_display'     => $saved['billing_currency_display']     ?? config('billing.plans.pro.currency', 'ILS'),
-
             // حقول إنشاء receiver address (مؤقتة — لا تُحفظ)
             'receiver_name'                => '',
             'receiver_phone'               => '',
@@ -166,36 +161,8 @@ class PaymentSettings extends Page
                             ->columnSpan(2),
                     ]),
 
-                // ── القسم 4: أسعار الخطط ──────────────────────────────
-                Forms\Components\Section::make('أسعار خطط الاشتراك')
-                    ->icon('heroicon-o-tag')
-                    ->description('الأسعار المعروضة في صفحة الترقية')
-                    ->columns(3)
-                    ->schema([
-                        Forms\Components\TextInput::make('billing_price_pro')
-                            ->label('سعر خطة Pro')
-                            ->numeric()
-                            ->placeholder('99')
-                            ->required()
-                            ->suffix(fn (Forms\Get $get) => $get('billing_currency_display') ?: 'ILS'),
-
-                        Forms\Components\TextInput::make('billing_price_business')
-                            ->label('سعر خطة Business')
-                            ->numeric()
-                            ->placeholder('299')
-                            ->required()
-                            ->suffix(fn (Forms\Get $get) => $get('billing_currency_display') ?: 'ILS'),
-
-                        Forms\Components\Select::make('billing_currency_display')
-                            ->label('عملة العرض')
-                            ->options([
-                                'ILS' => 'شيكل (₪)',
-                                'USD' => 'دولار ($)',
-                                'SAR' => 'ريال (SAR)',
-                            ])
-                            ->default('ILS')
-                            ->required(),
-                    ]),
+                // ملاحظة: أسعار الخطط تُقرأ من config/billing.php فقط
+                // (billing.plans.{plan}.{cycle}.price) — لا تُعدَّل من هنا.
 
             ])
             ->statePath('data');
@@ -208,13 +175,12 @@ class PaymentSettings extends Page
         $data = $this->form->getState();
 
         $toSave = [
-            'billing_provider'         => $data['billing_provider'],
-            'togo_api_key'             => $data['togo_api_key'],
-            'togo_receiver_address_id' => $data['togo_receiver_address_id'],
-            'togo_currency'            => $data['togo_currency'],
-            'billing_price_pro'        => $data['billing_price_pro'],
-            'billing_price_business'   => $data['billing_price_business'],
-            'billing_currency_display' => $data['billing_currency_display'],
+            'billing_provider'         => $data['billing_provider']           ?? '',
+            // Togo fields are only present in $data when the section is visible
+            'togo_api_key'             => $data['togo_api_key']               ?? '',
+            'togo_receiver_address_id' => $data['togo_receiver_address_id']   ?? '',
+            'togo_currency'            => $data['togo_currency']               ?? 'ILS',
+            // أسعار الخطط محذوفة — مصدرها config/billing.php حصراً
         ];
 
         // احفظ كل قيمة بشكل مستقل حتى تُحفظ القيم الفارغة (مثل مسح togo_receiver_address_id)

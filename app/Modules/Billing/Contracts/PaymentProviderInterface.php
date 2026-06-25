@@ -14,7 +14,7 @@ interface PaymentProviderInterface
      * إنشاء رابط Checkout لخطة معيّنة
      * يُعيد URL يُحوَّل إليه المستخدم مباشرة
      */
-    public function createCheckoutUrl(User $user, string $plan): string;
+    public function createCheckoutUrl(User $user, string $plan, string $cycle = 'monthly'): string;
 
     /**
      * إنشاء رابط بوابة إدارة الاشتراك (تعديل / إلغاء / فواتير)

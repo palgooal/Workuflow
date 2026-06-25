@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PaymentOrder;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
 use App\Modules\Billing\Services\SubscriptionService;
 use App\Modules\Billing\Services\TogoPaymentService;
@@ -40,8 +41,11 @@ class BillingController extends Controller
     public function checkout(Request $request): RedirectResponse
     {
         $request->validate([
-            'plan' => ['required', 'in:pro,business'],
+            'plan'  => ['required', 'in:pro,business'],
+            'cycle' => ['sometimes', 'in:monthly,annual'],
         ]);
+
+        $cycle = $request->input('cycle', 'monthly');
 
         if (! $this->billing->isPaymentProviderConfigured()) {
             return back()->with('info', 'بوابة الدفع غير مفعّلة بعد. تواصل مع الدعم.');
@@ -49,13 +53,14 @@ class BillingController extends Controller
 
         try {
             $url = app(PaymentProviderInterface::class)
-                ->createCheckoutUrl(auth()->user(), $request->plan);
+                ->createCheckoutUrl(auth()->user(), $request->plan, $cycle);
 
             return redirect()->away($url);
         } catch (\RuntimeException $e) {
             Log::error('Togo checkout error', [
-                'user' => auth()->id(),
-                'plan' => $request->plan,
+                'user'  => auth()->id(),
+                'plan'  => $request->plan,
+                'cycle' => $cycle,
                 'error' => $e->getMessage(),
             ]);
             return back()->with('error', $e->getMessage());
@@ -64,60 +69,91 @@ class BillingController extends Controller
 
     /**
      * Callback بعد نجاح الدفع — Togo يُعيد المستخدم هنا
-     * الخطوة 4: التحقق من حالة الطلب قبل تفعيل الخطة
+     *
+     * Phase 3: يقرأ PaymentOrder من DB (ليس من session فقط).
+     * - يحمي من التكرار عبر idempotency guard.
+     * - يدعم fallback بـ provider_order_id من query string إذا انتهت session.
      */
     public function togoCallback(Request $request): RedirectResponse
     {
-        $orderId = session('togo_order_id');
-        $plan    = session('togo_order_plan');
+        /** @var TogoPaymentService $togo */
+        $togo = app(TogoPaymentService::class);
 
-        if (! $orderId || ! $plan) {
+        // ── 1. تحميل PaymentOrder من DB ─────────────────────────────────
+        $paymentOrder = $this->resolvePaymentOrder($request, $togo);
+
+        if (! $paymentOrder) {
+            Log::warning('Togo callback: PaymentOrder not found', [
+                'user'             => auth()->id(),
+                'session_order_id' => session('payment_order_id'),
+                'query'            => $request->query(),
+            ]);
+
             return redirect()->route('billing.index')
-                ->with('error', 'انتهت جلسة الدفع. إذا اكتمل الدفع تواصل مع الدعم.');
+                ->with('error', 'انتهت جلسة الدفع أو لم يُعثر على الطلب. إذا اكتمل الدفع تواصل مع الدعم.');
         }
 
+        // ── 2. Idempotency guard ─────────────────────────────────────────
+        if ($paymentOrder->isPaid()) {
+            Log::info('Togo callback: already processed (idempotent)', [
+                'order_id' => $paymentOrder->id,
+                'user'     => auth()->id(),
+            ]);
+
+            return redirect()->route('billing.success');
+        }
+
+        // ── 3. التحقق من حالة الطلب عبر Togo API ───────────────────────
         try {
-            /** @var TogoPaymentService $togo */
-            $togo  = app(TogoPaymentService::class);
-            $order = $togo->verifyOrder($orderId);
-            $status = $order['status'] ?? 'UNKNOWN';
+            $togoData = $togo->verifyOrder($paymentOrder->provider_order_id);
+            $status   = $togoData['status'] ?? 'UNKNOWN';
 
             if ($status === 'PAID') {
+                // ── 4a. تفعيل الاشتراك ──────────────────────────────────
+                $paymentOrder->markAsPaid($togoData);
+
                 $this->billing->activatePlan(
                     user: auth()->user(),
-                    planValue: $plan,
-                    providerSubscriptionId: $orderId,
+                    planValue: $paymentOrder->plan,
+                    providerSubscriptionId: $paymentOrder->provider_order_id,
+                    cycle: $paymentOrder->cycle ?? 'monthly',
                 );
 
-                session()->forget(['togo_order_id', 'togo_order_plan']);
+                session()->forget('payment_order_id');
 
-                Log::info('Togo payment succeeded', [
-                    'user'     => auth()->id(),
-                    'plan'     => $plan,
-                    'order_id' => $orderId,
+                Log::info('Togo payment succeeded — subscription activated', [
+                    'payment_order_id'  => $paymentOrder->id,
+                    'provider_order_id' => $paymentOrder->provider_order_id,
+                    'plan'              => $paymentOrder->plan,
+                    'user'              => auth()->id(),
                 ]);
 
                 return redirect()->route('billing.success');
             }
 
-            // الدفع لم يكتمل بعد
-            Log::warning('Togo callback: order not PAID', [
-                'user'     => auth()->id(),
-                'order_id' => $orderId,
-                'status'   => $status,
+            // ── 4b. الدفع غير مكتمل ─────────────────────────────────────
+            $paymentOrder->markAsFailed($togoData);
+
+            Log::warning('Togo callback: payment not PAID', [
+                'payment_order_id' => $paymentOrder->id,
+                'togo_status'      => $status,
+                'user'             => auth()->id(),
             ]);
 
-            return redirect()->route('billing.upgrade')
-                ->with('error', "لم يكتمل الدفع (الحالة: {$status}). تواصل مع الدعم إذا خُصمت المبالغ.");
+            session()->forget('payment_order_id');
+
+            return redirect()->route('billing.failed')
+                ->with('togo_status', $status);
 
         } catch (\RuntimeException $e) {
-            Log::error('Togo callback error', [
-                'user'    => auth()->id(),
-                'error'   => $e->getMessage(),
-                'order_id' => $orderId,
+            Log::error('Togo callback: verifyOrder exception', [
+                'payment_order_id'  => $paymentOrder->id,
+                'provider_order_id' => $paymentOrder->provider_order_id,
+                'error'             => $e->getMessage(),
+                'user'              => auth()->id(),
             ]);
 
-            return redirect()->route('billing.upgrade')
+            return redirect()->route('billing.failed')
                 ->with('error', 'حدث خطأ أثناء التحقق من الدفع. تواصل مع الدعم.');
         }
     }
@@ -127,7 +163,18 @@ class BillingController extends Controller
      */
     public function togoCancel(): RedirectResponse
     {
-        session()->forget(['togo_order_id', 'togo_order_plan']);
+        $paymentOrderId = session()->pull('payment_order_id');
+
+        if ($paymentOrderId) {
+            PaymentOrder::where('id', $paymentOrderId)
+                ->where('status', 'pending')
+                ->update(['status' => 'cancelled']);
+
+            Log::info('Togo payment cancelled by user', [
+                'payment_order_id' => $paymentOrderId,
+                'user'             => auth()->id(),
+            ]);
+        }
 
         return redirect()->route('billing.upgrade')
             ->with('info', 'تم إلغاء عملية الدفع. يمكنك المحاولة مجدداً في أي وقت.');
@@ -144,6 +191,48 @@ class BillingController extends Controller
     }
 
     /**
+     * صفحة فشل الدفع
+     */
+    public function failed(Request $request): View
+    {
+        return view('billing.failed', [
+            'togoStatus' => session('togo_status'),
+        ]);
+    }
+
+    /**
+     * تحميل PaymentOrder من DB.
+     *
+     * الأولوية 1: session payment_order_id (الحالة الطبيعية)
+     * الأولوية 2: fallback بـ provider_order_id من Togo query string
+     *             (يُستخدم إذا انتهت session قبل redirect)
+     */
+    private function resolvePaymentOrder(Request $request, TogoPaymentService $togo): ?PaymentOrder
+    {
+        // Togo قد ترسل orderId في query string عند redirect
+        $togoOrderId = $request->query('orderId');
+
+        // الأولوية 1: session
+        if ($localId = session('payment_order_id')) {
+            $order = PaymentOrder::where('id', $localId)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if ($order) return $order;
+        }
+
+        // الأولوية 2: Togo hashed_id من query string → نبحث بـ provider_hashed_id
+        if ($togoOrderId) {
+            return PaymentOrder::where('provider_hashed_id', $togoOrderId)
+                ->where('user_id', auth()->id())
+                ->latest()
+                ->first();
+        }
+
+        return null;
+    }
+
+    /**
      * صفحة الترقية اليدوية — تواصل معنا على واتساب
      */
     public function upgrade(): View
@@ -151,8 +240,9 @@ class BillingController extends Controller
         $currentPlan   = auth()->user()->currentPlan();
         $ownerWhatsapp = config('billing.owner_whatsapp');
         $planPrices    = $this->billing->getPlanPrices();
+        $providerReady = $this->billing->isPaymentProviderConfigured();
 
-        return view('billing.upgrade', compact('currentPlan', 'ownerWhatsapp', 'planPrices'));
+        return view('billing.upgrade', compact('currentPlan', 'ownerWhatsapp', 'planPrices', 'providerReady'));
     }
 
     /**

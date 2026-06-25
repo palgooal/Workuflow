@@ -2,6 +2,7 @@
 
 namespace App\Modules\Billing\Services;
 
+use App\Models\PaymentOrder;
 use App\Models\User;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
 use Illuminate\Support\Facades\Http;
@@ -38,28 +39,30 @@ class TogoPaymentService implements PaymentProviderInterface
     /**
      * الخطوة 2+3: إنشاء RFP order وإرجاع رابط صفحة الدفع.
      *
-     * يُخزّن order_id في session للتحقق لاحقاً عبر verifyOrder().
+     * ينشئ سجل PaymentOrder في DB ويحفظ ULID المحلي فقط في session.
+     * هذا يضمن استمرارية الدفع حتى لو انتهت الجلسة قبل الـ callback.
      *
      * @throws \RuntimeException إذا فشل API
      */
-    public function createCheckoutUrl(User $user, string $plan): string
+    public function createCheckoutUrl(User $user, string $plan, string $cycle = 'monthly'): string
     {
         $this->assertConfigured();
 
-        $price = $this->getPlanPrice($plan);
+        $price    = $this->getPlanPrice($plan, $cycle);
+        $currency = $this->currency;
 
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(15)
             ->post(self::BASE_URL . '/api/v1/actions', [
                 'event' => 'Create_Visa',
                 'data'  => [
-                    'type'                        => 'RFP',
-                    'value'                       => $price,
-                    'receiver_address_id'         => $this->receiverAddressId,
-                    'receiver_email'              => $user->email,
-                    'currency'                    => $this->currency,
-                    'source'                      => 'external_website',
-                    'prevent_sms_link'            => false,
+                    'type'                          => 'RFP',
+                    'value'                         => $price,
+                    'receiver_address_id'           => $this->receiverAddressId,
+                    'receiver_email'                => $user->email,
+                    'currency'                      => $currency,
+                    'source'                        => 'external_website',
+                    'prevent_sms_link'              => false,
                     'payment_success_redirect_link' => route('billing.togo.callback'),
                     'payment_cancel_redirect_link'  => route('billing.togo.cancel'),
                 ],
@@ -82,10 +85,37 @@ class TogoPaymentService implements PaymentProviderInterface
             throw new \RuntimeException('استجابة Togo غير مكتملة.');
         }
 
-        // حفظ الـ order_id (وليس hashed_id) في session للتحقق لاحقاً
-        session([
-            'togo_order_id'   => $data['id'],
-            'togo_order_plan' => $plan,
+        // إنشاء سجل PaymentOrder في DB — يُستخدم لاحقاً في الـ callback
+        $order = PaymentOrder::create([
+            'user_id'            => $user->id,
+            'plan'               => $plan,
+            'cycle'              => $cycle,
+            'provider'           => 'togo',
+            'provider_order_id'  => $data['id'],
+            'provider_hashed_id' => $data['hashed_id'] ?? null,
+            'amount'             => $price,   // المبلغ الكامل المُحصّل (annual = 12 × monthly_equiv)
+            'currency'           => $currency,
+            'status'             => 'pending',
+            'metadata'           => array_merge($data, [
+                // حقول الفوترة — مفيدة للـ audit وعرض الفاتورة لاحقاً
+                'billing_cycle'           => $cycle,
+                'charged_months'          => $cycle === 'annual' ? 12 : 1,
+                'displayed_monthly_price' => $this->getPlanMonthlyDisplayPrice($plan, $cycle),
+                'plan'                    => $plan,
+            ]),
+        ]);
+
+        // حفظ ULID المحلي فقط في session — ليس بيانات Togo كاملة
+        session(['payment_order_id' => $order->id]);
+
+        Log::info('Togo payment order created', [
+            'order_id'          => $order->id,
+            'provider_order_id' => $data['id'],
+            'user'              => $user->id,
+            'plan'              => $plan,
+            'cycle'             => $cycle,
+            'amount'            => $price,
+            'currency'          => $currency,
         ]);
 
         // الخطوة 3: رابط صفحة الدفع
@@ -232,15 +262,40 @@ class TogoPaymentService implements PaymentProviderInterface
         }
     }
 
-    private function getPlanPrice(string $plan): float
+    /**
+     * حساب المبلغ الذي سيُحصّل من المستخدم عبر بوابة الدفع.
+     *
+     * config/billing.php يخزّن السعر الشهري المُعادل (Display Price):
+     *   billing.plans.pro.annual.price = 13  ← يُعرض للمستخدم كـ "$13/شهر"
+     *
+     * لكن عند الدفع السنوي يُحصّل المبلغ كاملاً مقدماً:
+     *   annual  → 13 × 12 = 156 USD  (Charge Amount)
+     *   monthly → 17 USD              (Charge Amount)
+     *
+     * ⚠️  لا تخلط بين Display Price (config) و Charge Amount (هذه الدالة).
+     */
+    private function getPlanPrice(string $plan, string $cycle = 'monthly'): float
     {
-        $plans = config('billing.plans', []);
-        $price = (float) ($plans[$plan]['price'] ?? 0);
+        // config: سعر شهري مُعادل للعرض (Display Price)
+        $monthlyEquiv = (float) (config("billing.plans.{$plan}.{$cycle}.price") ?? 0);
 
-        if ($price <= 0) {
-            throw new \RuntimeException("سعر الخطة [{$plan}] غير مضبوط في billing config.");
+        if ($monthlyEquiv <= 0) {
+            throw new \RuntimeException(
+                "سعر الخطة [{$plan}] دورة [{$cycle}] غير مضبوط في config/billing.php. "
+                . "المسار المتوقع: billing.plans.{$plan}.{$cycle}.price"
+            );
         }
 
-        return $price;
+        // السنوي = 12 شهراً تُدفع مقدماً
+        return $cycle === 'annual' ? round($monthlyEquiv * 12, 2) : $monthlyEquiv;
+    }
+
+    /**
+     * السعر الشهري المُعادل للعرض في الـ UI — قيمة config مباشرة بدون ضرب.
+     * مثال: pro/annual → 13.0  (يُعرض كـ "$13/شهر يُدفع سنوياً")
+     */
+    private function getPlanMonthlyDisplayPrice(string $plan, string $cycle = 'monthly'): float
+    {
+        return (float) (config("billing.plans.{$plan}.{$cycle}.price") ?? 0);
     }
 }

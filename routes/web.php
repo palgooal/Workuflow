@@ -162,6 +162,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/upgrade',   [BillingController::class, 'upgrade'])->name('upgrade');
         Route::post('/checkout', [BillingController::class, 'checkout'])->name('checkout');
         Route::get('/success',   [BillingController::class, 'success'])->name('success');
+        Route::get('/failed',    [BillingController::class, 'failed'])->name('failed');
         Route::post('/portal',   [BillingController::class, 'portal'])->name('portal');
 
         // Togo Payment Gateway — redirect callbacks (بعد الدفع أو الإلغاء)

@@ -466,9 +466,12 @@
           <a href="{{ auth()->check() ? route('dashboard') : route('register') }}"
             class="rounded bg-g-orange px-10 py-5 text-lg font-bold text-white hover:opacity-90 transition-opacity">ابدأ
             مجاناً</a>
-          <a href="#"
+          @if(config('billing.owner_whatsapp'))
+          <a href="https://wa.me/{{ config('billing.owner_whatsapp') }}"
+            target="_blank" rel="noopener noreferrer"
             class="rounded border-2 border-white/20 px-10 py-5 text-lg font-bold text-white hover:bg-white/10 transition-colors">احجز
             جلسة استشارية</a>
+          @endif
         </div>
       </div>
     </section>

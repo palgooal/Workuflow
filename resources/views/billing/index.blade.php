@@ -39,10 +39,15 @@
         </div>
     @endif
 
-    {{-- Flash --}}
+    {{-- Flash Messages --}}
     @if(session('success'))
         <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-xl text-sm">
             {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
+            {{ session('error') }}
         </div>
     @endif
     @if(session('info'))
@@ -51,7 +56,7 @@
         </div>
     @endif
 
-    {{-- Upgrade CTA (Manual Billing) --}}
+    {{-- WhatsApp manual upgrade CTA — shown only when payment gateway is disabled --}}
     @if(! $providerReady && $currentPlan->value === 'free')
         @php $ownerWa = config('billing.owner_whatsapp'); @endphp
         @if($ownerWa)
@@ -80,9 +85,25 @@
     @endif
 
     {{-- Pricing Cards --}}
+    @php
+        $proMonthly      = $planPrices['pro']['monthly']      ?? ['price' => '17', 'currency' => 'USD'];
+        $proAnnual       = $planPrices['pro']['annual']       ?? ['price' => '13', 'currency' => 'USD'];
+        $bizMonthly      = $planPrices['business']['monthly'] ?? ['price' => '45', 'currency' => 'USD'];
+        $bizAnnual       = $planPrices['business']['annual']  ?? ['price' => '34', 'currency' => 'USD'];
+        $proMonthlyPrice = $proMonthly['price'] ?? '17';
+        $proAnnualPrice  = $proAnnual['price']  ?? '13';
+        $bizMonthlyPrice = $bizMonthly['price'] ?? '45';
+        $bizAnnualPrice  = $bizAnnual['price']  ?? '34';
+        $priceCurrency   = $proMonthly['currency'] ?? 'USD';
+        $proAnnualTotal  = (int)$proAnnualPrice * 12;
+        $proAnnualSaving = ((int)$proMonthlyPrice - (int)$proAnnualPrice) * 12;
+        $bizAnnualTotal  = (int)$bizAnnualPrice * 12;
+        $bizAnnualSaving = ((int)$bizMonthlyPrice - (int)$bizAnnualPrice) * 12;
+    @endphp
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {{-- Free Plan --}}
+        {{-- ── Free Plan ── --}}
         <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'free' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative">
             @if($currentPlan->value === 'free')
                 <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
@@ -96,14 +117,14 @@
             </div>
 
             <div class="mb-6">
-                <span class="text-3xl font-bold text-slate-900 dark:text-white">0</span>
-                <span class="text-slate-500 dark:text-slate-400"> SAR / شهر</span>
+                <span class="text-3xl font-bold text-slate-900 dark:text-white">$0</span>
+                <span class="text-slate-500 dark:text-slate-400"> / شهر</span>
             </div>
 
             <ul class="space-y-2 mb-6 text-sm text-slate-600 dark:text-slate-400">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    حتى 2 مشروع
+                    حتى 3 مشاريع نشطة
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -111,7 +132,7 @@
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    إدارة الميزانية
+                    5 فواتير / شهر
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -129,8 +150,9 @@
             </button>
         </div>
 
-        {{-- Pro Plan --}}
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'pro' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative shadow-lg">
+        {{-- ── Pro Plan ── --}}
+        <div x-data="{ cycle: 'monthly' }"
+             class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'pro' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative shadow-lg">
             @if($currentPlan->value === 'pro')
                 <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                     خطتك الحالية
@@ -141,24 +163,52 @@
                 </span>
             @endif
 
-            <div class="mb-4">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Pro</h3>
+            <div class="mb-3">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Pro ⚡</h3>
                 <p class="text-sm text-muted mt-1">للمستقلين المحترفين</p>
             </div>
 
-            <div class="mb-6">
-                <span class="text-3xl font-bold text-slate-900 dark:text-white">99</span>
-                <span class="text-slate-500 dark:text-slate-400"> SAR / شهر</span>
+            {{-- Cycle toggle --}}
+            @if($currentPlan->value !== 'pro')
+            <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 mb-3 text-xs">
+                <button type="button"
+                        @click="cycle = 'monthly'"
+                        :class="cycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                        class="flex-1 py-1.5 px-2 rounded-md transition-all font-medium">
+                    شهري
+                </button>
+                <button type="button"
+                        @click="cycle = 'annual'"
+                        :class="cycle === 'annual' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                        class="flex-1 py-1.5 px-2 rounded-md transition-all font-medium flex items-center justify-center gap-1">
+                    سنوي
+                    <span class="text-emerald-500">وفّر 24%</span>
+                </button>
+            </div>
+            @endif
+
+            <div class="mb-1">
+                <span class="text-3xl font-bold text-slate-900 dark:text-white"
+                      x-text="cycle === 'monthly' ? '${{ $proMonthlyPrice }}' : '${{ $proAnnualPrice }}'"></span>
+                <span class="text-slate-500 dark:text-slate-400"> {{ $priceCurrency }} / شهر</span>
+            </div>
+            <div class="min-h-[1.25rem] mb-4">
+                <p class="text-xs text-slate-400 dark:text-slate-500" x-show="cycle === 'monthly'">
+                    أو ${{ $proAnnualPrice }} / شهر عند الدفع سنوياً
+                </p>
+                <p class="text-xs text-emerald-600 dark:text-emerald-400" x-show="cycle === 'annual'" x-cloak>
+                    تُدفع ${{ $proAnnualTotal }} سنوياً — تـوفير ${{ $proAnnualSaving }}
+                </p>
             </div>
 
             <ul class="space-y-2 mb-6 text-sm text-slate-600 dark:text-slate-400">
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    حتى 10 مشاريع
+                    مشاريع غير محدودة
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    500 معاملة / شهر
+                    1,000 معاملة / شهر
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -177,11 +227,24 @@
             @if($currentPlan->value === 'pro')
                 <form action="{{ route('billing.portal') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full py-2.5 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand/50 rounded-xl text-sm font-medium hover:bg-brand-100 transition">
+                    <button type="submit"
+                            class="w-full py-2.5 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand/50 rounded-xl text-sm font-medium hover:bg-brand-100 transition">
                         إدارة الاشتراك
                     </button>
                 </form>
+            @elseif($providerReady)
+                {{-- Togo: cycle driven by Alpine state --}}
+                <form method="POST" action="{{ route('billing.checkout') }}">
+                    @csrf
+                    <input type="hidden" name="plan" value="pro">
+                    <input type="hidden" name="cycle" :value="cycle">
+                    <button type="submit"
+                            class="w-full py-2.5 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand-600 transition">
+                        اشترك في Pro ⚡
+                    </button>
+                </form>
             @else
+                {{-- Manual fallback: WhatsApp/upgrade page --}}
                 <a href="{{ route('billing.upgrade') }}"
                    class="block w-full py-2.5 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand-600 transition text-center">
                     الترقية إلى Pro
@@ -189,22 +252,51 @@
             @endif
         </div>
 
-        {{-- Business Plan --}}
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'business' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative">
+        {{-- ── Business Plan ── --}}
+        <div x-data="{ cycle: 'monthly' }"
+             class="bg-white dark:bg-slate-900 rounded-2xl border-2 {{ $currentPlan->value === 'business' ? 'border-brand' : 'border-slate-200 dark:border-slate-800' }} p-6 relative">
             @if($currentPlan->value === 'business')
                 <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                     خطتك الحالية
                 </span>
             @endif
 
-            <div class="mb-4">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Business</h3>
+            <div class="mb-3">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Business 🚀</h3>
                 <p class="text-sm text-muted mt-1">للأعمال والفرق الصغيرة</p>
             </div>
 
-            <div class="mb-6">
-                <span class="text-3xl font-bold text-slate-900 dark:text-white">299</span>
-                <span class="text-slate-500 dark:text-slate-400"> SAR / شهر</span>
+            {{-- Cycle toggle --}}
+            @if($currentPlan->value !== 'business')
+            <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 mb-3 text-xs">
+                <button type="button"
+                        @click="cycle = 'monthly'"
+                        :class="cycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                        class="flex-1 py-1.5 px-2 rounded-md transition-all font-medium">
+                    شهري
+                </button>
+                <button type="button"
+                        @click="cycle = 'annual'"
+                        :class="cycle === 'annual' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                        class="flex-1 py-1.5 px-2 rounded-md transition-all font-medium flex items-center justify-center gap-1">
+                    سنوي
+                    <span class="text-emerald-500">وفّر 24%</span>
+                </button>
+            </div>
+            @endif
+
+            <div class="mb-1">
+                <span class="text-3xl font-bold text-slate-900 dark:text-white"
+                      x-text="cycle === 'monthly' ? '${{ $bizMonthlyPrice }}' : '${{ $bizAnnualPrice }}'"></span>
+                <span class="text-slate-500 dark:text-slate-400"> {{ $priceCurrency }} / شهر</span>
+            </div>
+            <div class="min-h-[1.25rem] mb-4">
+                <p class="text-xs text-slate-400 dark:text-slate-500" x-show="cycle === 'monthly'">
+                    أو ${{ $bizAnnualPrice }} / شهر عند الدفع سنوياً
+                </p>
+                <p class="text-xs text-emerald-600 dark:text-emerald-400" x-show="cycle === 'annual'" x-cloak>
+                    تُدفع ${{ $bizAnnualTotal }} سنوياً — تـوفير ${{ $bizAnnualSaving }}
+                </p>
             </div>
 
             <ul class="space-y-2 mb-6 text-sm text-slate-600 dark:text-slate-400">
@@ -222,22 +314,35 @@
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    API Access كامل
+                    دعم مخصص
                 </li>
                 <li class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    دعم مخصص
+                    API Access كامل
                 </li>
             </ul>
 
             @if($currentPlan->value === 'business')
                 <form action="{{ route('billing.portal') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full py-2.5 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand/50 rounded-xl text-sm font-medium hover:bg-brand-100 transition">
+                    <button type="submit"
+                            class="w-full py-2.5 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand/50 rounded-xl text-sm font-medium hover:bg-brand-100 transition">
                         إدارة الاشتراك
                     </button>
                 </form>
+            @elseif($providerReady)
+                {{-- Togo: cycle driven by Alpine state --}}
+                <form method="POST" action="{{ route('billing.checkout') }}">
+                    @csrf
+                    <input type="hidden" name="plan" value="business">
+                    <input type="hidden" name="cycle" :value="cycle">
+                    <button type="submit"
+                            class="w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-medium hover:bg-slate-700 dark:hover:bg-slate-100 transition">
+                        اشترك في Business 🚀
+                    </button>
+                </form>
             @else
+                {{-- Manual fallback --}}
                 <a href="{{ route('billing.upgrade') }}"
                    class="block w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-medium hover:bg-slate-700 dark:hover:bg-slate-100 transition text-center">
                     الترقية إلى Business
@@ -245,6 +350,13 @@
             @endif
         </div>
     </div>
+
+    {{-- Payment info note when gateway is active --}}
+    @if($providerReady)
+    <p class="text-center text-xs text-slate-400 dark:text-slate-500">
+        الفوترة بالدولار الأمريكي (USD). ستنتقل لصفحة دفع آمنة عبر Togo لإتمام الاشتراك.
+    </p>
+    @endif
 
     {{-- FAQ --}}
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
@@ -256,7 +368,11 @@
             </div>
             <div>
                 <p class="font-medium text-slate-900 dark:text-white">كيف أدفع؟</p>
-                <p class="mt-1">حالياً عبر التحويل البنكي اليدوي — تواصل معنا على واتساب وسنرسل لك التعليمات.</p>
+                @if($providerReady)
+                    <p class="mt-1">عبر بوابة الدفع الآمنة — اضغط على زر الاشتراك وستُحوَّل لصفحة الدفع مباشرة.</p>
+                @else
+                    <p class="mt-1">عبر التواصل معنا على واتساب وسنرسل لك تعليمات الدفع خلال دقائق.</p>
+                @endif
             </div>
             <div>
                 <p class="font-medium text-slate-900 dark:text-white">ماذا يحدث لبياناتي عند إلغاء الاشتراك؟</p>

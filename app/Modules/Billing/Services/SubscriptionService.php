@@ -18,11 +18,21 @@ class SubscriptionService
     /**
      * تفعيل خطة مدفوعة للمستخدم (يُستدعى بعد تأكيد الدفع من الـ Webhook)
      */
-    public function activatePlan(User $user, string $planValue, ?string $providerSubscriptionId = null): Subscription
-    {
+    public function activatePlan(
+        User    $user,
+        string  $planValue,
+        ?string $providerSubscriptionId = null,
+        string  $cycle = 'monthly',
+    ): Subscription {
         $plan = SubscriptionPlan::tryFrom($planValue) ?? SubscriptionPlan::Pro;
 
         $user->update(['subscription_plan' => $plan]);
+
+        // مدة الاشتراك تعتمد على الدورة المدفوعة
+        $endsAt = match ($cycle) {
+            'annual'  => now()->addYear(),
+            default   => now()->addMonth(),
+        };
 
         return Subscription::updateOrCreate(
             array_filter(['provider_subscription_id' => $providerSubscriptionId]),
@@ -32,7 +42,7 @@ class SubscriptionService
                 'status'                   => 'active',
                 'payment_provider'         => config('billing.provider', 'manual'),
                 'starts_at'                => now(),
-                'ends_at'                  => now()->addMonth(),
+                'ends_at'                  => $endsAt,
             ]
         );
     }

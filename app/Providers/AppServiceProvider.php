@@ -67,9 +67,9 @@ class AppServiceProvider extends ServiceProvider
             $p = Setting::group('payment');
             if (empty($p)) return;
 
-            // مزود الدفع
-            if (! empty($p['billing_provider'])) {
-                Config::set('billing.provider', $p['billing_provider']);
+            // مزود الدفع — نطبّق دائماً حتى لو كانت فارغة (لتعطيل البوابة)
+            if (array_key_exists('billing_provider', $p)) {
+                Config::set('billing.provider', $p['billing_provider'] ?: null);
             }
 
             // Togo credentials
@@ -83,17 +83,8 @@ class AppServiceProvider extends ServiceProvider
                 Config::set('billing.togo.currency', $p['togo_currency']);
             }
 
-            // أسعار الخطط
-            if (! empty($p['billing_price_pro'])) {
-                Config::set('billing.plans.pro.price', $p['billing_price_pro']);
-            }
-            if (! empty($p['billing_price_business'])) {
-                Config::set('billing.plans.business.price', $p['billing_price_business']);
-            }
-            if (! empty($p['billing_currency_display'])) {
-                Config::set('billing.plans.pro.currency',      $p['billing_currency_display']);
-                Config::set('billing.plans.business.currency', $p['billing_currency_display']);
-            }
+            // ملاحظة: أسعار الخطط لا تُضبط من هنا.
+            // مصدر الحقيقة: config/billing.php (billing.plans.{plan}.{cycle}.price)
         } catch (\Throwable) {
             // تجاهل إذا كان الجدول غير موجود بعد (أول migrate)
         }
