@@ -627,8 +627,7 @@
               class="pricing-billing-toggle flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium text-white/80 transition-colors">
               سنوي
               <span
-                class="pricing-save-badge rounded-full bg-g-green-lt/25 px-2.5 py-0.5 text-[11px] font-bold text-g-green-lt">وفّر
-                20%</span>
+                class="pricing-save-badge rounded-full bg-g-green-lt/25 px-2.5 py-0.5 text-[11px] font-bold text-g-green-lt">وفّر حتى 25%</span>
             </button>
           </div>
         </div>
@@ -650,27 +649,36 @@
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>حتى 3 عملاء</span>
+                <span>حتى 3 مشاريع</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>فواتير غير محدودة</span>
+                <span>حتى 5 عملاء</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>إدارة المهام الأساسية</span>
+                <span>5 فواتير شهرياً</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>دعم عبر البريد</span>
+                <span>3 عروض أسعار شهرياً</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <span
+                  class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
+                <span>50 معاملة شهرياً</span>
               </li>
             </ul>
-            <a href="#"
-              class="mt-8 block rounded-lg border border-g-border px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:border-g-purple hover:bg-g-light2">اشترك
-              الآن</a>
+            @auth
+            <a href="{{ route('dashboard') }}"
+              class="mt-8 block rounded-lg border border-g-border px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:border-g-purple hover:bg-g-light2">انتقل للوحة التحكم</a>
+            @else
+            <a href="{{ route('register') }}"
+              class="mt-8 block rounded-lg border border-g-border px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:border-g-purple hover:bg-g-light2">ابدأ مجاناً</a>
+            @endauth
           </article>
 
           <!-- Card: الإحترافية (featured) -->
@@ -684,11 +692,16 @@
               <span
                 class="inline-flex rounded-full bg-g-green/10 px-3 py-1 text-xs font-semibold text-g-green">الإحترافية</span>
               <div class="mt-4 flex items-end gap-2">
-                <span data-plan="pro" class="pricing-price text-[44px] font-bold leading-none text-g-green">18</span>
+                <span data-plan="pro" class="pricing-price text-[44px] font-bold leading-none text-g-green">{{ config('billing.plans.pro.monthly.price', '17') }}</span>
                 <span class="mb-1 text-sm text-g-muted">$ / شهرياً</span>
               </div>
             </div>
             <ul class="mt-6 flex flex-col gap-3.5 text-base text-g-dark">
+              <li class="flex items-center gap-3">
+                <span
+                  class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
+                <span>مشاريع غير محدودة</span>
+              </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
@@ -697,37 +710,41 @@
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>تقارير مالية متقدمة</span>
+                <span>1,000 معاملة شهرياً</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>تخصيص هوية الفواتير</span>
+                <span>إرسال الفواتير بالبريد</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>تنبيهات الدفع الآلية</span>
+                <span>الصناديق المالية</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>دعم فني ذو أولوية</span>
+                <span>التقارير المتقدمة</span>
               </li>
             </ul>
-            <a href="#"
-              class="mt-8 block rounded-lg bg-g-green px-4 py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-90">اشترك
-              الآن</a>
+            @auth
+            <a href="{{ route('billing.upgrade') }}"
+              class="mt-8 block rounded-lg bg-g-green px-4 py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-90">اشترك الآن</a>
+            @else
+            <a href="{{ route('register', ['plan' => 'pro', 'cycle' => 'monthly']) }}"
+              class="mt-8 block rounded-lg bg-g-green px-4 py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-90">ابدأ الآن</a>
+            @endauth
           </article>
 
-          <!-- Card: الفريق -->
+          <!-- Card: الأعمال (Business) -->
           <article
             class="flex flex-col rounded-lg border-2 border-g-purple/40 bg-white p-8 transition-shadow hover:shadow-md">
             <div class="border-b border-g-purple/20 pb-5">
               <span
-                class="inline-flex rounded-full bg-g-purple/10 px-3 py-1 text-xs font-semibold text-g-purple">الفريق</span>
+                class="inline-flex rounded-full bg-g-purple/10 px-3 py-1 text-xs font-semibold text-g-purple">{{ config('billing.plans.business.label', 'الأعمال') }}</span>
               <div class="mt-4 flex items-end gap-2">
-                <span data-plan="team" class="pricing-price text-[44px] font-bold leading-none text-g-purple">29</span>
+                <span data-plan="business" class="pricing-price text-[44px] font-bold leading-none text-g-purple">{{ config('billing.plans.business.monthly.price', '45') }}</span>
                 <span class="mb-1 text-sm text-g-muted">$ / شهرياً</span>
               </div>
             </div>
@@ -735,30 +752,45 @@
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>حتى 6 أعضاء فريق</span>
+                <span>كل مزايا الإحترافية</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>صلاحيات وصول مخصصة</span>
+                <span>أعضاء فريق أكثر</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>تتبع الوقت للمشاريع</span>
+                <span>API Access</span>
               </li>
               <li class="flex items-center gap-3">
                 <span
                   class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
-                <span>مدير حساب مخصص</span>
+                <span>صلاحيات متقدمة</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <span
+                  class="shrink-0 grid size-5 place-items-center rounded-full bg-g-green text-[10px] font-bold text-white">✓</span>
+                <span>دعم أولوية</span>
               </li>
             </ul>
-            <a href="#"
-              class="mt-8 block rounded-lg border-2 border-g-purple px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:bg-g-light2">تواصل
-              مع المبيعات</a>
+            @auth
+            <a href="{{ route('billing.upgrade') }}"
+              class="mt-8 block rounded-lg border-2 border-g-purple px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:bg-g-light2">اشترك الآن</a>
+            @else
+            <a href="{{ route('register', ['plan' => 'business', 'cycle' => 'monthly']) }}"
+              class="mt-8 block rounded-lg border-2 border-g-purple px-4 py-3 text-center text-sm font-bold text-g-purple transition-colors hover:bg-g-light2">ابدأ الآن</a>
+            @endauth
           </article>
 
         </div>
+
+        <!-- Note: currency + billing cycle -->
+        <p class="text-center text-xs text-g-muted mt-2">
+          الأسعار بالدولار الأمريكي، والدفع السنوي يُحسب كقيمة سنوية كاملة.
+        </p>
+
       </div>
     </section>
 

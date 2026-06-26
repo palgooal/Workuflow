@@ -40,6 +40,30 @@ class RegisterUserAction
         // تسجيل الدخول تلقائياً
         Auth::login($user);
 
+        // ── CONVERSION-01 Pre-payment Grace (30 minutes) ─────────────────
+        // المشكلة: billing.upgrade محمي بـ verified middleware، لكن المستخدم
+        // لم يوثّق بريده بعد عند التسجيل — مما يُعيد توجيهه لصفحة التحقق
+        // قبل أن يصل لصفحة الدفع.
+        //
+        // الحل: نمنح فترة سماح مؤقتة مدتها 30 دقيقة تسمح للمستخدم بالوصول
+        // لصفحة الدفع وإتمام الشراء.
+        //
+        // ملاحظات مهمة:
+        //   • grace_used_at لا يُضبط هنا — هذه ليست فترة السماح الرسمية (7 أيام).
+        //   • الخطة تبقى Free حتى تأكيد الدفع في SubscriptionService::activatePlan().
+        //   • بعد الدفع: activatePlan() يُرقّي grace_until لـ 7 أيام ويضبط grace_used_at.
+        //   • إذا لم يتم الدفع خلال 30 دقيقة: grace_until تنتهي وverified middleware
+        //     يُعيد تطبيق نفسه تلقائياً دون أي تدخل.
+        //   • كتابة session('paid_intent') والـ redirect تتم في RegisteredUserController
+        //     مباشرة بعد execute() — لتجنب race condition مع Auth::login() session migration.
+        $planIntent = $request->input('plan_intent');
+        if (in_array($planIntent, ['pro', 'business'], true)) {
+            $user->update([
+                'email_verification_grace_until' => now()->addMinutes(30),
+                // grace_used_at intentionally null — reserved for post-payment 7-day grace
+            ]);
+        }
+
         return $user;
     }
 

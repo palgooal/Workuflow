@@ -3586,3 +3586,123 @@ button {
     }
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   Marketing User Dropdown — generated classes (2026-06-26)
+   These classes are used in resources/views/layouts/marketing.blade.php
+   and will be included automatically on next `tailwindcss` recompile.
+════════════════════════════════════════════════════════════ */
+
+/* ── Positioning & sizing ── */
+.top-\[calc\(100\%\+10px\)\] { top: calc(100% + 10px); }
+.-top-\[6px\] { top: -6px; }
+.size-3 { width: 0.75rem; height: 0.75rem; }
+
+/* ── Border radius ── */
+.rounded-\[14px\] { border-radius: 14px; }
+.rounded-tl { border-top-left-radius: 0.25rem; }
+
+/* ── Border colors ── */
+.border-black\/\[8\%\] { border-color: rgb(0 0 0 / 0.08); }
+.border-black\/10 { border-color: rgb(0 0 0 / 0.1); }
+.border-emerald-200 { border-color: #a7f3d0; }
+.border-violet-200 { border-color: #ddd6fe; }
+.border-gray-200 { border-color: #e5e7eb; }
+
+/* ── Background colors ── */
+.bg-slate-50 { background-color: #f8fafc; }
+.bg-emerald-50 { background-color: #ecfdf5; }
+.bg-emerald-100 { background-color: #d1fae5; }
+.bg-emerald-500 { background-color: #10b981; }
+.bg-violet-50 { background-color: #f5f3ff; }
+.bg-violet-600 { background-color: #7c3aed; }
+.bg-gray-50 { background-color: #f9fafb; }
+.bg-gray-100 { background-color: #f3f4f6; }
+.bg-gray-200 { background-color: #e5e7eb; }
+.bg-gray-400 { background-color: #9ca3af; }
+.bg-red-50 { background-color: #fef2f2; }
+.bg-red-100 { background-color: #fee2e2; }
+
+/* ── Text colors ── */
+.text-emerald-500 { color: #10b981; }
+.text-emerald-700 { color: #047857; }
+.text-violet-700 { color: #6d28d9; }
+.text-gray-500 { color: #6b7280; }
+.text-gray-800 { color: #1f2937; }
+.text-red-400 { color: #f87171; }
+.text-red-500 { color: #ef4444; }
+
+/* ── Gradient colors ── */
+.from-indigo-500 {
+  --tw-gradient-from: #6366f1;
+  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.to-emerald-500 {
+  --tw-gradient-to: #10b981;
+  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+
+/* ── Scale ── */
+.scale-95  { --tw-scale-x: 95%;  --tw-scale-y: 95%;  --tw-scale-z: 95%;  scale: var(--tw-scale-x) var(--tw-scale-y); }
+.scale-100 { --tw-scale-x: 100%; --tw-scale-y: 100%; --tw-scale-z: 100%; scale: var(--tw-scale-x) var(--tw-scale-y); }
+.scale-105 { --tw-scale-x: 105%; --tw-scale-y: 105%; --tw-scale-z: 105%; scale: var(--tw-scale-x) var(--tw-scale-y); }
+
+/* ── Translate ── */
+.-translate-y-2 { --tw-translate-y: calc(var(--spacing) * -2); translate: var(--tw-translate-x) var(--tw-translate-y); }
+.translate-y-0  { --tw-translate-y: 0; translate: var(--tw-translate-x) var(--tw-translate-y); }
+
+/* ── Rotate ── */
+.-rotate-45 { rotate: -45deg; }
+
+/* ── Pointer events ── */
+.pointer-events-auto { pointer-events: auto; }
+
+/* ── Ring utilities (hover trigger button) ── */
+.hover\:ring-2:hover {
+  --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.hover\:ring-emerald-500\/10:hover { --tw-ring-color: rgb(16 185 129 / 0.1); }
+.hover\:border-emerald-500:hover { border-color: #10b981; }
+
+/* ── Hover backgrounds ── */
+.hover\:bg-gray-50:hover { background-color: #f9fafb; }
+.hover\:bg-red-50:hover { background-color: #fef2f2; }
+
+/* ── Group hover ── */
+.group:hover .group-hover\:scale-105 {
+  --tw-scale-x: 105%; --tw-scale-y: 105%; --tw-scale-z: 105%;
+  scale: var(--tw-scale-x) var(--tw-scale-y);
+}
+
+/* ── Named group hover (group/item) ── */
+:where(.group\/item):hover .group-hover\/item\:bg-emerald-100 { background-color: #d1fae5; }
+:where(.group\/item):hover .group-hover\/item\:bg-gray-200    { background-color: #e5e7eb; }
+:where(.group\/item):hover .group-hover\/item\:bg-red-100     { background-color: #fee2e2; }
+
+/* ── Transition ease ── */
+.ease-out { transition-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+
+/* ── data-[state=closed] variants ── */
+.data-\[state\=closed\]\:opacity-0[data-state="closed"]       { opacity: 0; }
+.data-\[state\=closed\]\:-translate-y-2[data-state="closed"]  {
+  --tw-translate-y: calc(var(--spacing) * -2);
+  translate: var(--tw-translate-x) var(--tw-translate-y);
+}
+.data-\[state\=closed\]\:scale-95[data-state="closed"]        {
+  --tw-scale-x: 95%; --tw-scale-y: 95%; --tw-scale-z: 95%;
+  scale: var(--tw-scale-x) var(--tw-scale-y);
+}
+.data-\[state\=closed\]\:pointer-events-none[data-state="closed"] { pointer-events: none; }
+
+/* ── data-[state=open] variants ── */
+.data-\[state\=open\]\:opacity-100[data-state="open"]         { opacity: 1; }
+.data-\[state\=open\]\:translate-y-0[data-state="open"]       {
+  --tw-translate-y: 0;
+  translate: var(--tw-translate-x) var(--tw-translate-y);
+}
+.data-\[state\=open\]\:scale-100[data-state="open"]           {
+  --tw-scale-x: 100%; --tw-scale-y: 100%; --tw-scale-z: 100%;
+  scale: var(--tw-scale-x) var(--tw-scale-y);
+}
+.data-\[state\=open\]\:pointer-events-auto[data-state="open"] { pointer-events: auto; }

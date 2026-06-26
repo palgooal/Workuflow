@@ -30,6 +30,9 @@ class ProfileController extends Controller
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
+            // CONVERSION-01 Phase 2: إلغاء فترة السماح عند تغيير البريد.
+            // email_verification_grace_used_at يبقى كما هو (قاعدة مرة واحدة في الحياة).
+            $request->user()->email_verification_grace_until = null;
         }
 
         $request->user()->save();

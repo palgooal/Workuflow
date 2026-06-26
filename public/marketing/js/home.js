@@ -4,9 +4,10 @@
 // ============================================================
 
 $(document).ready(function () {
+  // Prices mirror config/billing.php → plans.pro / plans.business
   const prices = {
-    monthly: { pro: "18", team: "29" },
-    yearly:  { pro: "14", team: "23" },
+    monthly: { pro: "17", business: "45" },
+    yearly:  { pro: "13", business: "34" },
   };
 
   $(".pricing-billing-toggle").on("click", function () {

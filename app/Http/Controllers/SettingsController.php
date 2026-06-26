@@ -83,7 +83,10 @@ class SettingsController extends Controller
         $data = $request->validated();
 
         if ($data['email'] !== $user->email) {
-            $data['email_verified_at'] = null; // TODO: إعادة التحقق في Phase 13
+            $data['email_verified_at'] = null;
+            // CONVERSION-01 Phase 2: إلغاء فترة السماح عند تغيير البريد.
+            // email_verification_grace_used_at يبقى كما هو (قاعدة مرة واحدة في الحياة).
+            $data['email_verification_grace_until'] = null;
         }
 
         $user->update($data);

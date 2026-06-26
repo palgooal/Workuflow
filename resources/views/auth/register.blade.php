@@ -18,6 +18,11 @@
         {{-- توقيت الفورم: يكتشف الإرسال الآلي الفوري --}}
         <input type="hidden" name="_form_token" value="{{ $formToken }}">
 
+        {{-- Plan Intent: نية الخطة المختارة من صفحة التسعير (اختياري) --}}
+        {{-- يُملأ تلقائياً عند القدوم من CTA مثل /register?plan=pro&cycle=annual --}}
+        <input type="hidden" name="plan_intent"  value="{{ old('plan_intent',  request('plan')) }}">
+        <input type="hidden" name="cycle_intent" value="{{ old('cycle_intent', request('cycle', 'monthly')) }}">
+
         {{-- الاسم --}}
         <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">الاسم الكامل</label>

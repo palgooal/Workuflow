@@ -34,6 +34,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'registration_user_agent',
         'last_login_at',
         'last_login_ip',
+        'email_verification_grace_until',    // CONVERSION-01 Phase 2
+        'email_verification_grace_used_at',  // CONVERSION-01 Phase 2
     ];
 
     protected $hidden = [
@@ -44,12 +46,14 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     protected function casts(): array
     {
         return [
-            'email_verified_at'          => 'datetime',
-            'password'                   => 'hashed',
-            'subscription_plan'          => SubscriptionPlan::class,
-            'status'                     => UserStatus::class,
-            'onboarding_dismissed_at'    => 'datetime',
-            'last_login_at'              => 'datetime',
+            'email_verified_at'                  => 'datetime',
+            'password'                           => 'hashed',
+            'subscription_plan'                  => SubscriptionPlan::class,
+            'status'                             => UserStatus::class,
+            'onboarding_dismissed_at'            => 'datetime',
+            'last_login_at'                      => 'datetime',
+            'email_verification_grace_until'     => 'datetime', // CONVERSION-01 Phase 2
+            'email_verification_grace_used_at'   => 'datetime', // CONVERSION-01 Phase 2
         ];
     }
 
@@ -90,6 +94,68 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->hasMany(Subscription::class);
     }
 
+    // ==================== Email Verification Grace (CONVERSION-01 Phase 2) ====================
+
+    /**
+     * Override MustVerifyEmail's hasVerifiedEmail().
+     *
+     * يعيد true إذا:
+     *   (أ) البريد موثَّق بشكل طبيعي (email_verified_at ≠ null)
+     *   (ب) أو المستخدم ضمن فترة السماح المدفوعة (grace_until في المستقبل)
+     *
+     * تأثيره: middleware 'verified' (EnsureEmailIsVerified) يستدعي هذه الدالة مباشرة،
+     * مما يعني أن المستخدم المدفوع غير الموثَّق يتجاوز الحاجز تلقائياً خلال فترة السماح.
+     * بعد انتهاء فترة السماح يعود السلوك الطبيعي — user يُحال لصفحة التحقق.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        // (أ) الحالة الطبيعية — البريد موثَّق
+        if ($this->email_verified_at !== null) {
+            return true;
+        }
+
+        // (ب) فترة السماح المدفوعة — لا تزال سارية
+        if ($this->email_verification_grace_until !== null
+            && $this->email_verification_grace_until->isFuture()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * هل المستخدم حالياً ضمن فترة السماح المدفوعة النشطة؟
+     * (غير موثَّق + فترة السماح لم تنتهِ بعد)
+     */
+    public function isInEmailVerificationGrace(): bool
+    {
+        return $this->email_verified_at === null
+            && $this->email_verification_grace_until !== null
+            && $this->email_verification_grace_until->isFuture();
+    }
+
+    /**
+     * هل استُخدمت فترة السماح من قبل (سواء انتهت أو لا)؟
+     * يُستخدم لمنع منح فترة سماح جديدة عند تجديد الاشتراك.
+     */
+    public function hasUsedEmailVerificationGrace(): bool
+    {
+        return $this->email_verification_grace_used_at !== null;
+    }
+
+    /**
+     * عدد الأيام المتبقية في فترة السماح (صحيح، كحد أدنى 1).
+     * يُستخدم في بانر التحذير.
+     */
+    public function graceDaysRemaining(): int
+    {
+        if (! $this->isInEmailVerificationGrace()) {
+            return 0;
+        }
+
+        return max(1, (int) ceil(now()->floatDiffInDays($this->email_verification_grace_until)));
+    }
+
     // ==================== Helpers ====================
 
     public function currentPlan(): SubscriptionPlan
@@ -124,6 +190,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new \App\Notifications\CustomResetPasswordNotification($token));
+    }
+
+    /** استخدام قالب البريد المخصص لتحقق البريد الإلكتروني */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new \App\Notifications\CustomVerifyEmailNotification());
     }
 
     // ==================== Filament Admin ====================

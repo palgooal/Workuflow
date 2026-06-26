@@ -35,6 +35,11 @@ class RegisterRequest extends FormRequest
             'password'  => ['required', 'confirmed', Password::defaults()],
             'currency'  => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
             'timezone'  => ['required', 'string', 'timezone:all'],
+
+            // ── Plan Intent (اختياري — يأتي من CTAs صفحة التسعير) ────────
+            // لا يؤثر على التحقق أو الاشتراك — يُخزَّن في الـ session فقط.
+            'plan_intent'  => ['nullable', 'string', 'in:pro,business'],
+            'cycle_intent' => ['nullable', 'string', 'in:monthly,annual'],
         ];
     }
 

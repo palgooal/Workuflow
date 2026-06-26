@@ -26,7 +26,29 @@ class SubscriptionService
     ): Subscription {
         $plan = SubscriptionPlan::tryFrom($planValue) ?? SubscriptionPlan::Pro;
 
-        $user->update(['subscription_plan' => $plan]);
+        // ── تحديث خطة المستخدم ──────────────────────────────────────────
+        $userUpdate = ['subscription_plan' => $plan];
+
+        // ── CONVERSION-01: ترقية فترة السماح من 30 دقيقة (ما قبل الدفع) إلى 7 أيام (ما بعده) ──
+        //
+        // السياق:
+        //   RegisterUserAction منح فترة سماح مؤقتة 30 دقيقة (pre-payment grace) تُتيح
+        //   للمستخدم الوصول لصفحة الدفع رغم أن بريده غير موثَّق.
+        //   grace_used_at ظلّ null طوال تلك الفترة — لأن الدفع لم يتأكد بعد.
+        //
+        // الآن (بعد تأكيد الدفع):
+        //   نُرقّي grace_until من 30 دقيقة إلى 7 أيام كاملة ونضبط grace_used_at
+        //   كعلامة دائمة تمنع منح فترة سماح ثانية مدى الحياة.
+        //
+        // الشروط:
+        //   (1) البريد غير موثَّق بعد (email_verified_at = null)
+        //   (2) لم يسبق ضبط grace_used_at — أي لم تُمنح فترة السماح الرسمية من قبل
+        if ($user->email_verified_at === null && ! $user->hasUsedEmailVerificationGrace()) {
+            $userUpdate['email_verification_grace_until']   = now()->addDays(7);
+            $userUpdate['email_verification_grace_used_at'] = now(); // one-time lifetime flag
+        }
+
+        $user->update($userUpdate);
 
         // مدة الاشتراك تعتمد على الدورة المدفوعة
         $endsAt = match ($cycle) {

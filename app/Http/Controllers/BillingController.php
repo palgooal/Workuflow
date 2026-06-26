@@ -317,7 +317,7 @@ class BillingController extends Controller
     }
 
     /**
-     * صفحة الترقية اليدوية — تواصل معنا على واتساب
+     * صفحة الترقية — تواصل معنا أو ادفع الآن
      */
     public function upgrade(): View
     {
@@ -326,7 +326,14 @@ class BillingController extends Controller
         $planPrices    = $this->billing->getPlanPrices();
         $providerReady = $this->billing->isPaymentProviderConfigured();
 
-        return view('billing.upgrade', compact('currentPlan', 'ownerWhatsapp', 'planPrices', 'providerReady'));
+        // ── Plan Intent: قراءة واستهلاك النية المحفوظة من صفحة التسجيل ──
+        // pull() تقرأ القيمة وتحذفها من الـ session في نفس الوقت (تُستهلك مرة واحدة).
+        // القيمة: ['plan' => 'pro'|'business', 'cycle' => 'monthly'|'annual'] | null
+        $paidIntent = session()->pull('paid_intent');
+
+        return view('billing.upgrade', compact(
+            'currentPlan', 'ownerWhatsapp', 'planPrices', 'providerReady', 'paidIntent'
+        ));
     }
 
     /**

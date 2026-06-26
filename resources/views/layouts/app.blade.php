@@ -83,6 +83,63 @@
 @endif
 @endauth
 
+{{-- ══════════════════════════════════════════════════════════════════════
+     بانر التحقق من البريد — CONVERSION-01 Phase 2
+     يظهر فقط للمستخدمين المدفوعين غير الموثَّقين أثناء فترة السماح.
+     لا يمنع الوصول — تحذير لاتخاذ إجراء فقط.
+══════════════════════════════════════════════════════════════════════ --}}
+@auth
+@if(auth()->user()->isInEmailVerificationGrace())
+@php
+    $graceDaysLeft = auth()->user()->graceDaysRemaining();
+    $graceDaysText = match(true) {
+        $graceDaysLeft >= 7  => '7 أيام',
+        $graceDaysLeft >= 3  => "{$graceDaysLeft} أيام",
+        $graceDaysLeft === 2 => 'يومين',
+        default              => 'يوم واحد',
+    };
+@endphp
+<div
+    role="alert"
+    aria-live="polite"
+    class="bg-amber-50 border-b border-amber-300 text-amber-900 text-sm px-4 py-2.5 flex items-center justify-between gap-4 print:hidden"
+>
+    <div class="flex items-center gap-2.5 min-w-0">
+        {{-- Warning icon --}}
+        <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <span class="truncate">
+            يرجى تأكيد بريدك الإلكتروني خلال
+            <strong>{{ $graceDaysText }}</strong>
+            للاستمرار في استخدام المنصة.
+        </span>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+        {{-- CTA: انتقل لصفحة التحقق --}}
+        <a href="{{ route('verification.notice') }}"
+           class="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            تأكيد البريد الآن
+        </a>
+        {{-- Resend: إعادة إرسال بريد التحقق --}}
+        <form method="POST" action="{{ route('verification.send') }}" class="inline">
+            @csrf
+            <button type="submit"
+                    class="text-amber-700 hover:text-amber-900 text-xs underline underline-offset-2 transition focus:outline-none"
+                    title="إعادة إرسال بريد التحقق">
+                إعادة الإرسال
+            </button>
+        </form>
+    </div>
+</div>
+@endif
+@endauth
+
 <div class="min-h-screen flex" x-data="{ sidebarOpen: false }">
 
     @include('layouts.partials.sidebar')

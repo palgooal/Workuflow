@@ -18,8 +18,29 @@
         </p>
     </div>
 
+    {{-- Plan Intent Banner: يظهر فقط عند القدوم مباشرة من صفحة التسجيل --}}
+    @if(!empty($paidIntent))
+    @php
+        $intentLabel = $paidIntent['plan'] === 'business' ? 'Business' : 'Pro';
+        $intentCycleLabel = $paidIntent['cycle'] === 'annual' ? 'سنوي' : 'شهري';
+    @endphp
+    <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm text-emerald-800 dark:text-emerald-300">
+        <svg class="w-5 h-5 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span>
+            اخترت خطة <strong>{{ $intentLabel }} ({{ $intentCycleLabel }})</strong> —
+            @if($providerReady)
+                اضغط على "الدفع الآن" للمتابعة.
+            @else
+                تواصل معنا عبر واتساب لتفعيل خطتك فوراً.
+            @endif
+        </span>
+    </div>
+    @endif
+
     {{-- Current Plan Notice --}}
-    @if($currentPlan->value === 'free')
+    @if($currentPlan->value === 'free' && empty($paidIntent))
     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl px-5 py-3 text-center text-sm text-blue-700 dark:text-blue-300">
         أنت حالياً على الخطة <strong>المجانية</strong> — الترقية تفتح لك جميع الميزات المتقدمة
     </div>
@@ -40,8 +61,10 @@
             $proWaMsgMonthly = "مرحباً، أريد الاشتراك في خطة Pro (شهري - \${$proMonthlyPrice}/شهر) - حسابي: {$proEmail}";
             $proWaMsgAnnual  = "مرحباً، أريد الاشتراك في خطة Pro (سنوي - \${$proAnnualPrice}/شهر تُدفع \${$proAnnualTotal} سنوياً) - حسابي: {$proEmail}";
         @endphp
-        <div x-data="{ cycle: 'monthly' }"
-             class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-brand/60 p-6 relative shadow-md">
+        {{-- Pro card: cycle يبدأ بالقيمة المحفوظة في paid_intent إذا كانت الخطة pro --}}
+        <div x-data="{ cycle: '{{ (!empty($paidIntent) && $paidIntent['plan'] === 'pro') ? $paidIntent['cycle'] : 'monthly' }}' }"
+             class="bg-white dark:bg-slate-900 rounded-2xl border-2 p-6 relative shadow-md
+                    {{ (!empty($paidIntent) && $paidIntent['plan'] === 'pro') ? 'border-brand ring-2 ring-brand/20' : 'border-brand/60' }}">
             <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand text-white text-xs font-medium rounded-full">
                 الأكثر شيوعاً
             </span>
@@ -159,8 +182,10 @@
             $bizWaMsgMonthly = "مرحباً، أريد الاشتراك في خطة Business (شهري - \${$bizMonthlyPrice}/شهر) - حسابي: {$bizEmail}";
             $bizWaMsgAnnual  = "مرحباً، أريد الاشتراك في خطة Business (سنوي - \${$bizAnnualPrice}/شهر تُدفع \${$bizAnnualTotal} سنوياً) - حسابي: {$bizEmail}";
         @endphp
-        <div x-data="{ cycle: 'monthly' }"
-             class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 p-6">
+        {{-- Business card: cycle يبدأ بالقيمة المحفوظة في paid_intent إذا كانت الخطة business --}}
+        <div x-data="{ cycle: '{{ (!empty($paidIntent) && $paidIntent['plan'] === 'business') ? $paidIntent['cycle'] : 'monthly' }}' }"
+             class="bg-white dark:bg-slate-900 rounded-2xl border-2 p-6
+                    {{ (!empty($paidIntent) && $paidIntent['plan'] === 'business') ? 'border-slate-700 dark:border-slate-400 ring-2 ring-slate-400/20' : 'border-slate-200 dark:border-slate-800' }}">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Business</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">للأعمال والفرق الصغيرة</p>
 
