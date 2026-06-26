@@ -113,6 +113,14 @@ class TogoPaymentService implements PaymentProviderInterface
             ]),
         ]);
 
+        // تسجيل أول حدث في الـ timeline
+        $order->addTimelineEvent('order.created', [
+            'plan'     => $plan,
+            'cycle'    => $cycle,
+            'amount'   => $price,
+            'currency' => $currency,
+        ]);
+
         // حفظ ULID المحلي فقط في session — ليس بيانات Togo كاملة
         session(['payment_order_id' => $order->id]);
 

@@ -35,6 +35,15 @@ Route::prefix('')->name('marketing.')->group(function () {
     Route::get('/contact',  fn() => view('marketing.contact'))->name('contact');
 });
 
+// ==================== الصفحات القانونية ====================
+Route::prefix('legal')->name('legal.')->group(function () {
+    Route::get('/privacy',            fn() => view('legal.privacy'))->name('privacy');
+    Route::get('/terms',              fn() => view('legal.terms'))->name('terms');
+    Route::get('/refund',             fn() => view('legal.refund'))->name('refund');
+    Route::get('/subscription-terms', fn() => view('legal.subscription-terms'))->name('subscription-terms');
+    Route::get('/cancellation',       fn() => view('legal.cancellation'))->name('cancellation');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

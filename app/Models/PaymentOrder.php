@@ -104,4 +104,68 @@ class PaymentOrder extends Model
     {
         $this->update(['status' => 'cancelled']);
     }
+
+    // ──────────────────────────────────────────
+    // Payment Timeline
+    // ──────────────────────────────────────────
+
+    /**
+     * يُضيف حدثاً إلى سجل timeline داخل metadata
+     */
+    public function addTimelineEvent(string $event, array $extra = []): void
+    {
+        $current = $this->metadata ?? [];
+        $events  = $current['timeline_events'] ?? [];
+
+        $events[] = array_merge([
+            'event' => $event,
+            'at'    => now()->toIso8601String(),
+        ], $extra);
+
+        $current['timeline_events'] = $events;
+
+        $this->update(['metadata' => $current]);
+    }
+
+    /**
+     * يُعيد أحداث timeline مدمجة مع النقاط الجوهرية من الـ timestamps
+     */
+    public function getTimelineEvents(): array
+    {
+        $events = $this->metadata['timeline_events'] ?? [];
+
+        // أضف نقاط النظام من timestamps لو لم تُسجَّل صراحةً
+        $hasCreated = collect($events)->contains('event', 'order.created');
+        if (! $hasCreated) {
+            array_unshift($events, [
+                'event' => 'order.created',
+                'at'    => $this->created_at?->toIso8601String(),
+            ]);
+        }
+
+        if ($this->paid_at) {
+            $hasPaid = collect($events)->contains('event', 'payment.marked_paid');
+            if (! $hasPaid) {
+                $events[] = [
+                    'event' => 'payment.marked_paid',
+                    'at'    => $this->paid_at->toIso8601String(),
+                ];
+            }
+        }
+
+        if ($this->failed_at) {
+            $hasFailed = collect($events)->contains('event', 'payment.failed');
+            if (! $hasFailed) {
+                $events[] = [
+                    'event' => 'payment.failed',
+                    'at'    => $this->failed_at->toIso8601String(),
+                ];
+            }
+        }
+
+        // رتِّب بالتاريخ
+        usort($events, fn ($a, $b) => strcmp($a['at'] ?? '', $b['at'] ?? ''));
+
+        return $events;
+    }
 }

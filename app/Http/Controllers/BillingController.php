@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\PaymentSucceeded;
 use App\Events\PaymentFailed as PaymentFailedEvent;
+use App\Models\FailedPaymentCallback;
 use App\Models\PaymentOrder;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
 use App\Modules\Billing\Services\SubscriptionService;
@@ -119,6 +120,9 @@ class BillingController extends Controller
             'annual'  => 'سنوي (12 شهراً)',
         ];
 
+        // تسجيل لحظة توجيه المستخدم لبوابة Togo
+        $order->addTimelineEvent('user.redirected_to_gateway', ['gateway' => 'togo']);
+
         return view('billing.togo-pending', [
             'order'       => $order,
             'checkoutUrl' => $checkoutUrl,
@@ -170,7 +174,9 @@ class BillingController extends Controller
 
             if ($status === 'PAID') {
                 // ── 4a. تفعيل الاشتراك ──────────────────────────────────
+                $paymentOrder->addTimelineEvent('callback.received', ['togo_status' => $status]);
                 $paymentOrder->markAsPaid($togoData);
+                $paymentOrder->addTimelineEvent('payment.marked_paid');
 
                 $this->billing->activatePlan(
                     user: auth()->user(),
@@ -178,12 +184,14 @@ class BillingController extends Controller
                     providerSubscriptionId: $paymentOrder->provider_order_id,
                     cycle: $paymentOrder->cycle ?? 'monthly',
                 );
+                $paymentOrder->addTimelineEvent('subscription.activated', ['plan' => $paymentOrder->plan, 'cycle' => $paymentOrder->cycle]);
 
                 session()->forget('payment_order_id');
 
                 // ── إطلاق حدث + إشعار نجاح الدفع ──────────────────────
                 event(new PaymentSucceeded($paymentOrder));
                 auth()->user()->notify(new PaymentSuccessfulNotification($paymentOrder));
+                $paymentOrder->addTimelineEvent('notification.sent', ['type' => 'PaymentSuccessfulNotification']);
 
                 Log::info('Togo payment succeeded — subscription activated', [
                     'payment_order_id'  => $paymentOrder->id,
@@ -213,13 +221,21 @@ class BillingController extends Controller
             return redirect()->route('billing.failed')
                 ->with('togo_status', $status);
 
-        } catch (\RuntimeException $e) {
+        } catch (\Throwable $e) {
             Log::error('Togo callback: verifyOrder exception', [
                 'payment_order_id'  => $paymentOrder->id,
                 'provider_order_id' => $paymentOrder->provider_order_id,
                 'error'             => $e->getMessage(),
                 'user'              => auth()->id(),
             ]);
+
+            // تسجيل الفشل في الجدول المخصص لعدم إهدار أي callback
+            FailedPaymentCallback::record(
+                provider: 'togo',
+                orderId:  $paymentOrder->provider_order_id,
+                payload:  $request->all(),
+                exception: $e,
+            );
 
             return redirect()->route('billing.failed')
                 ->with('error', 'حدث خطأ أثناء التحقق من الدفع. تواصل مع الدعم.');

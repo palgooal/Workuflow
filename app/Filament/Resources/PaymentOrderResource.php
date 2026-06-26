@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 
 class PaymentOrderResource extends Resource
@@ -242,13 +243,27 @@ class PaymentOrderResource extends Resource
                 // Paid / Unpaid quick filter
                 Tables\Filters\Filter::make('paid_only')
                     ->label('المدفوعة فقط')
-                    ->query(fn ($q) => $q->where('status', 'paid')),
+                    ->query(fn (Builder $query) => $query->where('status', 'paid')),
 
                 Tables\Filters\Filter::make('unpaid_only')
                     ->label('غير المدفوعة')
-                    ->query(fn ($q) => $q->whereIn('status', ['pending', 'failed', 'cancelled'])),
+                    ->query(fn (Builder $query) => $query->whereIn('status', ['pending', 'failed', 'cancelled'])),
             ])
             ->actions([
+                // ── Payment Timeline ──
+                Tables\Actions\Action::make('view_timeline')
+                    ->label('Timeline')
+                    ->icon('heroicon-o-clock')
+                    ->color('primary')
+                    ->modalHeading(fn (PaymentOrder $record) => 'مسار الدفع: ' . substr($record->id, 0, 14) . '…')
+                    ->modalContent(fn (PaymentOrder $record) => view(
+                        'filament.modals.payment-order-timeline',
+                        ['order' => $record]
+                    ))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق')
+                    ->modalWidth('2xl'),
+
                 // ── View Details (read-only modal) ──
                 Tables\Actions\Action::make('view_details')
                     ->label('التفاصيل')

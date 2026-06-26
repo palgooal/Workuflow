@@ -69,6 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 'إدارة المستخدمين',
                 'البيانات المالية',
+                'المدفوعات',
                 'النظام',
             ]);
     }

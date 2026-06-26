@@ -19,20 +19,28 @@ class OnboardingService
             'url_label'   => 'إنشاء مشروع',
         ],
         [
+            'key'         => 'add_client',
+            'title'       => 'أضف أول عميل',
+            'description' => 'سجّل بيانات عميلك لإدارة علاقاتك التجارية',
+            'icon'        => '👥',
+            'url_name'    => 'clients.create',
+            'url_label'   => 'إضافة عميل',
+        ],
+        [
+            'key'         => 'create_invoice',
+            'title'       => 'أنشئ أول فاتورة',
+            'description' => 'أرسل فاتورة احترافية لعميلك بخطوات بسيطة',
+            'icon'        => '🧾',
+            'url_name'    => 'invoices.create',
+            'url_label'   => 'إنشاء فاتورة',
+        ],
+        [
             'key'         => 'add_transaction',
             'title'       => 'سجّل أول معاملة',
             'description' => 'أضف دخلاً أو مصروفاً لتبدأ بتتبع ماليتك',
             'icon'        => '💸',
             'url_name'    => 'transactions.create',
             'url_label'   => 'إضافة معاملة',
-        ],
-        [
-            'key'         => 'set_budget',
-            'title'       => 'ضع ميزانيتك الشهرية',
-            'description' => 'حدد سقف المصروفات لكل فئة وتحكم في إنفاقك',
-            'icon'        => '🎯',
-            'url_name'    => 'budget.index',
-            'url_label'   => 'ضبط الميزانية',
         ],
         [
             'key'         => 'view_reports',
@@ -103,6 +111,18 @@ class OnboardingService
             $completed[] = 'create_project';
         }
 
+        // العملاء — جدول clients في CRM
+        if (\Illuminate\Support\Facades\DB::table('clients')
+            ->where('user_id', $user->id)->exists()) {
+            $completed[] = 'add_client';
+        }
+
+        // الفواتير
+        if (\Illuminate\Support\Facades\DB::table('invoices')
+            ->where('user_id', $user->id)->exists()) {
+            $completed[] = 'create_invoice';
+        }
+
         if ($user->transactions()->exists()) {
             $completed[] = 'add_transaction';
         }
@@ -111,7 +131,7 @@ class OnboardingService
             $completed[] = 'set_budget';
         }
 
-        // التقارير: تُعتبر مكتملة إذا أكمل خطوات الدخل والمصروفات
+        // التقارير: تُعتبر مكتملة إذا أكمل خطوات الدخل والمشاريع
         if (in_array('add_transaction', $completed) && in_array('create_project', $completed)) {
             $completed[] = 'view_reports';
         }

@@ -31,7 +31,10 @@
                 ['id' => 'recurring',    'label' => 'الالتزامات الثابتة', 'emoji' => '🔁'],
                 ['id' => 'reports',      'label' => 'التقارير',           'emoji' => '📈'],
                 ['id' => 'crm',          'label' => 'الشرائح وصحة العملاء','emoji' => '🎯'],
-                ['id' => 'tips',         'label' => 'نصائح وحيل',         'emoji' => '💡'],
+                ['id' => 'tips',          'label' => 'نصائح وحيل',          'emoji' => '💡'],
+                ['id' => 'subscriptions', 'label' => 'الاشتراكات',           'emoji' => '⭐'],
+                ['id' => 'payments',      'label' => 'الدفع',                'emoji' => '💳'],
+                ['id' => 'faq',           'label' => 'الأسئلة الشائعة',      'emoji' => '❓'],
             ];
             @endphp
 
@@ -615,6 +618,105 @@
                 <div class="mt-4 p-5 bg-gradient-to-l from-brand-50 to-purple-50 rounded-2xl border border-brand-100">
                     <p class="font-semibold text-slate-900 mb-1">لديك سؤال لم تجد إجابته هنا؟</p>
                     <p class="text-sm text-slate-600">تواصل معنا عبر البريد الإلكتروني أو واتساب وسنساعدك فوراً.</p>
+                </div>
+
+            </x-help-section>
+        </div>
+
+        {{-- ===== Subscriptions ===== --}}
+        <div x-show="tab === 'subscriptions'" x-cloak>
+            <x-help-section title="⭐ الاشتراكات">
+
+                <x-help-card title="ما الفرق بين الخطط؟">
+                    <ul class="list-disc list-inside space-y-1 text-sm text-slate-600">
+                        <li><strong>مجاني:</strong> مشروع واحد، 5 عملاء، 10 فواتير — مناسب للتجربة</li>
+                        <li><strong>Pro ⚡:</strong> مشاريع وعملاء وفواتير غير محدودة + تقارير متقدمة</li>
+                        <li><strong>Business 🚀:</strong> كل ميزات Pro + التحليلات والتصدير المتقدم</li>
+                    </ul>
+                    <p class="mt-2 text-sm text-slate-500">قارن الخطط في <a href="{{ route('marketing.pricing') }}" class="text-brand-600 hover:underline">صفحة الأسعار</a>.</p>
+                </x-help-card>
+
+                <x-help-card title="كيف أشترك في خطة مدفوعة؟">
+                    <ol class="list-decimal list-inside space-y-1 text-sm text-slate-600">
+                        <li>اذهب إلى <strong>الإعدادات → الاشتراك</strong></li>
+                        <li>اختر الخطة ودورة الفوترة (شهري أو سنوي)</li>
+                        <li>اضغط "ابدأ الآن" وأكمل الدفع عبر Togo</li>
+                        <li>يُفعَّل الاشتراك فوراً بعد تأكيد الدفع</li>
+                    </ol>
+                </x-help-card>
+
+                <x-help-card title="ماذا يحدث عند انتهاء الاشتراك؟">
+                    <p class="text-sm text-slate-600">ستصلك رسالة تذكير قبل 7 أيام من الانتهاء. بعد الانتهاء يُخفَّض حسابك للخطة المجانية تلقائياً — <strong>لا تُحذف أي بيانات</strong>. يمكنك تجديد الاشتراك في أي وقت.</p>
+                </x-help-card>
+
+                <x-help-card title="هل الاشتراك يتجدد تلقائياً؟">
+                    <p class="text-sm text-slate-600">لا. دراهم لا يُجدِّد الاشتراك تلقائياً. ستُخطَر قبل الانتهاء وتختار التجديد بنفسك. راجع <a href="{{ route('legal.subscription-terms') }}" class="text-brand-600 hover:underline">شروط الاشتراك</a> لمزيد من التفاصيل.</p>
+                </x-help-card>
+
+            </x-help-section>
+        </div>
+
+        {{-- ===== Payments ===== --}}
+        <div x-show="tab === 'payments'" x-cloak>
+            <x-help-section title="💳 الدفع">
+
+                <x-help-card title="كيف يعمل الدفع؟">
+                    <p class="text-sm text-slate-600">تُعالَج المدفوعات عبر بوابة <strong>Togo (togo.ps)</strong> الآمنة. عند الضغط على "ابدأ الآن" تُنقَل لصفحة دفع Togo، وبعد الدفع يعود النظام تلقائياً ويُفعِّل اشتراكك.</p>
+                </x-help-card>
+
+                <x-help-card title="ما وسائل الدفع المقبولة؟">
+                    <p class="text-sm text-slate-600">تدعم بوابة Togo بطاقات Visa و MasterCard ووسائل الدفع المحلية في فلسطين. قائمة وسائل الدفع الكاملة متوفرة في صفحة Togo عند الدفع.</p>
+                </x-help-card>
+
+                <x-help-card title="فشلت عملية الدفع — ماذا أفعل؟">
+                    <ol class="list-decimal list-inside space-y-1 text-sm text-slate-600">
+                        <li>تحقق من بيانات البطاقة والرصيد</li>
+                        <li>اضغط "إعادة المحاولة" في صفحة الدفع الفاشل</li>
+                        <li>إذا استمر الفشل، تواصل مع دعمنا</li>
+                    </ol>
+                    <p class="mt-2 text-sm text-slate-500">⚠️ لن تُفرض رسوم على الدفع الفاشل — نحن لا نخزّن بيانات بطاقتك.</p>
+                </x-help-card>
+
+                <x-help-card title="كيف أطلب استرداداً؟">
+                    <p class="text-sm text-slate-600">راجع <a href="{{ route('legal.refund') }}" class="text-brand-600 hover:underline">سياسة الاسترداد</a> كاملةً. الملخص: للاشتراك الشهري خلال 48 ساعة، والسنوي خلال 7 أيام، أرسل طلبك لـ support@darahum.com.</p>
+                </x-help-card>
+
+            </x-help-section>
+        </div>
+
+        {{-- ===== FAQ ===== --}}
+        <div x-show="tab === 'faq'" x-cloak>
+            <x-help-section title="❓ الأسئلة الشائعة">
+
+                @php
+                $faqs = [
+                    ['هل يمكنني تجربة دراهم مجاناً؟', 'نعم! الخطة المجانية متاحة بلا حد زمني. تشمل مشروعاً واحداً، 5 عملاء، و10 فواتير. لا يلزم إدخال بيانات الدفع للبدء.'],
+                    ['هل بياناتي آمنة؟', 'نعم. نستخدم HTTPS مشفَّراً، كلمات مرور محمية، وعزل كامل لبيانات كل مستخدم. لا نبيع بياناتك أبداً. راجع سياسة الخصوصية لمزيد من التفاصيل.'],
+                    ['هل يمكنني تصدير فواتيري؟', 'نعم. من داخل أي فاتورة، اضغط زر PDF لتنزيلها. يمكنك أيضاً إرسالها مباشرة عبر واتساب أو بريد إلكتروني.'],
+                    ['هل دراهم يدعم الفريق؟', 'نعم. يمكنك إضافة أعضاء فريق لكل مشروع من إعدادات المشروع → الفريق. كل عضو يملك صلاحيات محددة.'],
+                    ['ما عملات الدفع المدعومة؟', 'واجهة دراهم تدعم متعددة العملات (دولار، ريال، درهم، دينار...). الدفع عبر Togo يتم بالشيكل الإسرائيلي (ILS) أو العملة المضبوطة في إعدادات البوابة.'],
+                    ['كيف أُلغي اشتراكي؟', 'من الإعدادات → الاشتراك → إلغاء الاشتراك. ستظل تستخدم المنصة حتى نهاية الفترة المدفوعة. راجع سياسة الإلغاء.'],
+                    ['هل يمكنني استخدام دراهم بدون اتصال إنترنت؟', 'لا. دراهم تطبيق سحابي يحتاج اتصالاً دائماً بالإنترنت.'],
+                    ['كيف أتواصل مع الدعم؟', 'بريد إلكتروني: support@darahum.com — أو عبر واتساب للدعم السريع. نرد خلال 24 ساعة في أيام العمل.'],
+                ];
+                @endphp
+
+                <div class="space-y-3" x-data="{ open: null }">
+                    @foreach($faqs as $i => [$q, $a])
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <button
+                            @click="open = open === {{ $i }} ? null : {{ $i }}"
+                            class="w-full text-right px-5 py-4 flex items-center justify-between font-medium text-slate-800 hover:bg-slate-50 transition">
+                            <span>{{ $q }}</span>
+                            <svg class="w-5 h-5 text-slate-400 transition-transform" :class="open === {{ $i }} ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="open === {{ $i }}" x-collapse class="px-5 pb-4 text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                            <p class="pt-3">{{ $a }}</p>
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
 
             </x-help-section>
