@@ -17,12 +17,14 @@ class RegisterUserAction
     {
         // إنشاء المستخدم
         $user = User::create([
-            'name'              => $request->name,
-            'email'             => $request->email,
-            'password'          => $request->password,
-            'currency'          => $request->currency,
-            'timezone'          => $request->timezone,
-            'subscription_plan' => SubscriptionPlan::Free,
+            'name'                    => $request->name,
+            'email'                   => $request->email,
+            'password'                => $request->password,
+            'currency'                => $request->currency,
+            'timezone'                => $request->timezone,
+            'subscription_plan'       => SubscriptionPlan::Free,
+            'registration_ip'         => $request->ip(),
+            'registration_user_agent' => $request->userAgent(),
         ]);
 
         // إطلاق حدث التسجيل (يُرسل بريد التحقق تلقائياً)

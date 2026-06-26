@@ -39,7 +39,9 @@ class RegisteredUserController extends Controller
             'UTC'             => 'UTC',
         ];
 
-        return view('auth.register', compact('currencies', 'timezones'));
+        $formToken = encrypt(now()->timestamp);
+
+        return view('auth.register', compact('currencies', 'timezones', 'formToken'));
     }
 
     public function store(RegisterRequest $request): RedirectResponse

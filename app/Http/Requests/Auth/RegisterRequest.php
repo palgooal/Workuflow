@@ -4,6 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Validator;
 
 class RegisterRequest extends FormRequest
 {
@@ -15,12 +16,58 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // ── Anti-spam ────────────────────────────────────────────────
+            'website'      => ['prohibited'],        // Honeypot: يجب أن يبقى فارغاً
+            '_form_token'  => ['required', 'string'], // Timing token: مطلوب دائماً
+            // ── Registration fields ───────────────────────────────────────
             'name'      => ['required', 'string', 'max:255'],
-            'email'     => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'email'     => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $atPos = strrpos($value, '@');
+                    if ($atPos === false) return; // حقل البريد غير صالح — تُعالجه قاعدة email
+                    $domain = strtolower(trim(substr($value, $atPos + 1)));
+                    if (in_array($domain, config('blocked-email-domains', []))) {
+                        $fail('لا يمكن استخدام بريد إلكتروني مؤقت للتسجيل.');
+                    }
+                },
+            ],
             'password'  => ['required', 'confirmed', Password::defaults()],
             'currency'  => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
             'timezone'  => ['required', 'string', 'timezone:all'],
         ];
+    }
+
+    /**
+     * فحص توقيت الفورم بعد اجتياز القواعد الأساسية.
+     * إذا كان هناك أي خطأ مسبق (Honeypot أو حقول ناقصة)، يُتجاوز الفحص.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return; // الطلب فاشل بالفعل — لا داعي لمزيد من الفحص
+            }
+
+            $this->validateFormTiming($validator);
+        });
+    }
+
+    private function validateFormTiming(Validator $validator): void
+    {
+        $token = $this->input('_form_token', '');
+
+        try {
+            $renderedAt = (int) decrypt($token);
+        } catch (\Throwable) {
+            // التوكن مفقود أو مزيّف أو التشفير فاشل — رفض صامت
+            $validator->errors()->add('_form_token', 'invalid');
+            return;
+        }
+
+        // الإرسال خلال أقل من ثانيتين = ربما بوت
+        if ((now()->timestamp - $renderedAt) < 2) {
+            $validator->errors()->add('_form_token', 'too_fast');
+        }
     }
 
     public function messages(): array

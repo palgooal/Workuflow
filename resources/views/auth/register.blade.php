@@ -9,6 +9,15 @@
     <form method="POST" action="{{ route('register') }}" class="space-y-5">
         @csrf
 
+        {{-- Honeypot: مخفي عن البشر، يُملأ بواسطة البوتات --}}
+        <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;" tabindex="-1">
+            <label for="hp_website">Website (leave blank)</label>
+            <input type="text" id="hp_website" name="website" tabindex="-1" autocomplete="off" value="">
+        </div>
+
+        {{-- توقيت الفورم: يكتشف الإرسال الآلي الفوري --}}
+        <input type="hidden" name="_form_token" value="{{ $formToken }}">
+
         {{-- الاسم --}}
         <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">الاسم الكامل</label>

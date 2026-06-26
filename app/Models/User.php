@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Support\Enums\SubscriptionPlan;
 use App\Support\Enums\UserStatus;
-// use Illuminate\Contracts\Auth\MustVerifyEmail; // TODO: إعادة تفعيله قبل الإطلاق (Phase 13)
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser // implements MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
@@ -29,6 +29,10 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
         'status',
         'onboarding_dismissed_at',
         'payment_customer_id',  // يُملأ عند ربط مزود الدفع
+        'registration_ip',
+        'registration_user_agent',
+        'last_login_at',
+        'last_login_ip',
     ];
 
     protected $hidden = [
@@ -44,6 +48,7 @@ class User extends Authenticatable implements FilamentUser // implements MustVer
             'subscription_plan'          => SubscriptionPlan::class,
             'status'                     => UserStatus::class,
             'onboarding_dismissed_at'    => 'datetime',
+            'last_login_at'              => 'datetime',
         ];
     }
 

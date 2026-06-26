@@ -14,6 +14,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use App\Mail\ReEngagementEmail;
 use App\Modules\Billing\Services\SubscriptionService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class UserResource extends Resource
@@ -99,6 +101,7 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                // ── Identity ───────────────────────────────────────────
                 Tables\Columns\TextColumn::make('name')
                     ->label('الاسم')
                     ->searchable()
@@ -110,6 +113,18 @@ class UserResource extends Resource
                     ->sortable()
                     ->copyable(),
 
+                // ── Verification badge ─────────────────────────────────
+                Tables\Columns\TextColumn::make('email_verified_at')
+                    ->label('التحقق')
+                    ->badge()
+                    ->getStateUsing(fn (User $record): string => $record->email_verified_at
+                        ? 'مُتحقق'
+                        : 'غير مُتحقق'
+                    )
+                    ->color(fn (string $state): string => $state === 'مُتحقق' ? 'success' : 'danger')
+                    ->sortable(),
+
+                // ── Status & Plan ──────────────────────────────────────
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('الحالة')
                     ->formatStateUsing(fn ($state) => $state instanceof UserStatus ? $state->label() : $state)
@@ -127,27 +142,70 @@ class UserResource extends Resource
                         'success' => fn ($state) => $state === SubscriptionPlan::Business || $state?->value === 'business',
                     ]),
 
+                // ── Activity counts ────────────────────────────────────
                 Tables\Columns\TextColumn::make('projects_count')
                     ->label('المشاريع')
                     ->counts('projects')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('clients_count')
+                    ->label('العملاء')
+                    ->getStateUsing(fn (User $record): int =>
+                        DB::table('clients')->where('user_id', $record->id)->count()
+                    )
+                    ->sortable(false), // لا علاقة Eloquent — الترتيب غير متاح
 
                 Tables\Columns\TextColumn::make('transactions_count')
                     ->label('المعاملات')
                     ->counts('transactions')
                     ->sortable(),
 
+                // ── Login metadata ─────────────────────────────────────
+                Tables\Columns\TextColumn::make('last_login_at')
+                    ->label('آخر دخول')
+                    ->dateTime('d/m/Y H:i')
+                    ->placeholder('لم يسجّل دخولاً')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('last_login_ip')
+                    ->label('IP آخر دخول')
+                    ->fontFamily('mono')
+                    ->placeholder('—')
+                    ->copyable()
+                    ->copyMessage('تم النسخ')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                // ── Registration metadata ──────────────────────────────
+                Tables\Columns\TextColumn::make('registration_ip')
+                    ->label('IP التسجيل')
+                    ->fontFamily('mono')
+                    ->placeholder('—')
+                    ->copyable()
+                    ->copyMessage('تم النسخ')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('registration_user_agent')
+                    ->label('User-Agent التسجيل')
+                    ->limit(40)
+                    ->tooltip(fn (User $record): string => $record->registration_user_agent ?? '—')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                // ── Date ───────────────────────────────────────────────
                 Tables\Columns\TextColumn::make('currency')
                     ->label('العملة')
-                    ->badge(),
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ التسجيل')
-                    ->dateTime('d/m/Y')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                // ── Existing ───────────────────────────────────────────
                 Tables\Filters\SelectFilter::make('subscription_plan')
                     ->label('الخطة')
                     ->options([
@@ -162,12 +220,61 @@ class UserResource extends Resource
                         'active'    => 'نشط',
                         'suspended' => 'موقوف',
                     ]),
+
+                // ── Security filters ───────────────────────────────────
+                Tables\Filters\Filter::make('email_unverified')
+                    ->label('غير مُتحقق من البريد')
+                    ->query(fn (Builder $query) => $query->whereNull('email_verified_at'))
+                    ->toggle(),
+
+                Tables\Filters\Filter::make('email_verified')
+                    ->label('مُتحقق من البريد')
+                    ->query(fn (Builder $query) => $query->whereNotNull('email_verified_at'))
+                    ->toggle(),
+
+                Tables\Filters\Filter::make('registered_today')
+                    ->label('مسجّل اليوم')
+                    ->query(fn (Builder $query) => $query->whereDate('created_at', today()))
+                    ->toggle(),
+
+                Tables\Filters\Filter::make('never_logged_in')
+                    ->label('لم يسجّل دخولاً قط')
+                    ->query(fn (Builder $query) => $query->whereNull('last_login_at'))
+                    ->toggle(),
+
+                Tables\Filters\Filter::make('no_activity')
+                    ->label('بلا نشاط (مشبوه)')
+                    ->query(fn (Builder $query) => $query
+                        ->whereDoesntHave('projects')
+                        ->whereDoesntHave('transactions')
+                        ->whereRaw('(SELECT COUNT(*) FROM clients WHERE clients.user_id = users.id) = 0')
+                    )
+                    ->toggle(),
             ])
             ->actions([
-                // ─── تعديل ───────────────────────────────────────────
+                // ─── تعديل ────────────────────────────────────────────
                 Tables\Actions\EditAction::make()->label('تعديل'),
 
-                // ─── تعليق الحساب ────────────────────────────────────
+                // ─── إعادة إرسال التحقق ───────────────────────────────
+                Tables\Actions\Action::make('resendVerification')
+                    ->label('إعادة التحقق')
+                    ->icon('heroicon-o-envelope-open')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (User $record) => "إعادة إرسال بريد التحقق لـ {$record->name}")
+                    ->modalDescription('سيُرسل رابط تحقق جديد إلى بريده الإلكتروني.')
+                    ->modalSubmitActionLabel('إرسال')
+                    ->visible(fn (User $record): bool => $record->email_verified_at === null)
+                    ->action(function (User $record): void {
+                        $record->sendEmailVerificationNotification();
+                        Notification::make()
+                            ->title('تم الإرسال')
+                            ->body("أُرسل بريد التحقق إلى {$record->email}.")
+                            ->success()
+                            ->send();
+                    }),
+
+                // ─── تعليق الحساب ─────────────────────────────────────
                 Tables\Actions\Action::make('suspend')
                     ->label('تعليق')
                     ->icon('heroicon-o-no-symbol')
@@ -186,7 +293,7 @@ class UserResource extends Resource
                             ->send();
                     }),
 
-                // ─── تفعيل الحساب ────────────────────────────────────
+                // ─── تفعيل الحساب ─────────────────────────────────────
                 Tables\Actions\Action::make('activate')
                     ->label('تفعيل')
                     ->icon('heroicon-o-check-circle')
@@ -205,7 +312,7 @@ class UserResource extends Resource
                             ->send();
                     }),
 
-                // ─── إعادة ضبط الخطة إلى مجاني ──────────────────────
+                // ─── إعادة ضبط الخطة إلى مجاني ───────────────────────
                 Tables\Actions\Action::make('resetPlan')
                     ->label('خطة مجانية')
                     ->icon('heroicon-o-arrow-path')
@@ -229,7 +336,7 @@ class UserResource extends Resource
                             ->send();
                     }),
 
-                // ─── تفعيل خطة مدفوعة ────────────────────────────────
+                // ─── تفعيل خطة مدفوعة ─────────────────────────────────
                 Tables\Actions\Action::make('activatePlan')
                     ->label('تفعيل خطة')
                     ->icon('heroicon-o-star')
@@ -259,14 +366,11 @@ class UserResource extends Resource
                     ->modalHeading(fn (User $record) => "تفعيل خطة مدفوعة لـ {$record->name}")
                     ->modalSubmitActionLabel('تفعيل الاشتراك')
                     ->action(function (User $record, array $data): void {
-                        // معرّف ثابت وفريد لتجنب updateOrCreate بمصفوفة مطابقة فارغة
                         $providerSubscriptionId = 'manual-' . $record->id . '-' . now()->timestamp;
 
                         $service      = app(SubscriptionService::class);
                         $subscription = $service->activatePlan($record, $data['plan'], $providerSubscriptionId);
 
-                        // تحديث ends_at فقط — provider_subscription_id مضبوط أعلاه
-                        // ملاحظة الأدمن في $data['notes'] للمراجعة فقط (لا يوجد حقل notes في DB)
                         $subscription->update([
                             'ends_at' => $data['ends_at'],
                         ]);
@@ -278,7 +382,7 @@ class UserResource extends Resource
                             ->send();
                     }),
 
-                // ─── إرسال بريد إلكتروني ─────────────────────────────
+                // ─── إرسال بريد إلكتروني ──────────────────────────────
                 Tables\Actions\Action::make('sendEmail')
                     ->label('إرسال بريد')
                     ->icon('heroicon-o-envelope')
@@ -320,7 +424,7 @@ class UserResource extends Resource
                         }
                     }),
 
-                // ─── إرسال بريد إعادة التفعيل ───────────────────────
+                // ─── إرسال بريد إعادة التفعيل ─────────────────────────
                 Tables\Actions\Action::make('sendReEngagement')
                     ->label('إعادة التفعيل')
                     ->icon('heroicon-o-rocket-launch')
@@ -347,7 +451,47 @@ class UserResource extends Resource
                         }
                     }),
 
-                // ─── حذف بيانات المستخدم ─────────────────────────────
+                // ─── حذف حساب سبام (مشروط) ────────────────────────────
+                Tables\Actions\Action::make('deleteSpamAccount')
+                    ->label('حذف سبام')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('حذف حساب سبام')
+                    ->modalDescription(fn (User $record) => implode("\n", [
+                        "الحساب: {$record->name} ({$record->email})",
+                        "IP التسجيل: " . ($record->registration_ip ?? '—'),
+                        "",
+                        "الشروط مستوفاة: بريد غير مُتحقق + خطة مجانية + لا مشاريع + لا عملاء + لا معاملات.",
+                        "هذا الإجراء لا يمكن التراجع عنه.",
+                    ]))
+                    ->modalSubmitActionLabel('نعم، احذف الحساب نهائياً')
+                    ->visible(function (User $record): bool {
+                        // شروط الأمان: يجب استيفاء الخمسة معاً
+                        if ($record->email_verified_at !== null) return false;
+                        if ($record->subscription_plan !== SubscriptionPlan::Free) return false;
+                        if ($record->projects()->exists()) return false;
+                        if ($record->transactions()->exists()) return false;
+                        if (DB::table('clients')->where('user_id', $record->id)->exists()) return false;
+                        return true;
+                    })
+                    ->action(function (User $record): void {
+                        $email = $record->email;
+                        $name  = $record->name;
+
+                        // تنظيف البيانات المرتبطة قبل الحذف
+                        $record->notifications()->delete();
+                        $record->categories()->delete();
+                        $record->delete(); // حذف نهائي للحساب
+
+                        Notification::make()
+                            ->title('تم حذف حساب السبام')
+                            ->body("تم حذف {$name} ({$email}) نهائياً.")
+                            ->danger()
+                            ->send();
+                    }),
+
+                // ─── حذف بيانات المستخدم ──────────────────────────────
                 Tables\Actions\Action::make('deleteData')
                     ->label('حذف البيانات')
                     ->icon('heroicon-o-trash')
@@ -382,7 +526,7 @@ class UserResource extends Resource
                             ->send();
                     }),
 
-                // ─── دخول كمستخدم (Impersonate) ──────────────────────
+                // ─── دخول كمستخدم (Impersonate) ───────────────────────
                 Tables\Actions\Action::make('loginAs')
                     ->label('دخول كمستخدم')
                     ->icon('heroicon-o-arrow-right-on-rectangle')
