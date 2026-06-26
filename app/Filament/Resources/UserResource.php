@@ -43,6 +43,19 @@ class UserResource extends Resource
                     ->required()
                     ->unique(ignoreRecord: true),
 
+                Forms\Components\TextInput::make('phone')
+                    ->label('رقم الجوال')
+                    ->tel()
+                    ->placeholder('+970599123456')
+                    ->maxLength(30)
+                    ->nullable()
+                    ->unique(ignoreRecord: true)
+                    ->regex('/^\+[1-9]\d{5,14}$/')
+                    ->validationMessages([
+                        'regex'  => 'صيغة رقم الجوال غير صحيحة. مثال: +970599123456',
+                        'unique' => 'رقم الجوال هذا مستخدم من قِبل حساب آخر.',
+                    ]),
+
                 Forms\Components\TextInput::make('password')
                     ->label('كلمة المرور')
                     ->password()
@@ -112,6 +125,14 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable(),
+
+                Tables\Columns\TextColumn::make('phone')
+                    ->label('الجوال')
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('تم نسخ رقم الجوال')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 // ── Verification badge ─────────────────────────────────
                 Tables\Columns\TextColumn::make('email_verified_at')
@@ -250,10 +271,30 @@ class UserResource extends Resource
                         ->whereRaw('(SELECT COUNT(*) FROM clients WHERE clients.user_id = users.id) = 0')
                     )
                     ->toggle(),
+
+                // ── Phone filters ──────────────────────────────────────
+                Tables\Filters\Filter::make('has_phone')
+                    ->label('لديه رقم جوال')
+                    ->query(fn (Builder $query) => $query->whereNotNull('phone'))
+                    ->toggle(),
+
+                Tables\Filters\Filter::make('missing_phone')
+                    ->label('بدون رقم جوال')
+                    ->query(fn (Builder $query) => $query->whereNull('phone'))
+                    ->toggle(),
             ])
             ->actions([
                 // ─── تعديل ────────────────────────────────────────────
                 Tables\Actions\EditAction::make()->label('تعديل'),
+
+                // ─── واتساب ───────────────────────────────────────────
+                Tables\Actions\Action::make('whatsapp')
+                    ->label('واتساب')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->url(fn (User $record): string => 'https://wa.me/' . ltrim($record->phone ?? '', '+'))
+                    ->openUrlInNewTab()
+                    ->visible(fn (User $record): bool => filled($record->phone)),
 
                 // ─── إعادة إرسال التحقق ───────────────────────────────
                 Tables\Actions\Action::make('resendVerification')

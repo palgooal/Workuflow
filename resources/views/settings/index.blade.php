@@ -130,6 +130,109 @@
                     @enderror
                 </div>
 
+                {{-- رقم الهاتف --}}
+                {{--
+                    نفس نمط Alpine المستخدم في صفحة التسجيل.
+                    عند تحميل الصفحة للمرة الأولى: يُحلَّل $user->phone (E.164) بـ PHP
+                    لاستخراج رمز الدولة والرقم المحلي للعرض.
+                    عند إعادة التحميل بعد خطأ: old('phone_code') / old('phone_local') يتولّيان الأمر.
+                --}}
+                @php
+                    // 1. قيم افتراضية
+                    $settingsPhoneCode  = '+970';
+                    $settingsPhoneLocal = '';
+
+                    // 2. تحليل الرقم الموجود في قاعدة البيانات (إن وُجد)
+                    if ($user->phone) {
+                        // رموز الدول مرتبة: الأطول أولاً لتفادي التطابق الخاطئ (+20 قبل +2)
+                        $knownCodes = [
+                            '+970','+966','+962','+971','+965','+974','+973','+968',
+                            '+961','+963','+964','+967','+212','+216','+213','+44','+20','+1',
+                        ];
+                        foreach ($knownCodes as $code) {
+                            if (str_starts_with($user->phone, $code)) {
+                                $settingsPhoneCode  = $code;
+                                $settingsPhoneLocal = substr($user->phone, strlen($code));
+                                break;
+                            }
+                        }
+                    }
+
+                    // 3. old() يتولّى الأولوية عند إعادة التحميل بعد خطأ تحقق
+                    $settingsPhoneCode  = old('phone_code',  $settingsPhoneCode);
+                    $settingsPhoneLocal = old('phone_local', $settingsPhoneLocal);
+                @endphp
+
+                <div
+                    x-data="{
+                        dialCode: '{{ $settingsPhoneCode }}',
+                        localNum: '{{ $settingsPhoneLocal }}',
+                        get phone() {
+                            let local = this.localNum.replace(/[\s\-]/g, '').replace(/\D/g, '');
+                            if (local.startsWith('0')) local = local.slice(1);
+                            return local.length ? this.dialCode + local : '';
+                        }
+                    }"
+                >
+                    <label class="block text-sm font-semibold text-ink mb-1.5">
+                        رقم الهاتف
+                        @if(! $user->phone)
+                            <span class="text-xs font-normal text-amber-600 mr-1">(غير مُضاف بعد)</span>
+                        @endif
+                    </label>
+                    <div class="flex gap-2">
+
+                        {{-- رمز الدولة --}}
+                        <select
+                            name="phone_code"
+                            x-model="dialCode"
+                            class="px-3 py-2.5 rounded-btn border border-slate-200 bg-white text-slate-800 text-sm
+                                   focus:outline-none focus:ring-2 focus:ring-accent/40
+                                   @error('phone') border-red-400 @enderror"
+                        >
+                            <option value="+970">🇵🇸 +970</option>
+                            <option value="+966">🇸🇦 +966</option>
+                            <option value="+962">🇯🇴 +962</option>
+                            <option value="+971">🇦🇪 +971</option>
+                            <option value="+965">🇰🇼 +965</option>
+                            <option value="+974">🇶🇦 +974</option>
+                            <option value="+973">🇧🇭 +973</option>
+                            <option value="+968">🇴🇲 +968</option>
+                            <option value="+20">🇪🇬  +20</option>
+                            <option value="+961">🇱🇧 +961</option>
+                            <option value="+963">🇸🇾 +963</option>
+                            <option value="+964">🇮🇶 +964</option>
+                            <option value="+967">🇾🇪 +967</option>
+                            <option value="+212">🇲🇦 +212</option>
+                            <option value="+216">🇹🇳 +216</option>
+                            <option value="+213">🇩🇿 +213</option>
+                            <option value="+44">🇬🇧  +44</option>
+                            <option value="+1">🇺🇸  +1</option>
+                        </select>
+
+                        {{-- الرقم المحلي --}}
+                        <input
+                            type="tel"
+                            name="phone_local"
+                            x-model="localNum"
+                            required
+                            autocomplete="tel-national"
+                            placeholder="599123456"
+                            inputmode="numeric"
+                            class="dash-field flex-1 px-4 py-2.5
+                                   @error('phone') dash-field-error @enderror"
+                        >
+
+                        {{-- الحقل المخفي: E.164 المدمج ← هو المُرسل والمُحفوظ --}}
+                        <input type="hidden" name="phone" :value="phone">
+
+                    </div>
+
+                    @error('phone')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <div class="pt-2">
                     <button type="submit"
                             class="px-6 py-2.5 bg-brand hover:bg-brand-600 text-white text-sm font-semibold rounded-btn transition-colors">

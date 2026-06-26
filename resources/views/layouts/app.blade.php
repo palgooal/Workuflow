@@ -38,6 +38,51 @@
 </div>
 @endif
 
+{{-- شريط الجوال — يظهر للمستخدمين الذين لم يضيفوا رقم جوالهم بعد --}}
+@auth
+@if(! auth()->user()->phone)
+<div
+    x-data="{ show: ! sessionStorage.getItem('phone_notice_dismissed') }"
+    x-show="show"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 max-h-20"
+    x-transition:leave-end="opacity-0 max-h-0"
+    x-cloak
+    role="status"
+    aria-live="polite"
+    class="bg-amber-50 border-b border-amber-200 text-amber-800 text-sm px-4 py-2.5 flex items-center justify-between gap-4 print:hidden"
+>
+    <div class="flex items-center gap-2 min-w-0">
+        {{-- phone icon --}}
+        <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
+        <span class="truncate">أضف رقم جوالك لتسهيل التواصل معك واستلام تنبيهات الاشتراك والدعم.</span>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+        <a href="{{ route('settings.index') }}#profile"
+           class="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            إضافة رقم الجوال
+        </a>
+        <button
+            @click="sessionStorage.setItem('phone_notice_dismissed', '1'); show = false"
+            class="text-amber-400 hover:text-amber-600 transition focus:outline-none focus:ring-2 focus:ring-amber-400 rounded"
+            aria-label="إغلاق الإشعار"
+            type="button"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</div>
+@endif
+@endauth
+
 <div class="min-h-screen flex" x-data="{ sidebarOpen: false }">
 
     @include('layouts.partials.sidebar')

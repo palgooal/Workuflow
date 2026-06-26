@@ -52,6 +52,83 @@
             @enderror
         </div>
 
+        {{-- رقم الهاتف --}}
+        {{--
+            Alpine component:
+            - dialCode: رمز الدولة المختار (e.g. +970)
+            - localNum: الرقم المحلي كما يكتبه المستخدم
+            - phone (getter): E.164 = dialCode + localNum بعد تنظيفه
+              التنظيف: حذف المسافات والشرطات والحروف + حذف الصفر الأول إن وُجد
+            - الحقل المخفي name="phone" يستقبل القيمة المدمجة ← هو المُرسل والمُتحقق منه
+            - phone_code و phone_local يُرسلان أيضاً لاستعادة old() عند فشل التحقق
+        --}}
+        <div
+            x-data="{
+                dialCode: '{{ old('phone_code', '+970') }}',
+                localNum: '{{ old('phone_local', '') }}',
+                get phone() {
+                    let local = this.localNum.replace(/[\s\-]/g, '').replace(/\D/g, '');
+                    if (local.startsWith('0')) local = local.slice(1);
+                    return local.length ? this.dialCode + local : '';
+                }
+            }"
+        >
+            <label class="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
+            <div class="flex gap-2">
+
+                {{-- رمز الدولة --}}
+                <select
+                    name="phone_code"
+                    x-model="dialCode"
+                    class="px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900
+                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
+                           transition @error('phone') border-red-400 @enderror"
+                >
+                    <option value="+970">🇵🇸 +970</option>
+                    <option value="+966">🇸🇦 +966</option>
+                    <option value="+962">🇯🇴 +962</option>
+                    <option value="+971">🇦🇪 +971</option>
+                    <option value="+965">🇰🇼 +965</option>
+                    <option value="+974">🇶🇦 +974</option>
+                    <option value="+973">🇧🇭 +973</option>
+                    <option value="+968">🇴🇲 +968</option>
+                    <option value="+20">🇪🇬  +20</option>
+                    <option value="+961">🇱🇧 +961</option>
+                    <option value="+963">🇸🇾 +963</option>
+                    <option value="+964">🇮🇶 +964</option>
+                    <option value="+967">🇾🇪 +967</option>
+                    <option value="+212">🇲🇦 +212</option>
+                    <option value="+216">🇹🇳 +216</option>
+                    <option value="+213">🇩🇿 +213</option>
+                    <option value="+44">🇬🇧  +44</option>
+                    <option value="+1">🇺🇸  +1</option>
+                </select>
+
+                {{-- الرقم المحلي --}}
+                <input
+                    type="tel"
+                    id="phone_local"
+                    name="phone_local"
+                    x-model="localNum"
+                    required
+                    autocomplete="tel-national"
+                    placeholder="599123456"
+                    inputmode="numeric"
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
+                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
+                           transition @error('phone') border-red-400 @enderror"
+                >
+
+                {{-- الحقل المخفي: يحمل الرقم الكامل بصيغة E.164 → هو المُرسل للـ server --}}
+                <input type="hidden" name="phone" :value="phone">
+
+            </div>
+
+            @error('phone')
+                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- العملة والمنطقة الزمنية --}}
         <div class="grid grid-cols-2 gap-4">
             <div>

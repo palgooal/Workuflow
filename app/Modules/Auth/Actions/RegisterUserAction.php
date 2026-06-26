@@ -19,6 +19,7 @@ class RegisterUserAction
         $user = User::create([
             'name'                    => $request->name,
             'email'                   => $request->email,
+            'phone'                   => $request->phone, // E.164: +970599123456
             'password'                => $request->password,
             'currency'                => $request->currency,
             'timezone'                => $request->timezone,

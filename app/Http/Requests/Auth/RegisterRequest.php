@@ -31,6 +31,7 @@ class RegisterRequest extends FormRequest
                     }
                 },
             ],
+            'phone'     => ['required', 'string', 'max:30', 'regex:/^\+[1-9]\d{5,14}$/', 'unique:users,phone'],
             'password'  => ['required', 'confirmed', Password::defaults()],
             'currency'  => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
             'timezone'  => ['required', 'string', 'timezone:all'],
@@ -79,6 +80,10 @@ class RegisterRequest extends FormRequest
             'email.email'       => 'صيغة البريد الإلكتروني غير صحيحة',
             'password.required' => 'كلمة المرور مطلوبة',
             'password.confirmed'=> 'كلمتا المرور غير متطابقتين',
+            'phone.required'    => 'رقم الهاتف مطلوب.',
+            'phone.regex'       => 'صيغة رقم الهاتف غير صحيحة. مثال: +970599123456',
+            'phone.unique'      => 'رقم الهاتف هذا مسجّل بالفعل.',
+            'phone.max'         => 'رقم الهاتف طويل جداً.',
             'currency.required' => 'العملة مطلوبة',
             'currency.in'       => 'العملة المختارة غير مدعومة',
             'timezone.required' => 'المنطقة الزمنية مطلوبة',
