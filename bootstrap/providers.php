@@ -6,4 +6,5 @@ return [
     App\Providers\TelescopeServiceProvider::class,
     App\Providers\CRMServiceProvider::class,
     App\Providers\ActivityLogServiceProvider::class,
+    App\Providers\ReferralServiceProvider::class,
 ];

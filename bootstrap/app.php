@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // CRM Module — يُسجَّل بعد web.php لضمان الأولوية
             Route::middleware('web')->group(base_path('routes/crm.php'));
             Route::middleware('web')->group(base_path('routes/portal.php'));
+            // Referral Module
+            Route::middleware('web')->group(base_path('routes/referral.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

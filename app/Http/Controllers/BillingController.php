@@ -6,7 +6,9 @@ use App\Events\PaymentSucceeded;
 use App\Events\PaymentFailed as PaymentFailedEvent;
 use App\Models\FailedPaymentCallback;
 use App\Models\PaymentOrder;
+use App\Models\Subscription;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
+use App\Modules\Billing\Events\SubscriptionActivated;
 use App\Modules\Billing\Services\SubscriptionService;
 use App\Modules\Billing\Services\TogoPaymentService;
 use App\Notifications\PaymentSuccessfulNotification;
@@ -178,13 +180,28 @@ class BillingController extends Controller
                 $paymentOrder->markAsPaid($togoData);
                 $paymentOrder->addTimelineEvent('payment.marked_paid');
 
-                $this->billing->activatePlan(
+                // تحديد isFirstActivation قبل التفعيل:
+                // true إذا لم يسبق للمستخدم أي اشتراك (مدفوع أو ملغى أو منتهٍ)
+                $cycle            = $paymentOrder->cycle ?? 'monthly';
+                $isFirstActivation = ! Subscription::where('user_id', auth()->id())->exists();
+
+                $subscription = $this->billing->activatePlan(
                     user: auth()->user(),
                     planValue: $paymentOrder->plan,
                     providerSubscriptionId: $paymentOrder->provider_order_id,
-                    cycle: $paymentOrder->cycle ?? 'monthly',
+                    cycle: $cycle,
                 );
-                $paymentOrder->addTimelineEvent('subscription.activated', ['plan' => $paymentOrder->plan, 'cycle' => $paymentOrder->cycle]);
+                $paymentOrder->addTimelineEvent('subscription.activated', ['plan' => $paymentOrder->plan, 'cycle' => $cycle]);
+
+                // ── SubscriptionActivated: للإحالات وأي Listener مستقبلي ─
+                // يُطلَق بعد activatePlan() مباشرةً — لضمان وجود سجل الاشتراك في DB
+                // Listener العمولات يُنفَّذ afterCommit=true عبر Queue 'referrals'
+                event(new SubscriptionActivated(
+                    subscription:      $subscription,
+                    isFirstActivation: $isFirstActivation,
+                    triggerSource:     'togo_callback',
+                    cycle:             $cycle,
+                ));
 
                 session()->forget('payment_order_id');
 

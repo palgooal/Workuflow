@@ -70,6 +70,7 @@ class AdminPanelProvider extends PanelProvider
                 'إدارة المستخدمين',
                 'البيانات المالية',
                 'المدفوعات',
+                'الإحالات',
                 'النظام',
             ]);
     }

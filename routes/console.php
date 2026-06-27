@@ -107,3 +107,14 @@ Schedule::command('invoices:send-reminders')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/invoice-reminders.log'));
+
+// ==================== Referral — مطابقة الإجماليات ====================
+
+// مطابقة وتصحيح إجماليات المسوّقين يومياً الساعة 03:30
+// يعمل بعد crm:reconcile-aggregates (03:00) — بيانات المستخدمين محدَّثة أولاً
+// withoutOverlapping: آمن حتى عند تأخّر crm:refresh-segments في نفس الوقت
+Schedule::command('referral:reconcile')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/referral-reconcile.log'));

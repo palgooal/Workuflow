@@ -6,10 +6,12 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Jobs\SendWelcomeEmailJob;
 use App\Models\Category;
 use App\Models\User;
+use App\Modules\Referral\Services\ReferralService;
 use App\Support\Enums\SubscriptionPlan;
 use App\Support\Enums\TransactionType;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RegisterUserAction
 {
@@ -27,6 +29,40 @@ class RegisterUserAction
             'registration_ip'         => $request->ip(),
             'registration_user_agent' => $request->userAgent(),
         ]);
+
+        // ── Referral Attribution ──────────────────────────────────────────
+        // يُنفَّذ مباشرة بعد User::create() وقبل Auth::login() لأن:
+        //   • attributeRegistration() تُحدَّث referred_by_affiliate_id في DB مباشرة
+        //   • يجب تنفيذه قبل event(Registered) لضمان وجود الربط قبل أي Listener يقرأه
+        //
+        // مصدر البيانات (بالأولوية):
+        //   1. Session  — إذا سجّل المستخدم مباشرة بعد زيارة /ref/{code}
+        //   2. Cookie   — إذا تأخّر التسجيل (60 يوم من زيارة الرابط)
+        //
+        // الشروط: كلا المعرّفَين (affiliate_id + click_id) مطلوبان لضمان سلامة FK
+        $affiliateId = $request->session()->get('referral_affiliate_id')
+            ?? $request->cookie('ref_aff');
+
+        $clickId = $request->session()->get('referral_click_id')
+            ?? $request->cookie('ref_clk');
+
+        if ($affiliateId && $clickId) {
+            try {
+                app(ReferralService::class)->attributeRegistration(
+                    $user,
+                    $affiliateId,
+                    $clickId,
+                );
+            } catch (\Throwable $e) {
+                // Attribution لا يجوز أن يكسر التسجيل — يُسجَّل فقط
+                Log::error('Referral attribution failed during registration', [
+                    'user_id'      => $user->id,
+                    'affiliate_id' => $affiliateId,
+                    'click_id'     => $clickId,
+                    'error'        => $e->getMessage(),
+                ]);
+            }
+        }
 
         // إطلاق حدث التسجيل (يُرسل بريد التحقق تلقائياً)
         event(new Registered($user));

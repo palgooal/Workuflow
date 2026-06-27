@@ -8,7 +8,9 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -92,6 +94,32 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    // ==================== Referral Relations ====================
+
+    /** المسوّق المرتبط بهذا الحساب (إن كان المستخدم مسوّقاً) */
+    public function affiliate(): HasOne
+    {
+        return $this->hasOne(\App\Modules\Referral\Models\Affiliate::class);
+    }
+
+    /** المسوّق الذي أحال هذا المستخدم */
+    public function referredByAffiliate(): BelongsTo
+    {
+        return $this->belongsTo(
+            \App\Modules\Referral\Models\Affiliate::class,
+            'referred_by_affiliate_id'
+        );
+    }
+
+    /** سجل النقرة الذي أفضى لتسجيل هذا المستخدم */
+    public function referralClick(): BelongsTo
+    {
+        return $this->belongsTo(
+            \App\Modules\Referral\Models\ReferralClick::class,
+            'referral_click_id'
+        );
     }
 
     // ==================== Email Verification Grace (CONVERSION-01 Phase 2) ====================
