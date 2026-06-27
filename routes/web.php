@@ -29,10 +29,11 @@ Route::get('/', function () {
 
 // ==================== الصفحات التسويقية ====================
 Route::prefix('')->name('marketing.')->group(function () {
-    Route::get('/features', fn() => view('marketing.features'))->name('features');
-    Route::get('/pricing',  fn() => view('marketing.pricing'))->name('pricing');
-    Route::get('/faq',      fn() => view('marketing.faq'))->name('faq');
-    Route::get('/contact',  fn() => view('marketing.contact'))->name('contact');
+    Route::get('/features',          fn() => view('marketing.features'))->name('features');
+    Route::get('/pricing',           fn() => view('marketing.pricing'))->name('pricing');
+    Route::get('/faq',               fn() => view('marketing.faq'))->name('faq');
+    Route::get('/contact',           fn() => view('marketing.contact'))->name('contact');
+    Route::get('/affiliate-program', fn() => view('marketing.affiliate-program'))->name('affiliate-program');
 });
 
 // ==================== الصفحات القانونية ====================

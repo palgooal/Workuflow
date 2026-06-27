@@ -162,6 +162,46 @@
                 </x-slot>
                 الفريق
             </x-nav-item>
+
+            @php
+                try {
+                    $sidebarAffiliate  = auth()->user()->affiliate;
+                    $affiliateRoute    = $sidebarAffiliate
+                        ? route('affiliates.dashboard')
+                        : route('affiliates.join');
+                } catch (\Throwable $e) {
+                    $sidebarAffiliate = null;
+                    $affiliateRoute   = route('affiliates.join');
+                }
+                $affiliateActive = request()->routeIs('affiliates.*');
+            @endphp
+            <a href="{{ $affiliateRoute }}"
+               @if($affiliateActive) aria-current="page" @endif
+               class="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] min-h-[42px]
+                      transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40
+                      {{ $affiliateActive ? 'bg-brand-50 text-brand font-semibold' : 'text-slate-500 font-medium hover:bg-slate-50 hover:text-ink' }}">
+                @if($affiliateActive)
+                    <span class="absolute inset-y-2 right-0 w-[3px] rounded-full bg-accent"></span>
+                @endif
+                <span class="shrink-0 transition-colors {{ $affiliateActive ? 'text-brand' : 'text-slate-400 group-hover:text-slate-600' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </span>
+                <span class="truncate flex-1">💰 برنامج الإحالات</span>
+                @if($sidebarAffiliate)
+                    {{-- رصيد المسوّق المتاح --}}
+                    <span class="text-[11px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md shrink-0 nums">
+                        {{ number_format($sidebarAffiliate->balance, 0) }}₪
+                    </span>
+                @else
+                    {{-- badge جديد --}}
+                    <span class="text-[10px] font-bold bg-brand-100 text-brand px-1.5 py-0.5 rounded-md shrink-0 leading-tight">
+                        جديد
+                    </span>
+                @endif
+            </a>
         </div>
 
         {{-- التحليل --}}

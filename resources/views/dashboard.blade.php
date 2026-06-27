@@ -337,6 +337,155 @@
         </div>
 
     </div>
+
+    {{-- Referral Program Card --}}
+    @php
+        try {
+            $dashAffiliate = auth()->user()->affiliate;
+        } catch (\Throwable $e) {
+            $dashAffiliate = null;
+        }
+    @endphp
+    @if(!$dashAffiliate)
+        {{-- بطاقة دعائية: المستخدم لم ينضم بعد (8.2 + 8.4) --}}
+        <div class="relative overflow-hidden rounded-2xl p-5 border border-emerald-100 bg-gradient-to-l from-emerald-50 to-teal-50">
+            <div class="pointer-events-none absolute -top-10 -left-10 w-40 h-40 rounded-full bg-emerald-200/30 blur-3xl"></div>
+            <div class="relative flex items-start justify-between gap-4 flex-wrap">
+                <div class="flex items-start gap-4 flex-1 min-w-0">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl shrink-0">💰</div>
+                    <div class="min-w-0">
+                        <p class="font-bold text-emerald-900 text-base leading-snug">اربح حتى 45% من برنامج الإحالات</p>
+                        <p class="text-sm text-emerald-700 mt-1 leading-relaxed">
+                            اربح حتى 45% من قيمة أول اشتراك مدفوع لكل عميل تدعوه إلى دراهم.
+                        </p>
+                        <ul class="mt-3 space-y-1">
+                            <li class="text-xs text-emerald-800 flex items-center gap-1.5">
+                                <span class="text-emerald-600 font-bold">✓</span> عمولات تصل إلى 45%
+                            </li>
+                            <li class="text-xs text-emerald-800 flex items-center gap-1.5">
+                                <span class="text-emerald-600 font-bold">✓</span> طلبات صرف مرنة
+                            </li>
+                            <li class="text-xs text-emerald-800 flex items-center gap-1.5">
+                                <span class="text-emerald-600 font-bold">✓</span> لوحة متابعة كاملة للأرباح والعملاء
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <a href="{{ route('affiliates.join') }}"
+                   class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-btn
+                          bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold
+                          shadow-sm transition-colors self-start">
+                    انضم الآن
+                    <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    @else
+        {{-- ملخص المسوّق النشط (8.2 + 8.4) --}}
+        @php
+            $tier           = $dashAffiliate->tier; // AffiliateTier enum
+            $converted      = (int) $dashAffiliate->total_converted;
+            $tierBadgeClass = $tier->badgeClass();
+            $tierLabel      = $tier->label();
+            $tierRate       = number_format($dashAffiliate->commission_rate, 0);
+
+            // حساب المستوى التالي وعدد المتبقي
+            $nextTierData = match($tier) {
+                \App\Modules\Referral\Enums\AffiliateTier::Standard => [
+                    'label' => 'Silver', 'rate' => '35', 'target' => 10,
+                ],
+                \App\Modules\Referral\Enums\AffiliateTier::Silver   => [
+                    'label' => 'Gold',   'rate' => '40', 'target' => 30,
+                ],
+                \App\Modules\Referral\Enums\AffiliateTier::Gold     => [
+                    'label' => 'Platinum','rate' => '45', 'target' => 100,
+                ],
+                default => null,
+            };
+            $remaining = $nextTierData ? max(0, $nextTierData['target'] - $converted) : 0;
+            $progress  = $nextTierData
+                ? min(100, round(($converted / $nextTierData['target']) * 100))
+                : 100;
+        @endphp
+        <div class="dash-card p-5">
+            {{-- Header --}}
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-xl shrink-0">💰</div>
+                    <div>
+                        <p class="font-semibold text-ink text-sm">برنامج الإحالات</p>
+                        <p class="text-xs text-muted">{{ $dashAffiliate->status->label() }}</p>
+                    </div>
+                </div>
+                <a href="{{ route('affiliates.dashboard') }}"
+                   class="shrink-0 text-sm font-medium text-brand hover:text-brand-600 flex items-center gap-1">
+                    لوحة الإحالات
+                    <svg class="w-3.5 h-3.5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+
+            {{-- Stats --}}
+            <div class="mt-4 grid grid-cols-3 gap-3">
+                <div class="rounded-xl bg-slate-50 px-4 py-3 text-center">
+                    <p class="text-xs text-muted mb-0.5">إجمالي الأرباح</p>
+                    <p class="text-base font-bold text-ink nums">{{ number_format($dashAffiliate->total_earned, 2) }}</p>
+                    <p class="text-[10px] text-muted">₪</p>
+                </div>
+                <div class="rounded-xl bg-emerald-50 px-4 py-3 text-center">
+                    <p class="text-xs text-muted mb-0.5">الرصيد المتاح</p>
+                    <p class="text-base font-bold text-emerald-700 nums">{{ number_format($dashAffiliate->balance, 2) }}</p>
+                    <p class="text-[10px] text-muted">₪</p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-4 py-3 text-center">
+                    <p class="text-xs text-muted mb-0.5">اشتراكات مدفوعة</p>
+                    <p class="text-base font-bold text-ink nums">{{ $dashAffiliate->commissions()->count() }}</p>
+                    <p class="text-[10px] text-muted">عمولة</p>
+                </div>
+            </div>
+
+            {{-- Tier + Progress (8.4) --}}
+            <div class="mt-4 pt-4 border-t border-subtle">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-muted">المستوى الحالي:</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full {{ $tierBadgeClass }}">
+                            {{ $tierLabel }} ({{ $tierRate }}%)
+                        </span>
+                    </div>
+                    @if($nextTierData)
+                        <span class="text-[11px] text-muted nums">{{ $converted }} / {{ $nextTierData['target'] }}</span>
+                    @else
+                        <span class="text-[11px] font-semibold text-purple-700">🏆 أعلى مستوى</span>
+                    @endif
+                </div>
+
+                @if($nextTierData)
+                    {{-- شريط التقدم --}}
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-emerald-500 transition-all duration-500"
+                             style="width: {{ $progress }}%"></div>
+                    </div>
+                    {{-- رسالة التحفيز --}}
+                    @php
+                        $clientWord = $remaining === 1 ? 'عميل واحد' : ($remaining === 2 ? 'عميلان' : "{$remaining} عملاء");
+                    @endphp
+                    <p class="mt-1.5 text-xs text-muted">
+                        @if($remaining === 0)
+                            🎉 أنت مؤهل للترقية إلى <strong>{{ $nextTierData['label'] }} ({{ $nextTierData['rate'] }}%)</strong>
+                        @else
+                            تبقّى <strong class="text-ink">{{ $clientWord }}</strong>
+                            للوصول إلى {{ $nextTierData['label'] }} ({{ $nextTierData['rate'] }}%)
+                        @endif
+                    </p>
+                @endif
+            </div>
+        </div>
+    @endif
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
