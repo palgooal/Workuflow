@@ -141,7 +141,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Notifications — Phase 10
     Route::get('/notifications',                          [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{id}/read',               [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::match(['GET', 'POST'], '/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all',                [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('/notifications/{id}',                  [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('/api/notifications/unread-count',         [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
