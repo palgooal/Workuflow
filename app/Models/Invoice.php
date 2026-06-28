@@ -18,7 +18,7 @@ class Invoice extends Model
         'ulid', 'user_id', 'client_id', 'project_id',
         'number', 'status', 'title',
         'issue_date', 'due_date',
-        'subtotal', 'tax_rate', 'tax_amount', 'discount', 'total',
+        'subtotal', 'tax_rate', 'tax_amount', 'discount', 'discount_type', 'total',
         'currency', 'notes', 'terms',
         'sent_at', 'paid_at',
     ];
@@ -110,13 +110,25 @@ class Invoice extends Model
     {
         $subtotal = $this->items->sum(fn($i) => $i->quantity * $i->unit_price);
         $taxAmount = round($subtotal * ($this->tax_rate / 100), 2);
-        $total = $subtotal + $taxAmount - $this->discount;
+
+        $discountAmount = ($this->discount_type === 'percentage')
+            ? round($subtotal * ($this->discount / 100), 2)
+            : (float) $this->discount;
 
         $this->update([
             'subtotal'   => $subtotal,
             'tax_amount' => $taxAmount,
-            'total'      => max(0, $total),
+            'total'      => max(0, $subtotal + $taxAmount - $discountAmount),
         ]);
+    }
+
+    /** القيمة الفعلية للخصم بالعملة */
+    public function getDiscountAmountAttribute(): float
+    {
+        if ($this->discount_type === 'percentage') {
+            return round((float) $this->subtotal * ($this->discount / 100), 2);
+        }
+        return (float) $this->discount;
     }
 
     public function isOverdue(): bool

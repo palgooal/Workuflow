@@ -302,20 +302,27 @@
         {{-- الإجماليات --}}
         <div class="flex justify-end mb-6">
             <div class="w-64 space-y-2 text-sm">
-                @if($invoice->discount > 0)
+                @if($invoice->discount > 0 || $invoice->tax_amount > 0)
                 <div class="flex justify-between text-muted">
                     <span>المجموع الفرعي</span>
                     <span class="nums">{{ number_format($invoice->subtotal, 2) }} {{ $invoice->currency }}</span>
                 </div>
+                @endif
+                @if($invoice->tax_amount > 0)
                 <div class="flex justify-between text-muted">
-                    <span>الخصم</span>
-                    <span class="nums">- {{ number_format($invoice->discount, 2) }} {{ $invoice->currency }}</span>
+                    <span>الضريبة ({{ number_format($invoice->tax_rate, 0) }}%)</span>
+                    <span class="nums">{{ number_format($invoice->tax_amount, 2) }} {{ $invoice->currency }}</span>
                 </div>
                 @endif
-                @if($invoice->tax > 0)
+                @if($invoice->discount > 0)
                 <div class="flex justify-between text-muted">
-                    <span>الضريبة</span>
-                    <span class="nums">{{ number_format($invoice->tax, 2) }} {{ $invoice->currency }}</span>
+                    @if($invoice->discount_type === 'percentage')
+                        <span>الخصم ({{ number_format($invoice->discount, 0) }}%)</span>
+                        <span class="nums">- {{ number_format($invoice->discount_amount, 2) }} {{ $invoice->currency }}</span>
+                    @else
+                        <span>الخصم</span>
+                        <span class="nums">- {{ number_format($invoice->discount, 2) }} {{ $invoice->currency }}</span>
+                    @endif
                 </div>
                 @endif
                 <div class="flex justify-between font-bold text-ink border-t border-subtle pt-2">

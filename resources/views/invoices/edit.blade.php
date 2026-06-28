@@ -219,18 +219,37 @@
         <x-card-section>
             <div class="flex flex-col md:flex-row gap-6 items-start">
                 {{-- الخصم --}}
-                <div class="w-full md:w-48">
-                    <label class="block text-sm font-semibold text-ink mb-1.5">خصم (بالقيمة)</label>
+                <div class="w-full md:w-56">
+                    <label class="block text-sm font-semibold text-ink mb-1.5">الخصم</label>
+                    {{-- Toggle نوع الخصم --}}
+                    <div class="flex rounded-lg border border-slate-200 overflow-hidden mb-2 text-xs font-semibold">
+                        <button type="button"
+                                @click="discountType='fixed'; recalc()"
+                                :class="discountType==='fixed'
+                                    ? 'bg-brand text-white'
+                                    : 'bg-white text-slate-500 hover:bg-slate-50'"
+                                class="flex-1 py-1.5 transition-colors">
+                            قيمة ثابتة
+                        </button>
+                        <button type="button"
+                                @click="discountType='percentage'; recalc()"
+                                :class="discountType==='percentage'
+                                    ? 'bg-brand text-white'
+                                    : 'bg-white text-slate-500 hover:bg-slate-50'"
+                                class="flex-1 py-1.5 transition-colors">
+                            نسبة %
+                        </button>
+                    </div>
                     <div class="relative">
-                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M17 17h.01M5 19L19 5"/>
-                            </svg>
-                        </span>
+                        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted text-xs font-bold"
+                              x-text="discountType==='percentage' ? '%' : '₪'"></span>
                         <input type="number" name="discount"
                                value="{{ old('discount', $invoice->discount) }}"
-                               min="0" step="0.01" x-model.number="discount" @input="recalc()"
-                               class="dash-field pr-9 py-2.5 nums">
+                               min="0" step="0.01"
+                               :max="discountType==='percentage' ? 100 : undefined"
+                               x-model.number="discountValue" @input="recalc()"
+                               class="dash-field pr-8 py-2.5 nums">
+                        <input type="hidden" name="discount_type" :value="discountType">
                     </div>
                 </div>
 
@@ -244,9 +263,9 @@
                         <span>الضريبة (<span x-text="taxRate"></span>%)</span>
                         <span class="nums font-medium text-ink" x-text="formatMoney(taxAmount)"></span>
                     </div>
-                    <div class="flex justify-between text-muted" x-show="discount > 0">
-                        <span>الخصم</span>
-                        <span class="nums font-medium text-red-600" x-text="'-' + formatMoney(discount)"></span>
+                    <div class="flex justify-between text-muted" x-show="discountValue > 0">
+                        <span x-text="discountType==='percentage' ? 'الخصم (' + discountValue + '%)' : 'الخصم'"></span>
+                        <span class="nums font-medium text-red-600" x-text="'-' + formatMoney(discountAmount)"></span>
                     </div>
                     <div class="flex justify-between font-bold text-ink text-base pt-2 border-t border-subtle">
                         <span>الإجمالي</span>
@@ -304,11 +323,13 @@
 function invoiceForm() {
     return {
         items: @json($invoiceItems),
-        taxRate:   {{ old('tax_rate',  $invoice->tax_rate)  }},
-        discount:  {{ old('discount',  $invoice->discount)  }},
-        subtotal:  {{ $invoice->subtotal }},
-        taxAmount: {{ $invoice->tax_amount }},
-        total:     {{ $invoice->total }},
+        taxRate:       {{ old('tax_rate', $invoice->tax_rate) }},
+        discountValue: {{ old('discount', $invoice->discount) }},
+        discountType:  '{{ old('discount_type', $invoice->discount_type ?? 'fixed') }}',
+        subtotal:      {{ $invoice->subtotal }},
+        taxAmount:     {{ $invoice->tax_amount }},
+        discountAmount: 0,
+        total:         {{ $invoice->total }},
 
         init() { this.recalc(); },
 
@@ -320,9 +341,13 @@ function invoiceForm() {
             this.recalc();
         },
         recalc() {
-            this.subtotal  = this.items.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
+            this.subtotal = this.items.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
             this.taxAmount = this.subtotal * (this.taxRate / 100);
-            this.total     = Math.max(0, this.subtotal + this.taxAmount - this.discount);
+            this.discountAmount = this.discountType === 'percentage'
+                ? this.subtotal * (this.discountValue / 100)
+                : this.discountValue;
+            this.discountAmount = Math.max(0, this.discountAmount);
+            this.total = Math.max(0, this.subtotal + this.taxAmount - this.discountAmount);
         },
         formatMoney(val) {
             return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(val || 0);
