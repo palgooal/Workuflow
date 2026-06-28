@@ -20,15 +20,15 @@ class DashboardService
      */
     public function getData(int $userId): array
     {
-        return Cache::remember("dashboard_v2:{$userId}", 1800, function () {
+        return Cache::remember("dashboard_v2:{$userId}", 1800, function () use ($userId) {
             return [
-                'kpis'             => $this->getKpis(),
-                'chart'            => $this->getChartData(),
-                'recent'           => $this->getRecentTransactions(),
-                'projects'         => $this->getActiveProjects(),
-                'debts_due'        => $this->getDebtsDueSoon(),
-                'wallets_summary'  => $this->getWalletsSummary(),
-                'pending_invoices' => $this->getPendingInvoicesSummary(),
+                'kpis'             => $this->getKpis($userId),
+                'chart'            => $this->getChartData($userId),
+                'recent'           => $this->getRecentTransactions($userId),
+                'projects'         => $this->getActiveProjects($userId),
+                'debts_due'        => $this->getDebtsDueSoon($userId),
+                'wallets_summary'  => $this->getWalletsSummary($userId),
+                'pending_invoices' => $this->getPendingInvoicesSummary($userId),
             ];
         });
     }
@@ -43,7 +43,7 @@ class DashboardService
 
     // ==================== Private Methods ====================
 
-    private function getKpis(): array
+    private function getKpis(int $userId): array
     {
         $now       = Carbon::now();
         $lastMonth = $now->copy()->subMonth();
@@ -53,7 +53,8 @@ class DashboardService
         $moExpr  = $driver === 'sqlite' ? "CAST(strftime('%m', transaction_date) AS INTEGER)" : 'MONTH(transaction_date)';
 
         // استعلام واحد لشهرين بدل استعلامين + filter في PHP
-        $rows = Transaction::dateBetween(
+        $rows = Transaction::where('user_id', $userId)
+            ->dateBetween(
                 $lastMonth->startOfMonth()->toDateString(),
                 $now->endOfMonth()->toDateString()
             )
@@ -88,13 +89,13 @@ class DashboardService
                 'change' => null,
             ],
             'projects_active' => [
-                'value'  => Project::active()->count(),
+                'value'  => Project::where('user_id', $userId)->active()->count(),
                 'change' => null,
             ],
         ];
     }
 
-    private function getChartData(): array
+    private function getChartData(int $userId): array
     {
         $from = Carbon::now()->subMonths(5)->startOfMonth()->toDateString();
         $to   = Carbon::now()->endOfMonth()->toDateString();
@@ -104,7 +105,8 @@ class DashboardService
         $moExpr  = $driver === 'sqlite' ? "CAST(strftime('%m', transaction_date) AS INTEGER)" : 'MONTH(transaction_date)';
 
         // استعلام واحد بدل 6 استعلامات
-        $rows = Transaction::dateBetween($from, $to)
+        $rows = Transaction::where('user_id', $userId)
+            ->dateBetween($from, $to)
             ->select(
                 DB::raw("$yrExpr as yr"),
                 DB::raw("$moExpr as mo"),
@@ -130,34 +132,37 @@ class DashboardService
         return compact('months', 'income', 'expenses');
     }
 
-    private function getRecentTransactions(): \Illuminate\Database\Eloquent\Collection
+    private function getRecentTransactions(int $userId): \Illuminate\Database\Eloquent\Collection
     {
-        return Transaction::with(['project', 'category'])
+        return Transaction::where('user_id', $userId)
+            ->with(['project', 'category'])
             ->latest('transaction_date')
             ->limit(8)
             ->get();
     }
 
-    private function getActiveProjects(): \Illuminate\Database\Eloquent\Collection
+    private function getActiveProjects(int $userId): \Illuminate\Database\Eloquent\Collection
     {
-        return Project::active()
+        return Project::where('user_id', $userId)
+            ->active()
             ->withCount('transactions')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
     }
 
-    private function getDebtsDueSoon(): \Illuminate\Database\Eloquent\Collection
+    private function getDebtsDueSoon(int $userId): \Illuminate\Database\Eloquent\Collection
     {
-        return Debt::dueSoon(7)
+        return Debt::where('user_id', $userId)
+            ->dueSoon(7)
             ->orderBy('due_date')
             ->limit(5)
             ->get();
     }
 
-    private function getWalletsSummary(): array
+    private function getWalletsSummary(int $userId): array
     {
-        $wallets = Wallet::active()->get();
+        $wallets = Wallet::where('user_id', $userId)->active()->get();
 
         return [
             'total' => $wallets->sum(fn($w) => $w->balance()),
@@ -165,15 +170,16 @@ class DashboardService
         ];
     }
 
-    private function getPendingInvoicesSummary(): array
+    private function getPendingInvoicesSummary(int $userId): array
     {
-        $rows = Invoice::whereNotIn('status', [
-            InvoiceStatus::Paid->value,
-            InvoiceStatus::Cancelled->value,
-        ])
-        ->selectRaw('status, COUNT(*) as cnt, SUM(total) as total_amount')
-        ->groupBy('status')
-        ->get();
+        $rows = Invoice::where('user_id', $userId)
+            ->whereNotIn('status', [
+                InvoiceStatus::Paid->value,
+                InvoiceStatus::Cancelled->value,
+            ])
+            ->selectRaw('status, COUNT(*) as cnt, SUM(total) as total_amount')
+            ->groupBy('status')
+            ->get();
 
         return [
             'count'   => (int) $rows->sum('cnt'),
