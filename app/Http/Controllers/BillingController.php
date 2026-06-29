@@ -173,8 +173,18 @@ class BillingController extends Controller
 
         // ── 3. التحقق من حالة الطلب عبر Togo API ───────────────────────
         try {
-            $togoData = $togo->verifyOrder($paymentOrder->provider_order_id);
-            $status   = $togoData['status'] ?? 'UNKNOWN';
+            $togoRaw  = $togo->verifyOrder($paymentOrder->provider_order_id);
+
+            // verifyOrder قد تُرجع items[] wrapper أو items[0] مباشرةً — نتعامل مع الحالتين
+            if (isset($togoRaw['items'][0]) && is_array($togoRaw['items'][0])) {
+                $togoData = $togoRaw['items'][0];
+            } elseif (isset($togoRaw['data']) && is_array($togoRaw['data'])) {
+                $togoData = $togoRaw['data'];
+            } else {
+                $togoData = $togoRaw; // already parsed items[0]
+            }
+
+            $status = $togoData['status'] ?? 'UNKNOWN';
 
             Log::info('Togo callback: verifyOrder response', [
                 'payment_order_id'  => $paymentOrder->id,

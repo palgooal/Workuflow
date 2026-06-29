@@ -30,7 +30,8 @@ class NotificationController extends Controller
 
         // إذا جاء الطلب من إشعار معين، redirect لرابطه
         $notification = auth()->user()->notifications()->where('id', $id)->first();
-        $link = $notification ? (json_decode($notification->data, true)['link'] ?? null) : null;
+        $data = $notification ? (is_array($notification->data) ? $notification->data : json_decode($notification->data, true)) : [];
+        $link = $data['link'] ?? null;
 
         return $link
             ? redirect($link)
