@@ -32,6 +32,7 @@ class PaymentSettings extends Page
             'togo_api_key'                 => $saved['togo_api_key']                 ?? config('billing.togo.api_key', ''),
             'togo_receiver_address_id'     => $saved['togo_receiver_address_id']     ?? config('billing.togo.receiver_address_id', ''),
             'togo_currency'                => $saved['togo_currency']                ?? config('billing.togo.currency', 'ILS'),
+            'togo_mode'                    => $saved['togo_mode']                    ?? config('billing.togo.mode', 'sandbox'),
 
             // حقول إنشاء receiver address (مؤقتة — لا تُحفظ)
             'receiver_name'                => '',
@@ -72,6 +73,16 @@ class PaymentSettings extends Page
                     ->visible(fn (Forms\Get $get) => $get('billing_provider') === 'togo')
                     ->columns(1)
                     ->schema([
+                        Forms\Components\Select::make('togo_mode')
+                            ->label('وضع التشغيل')
+                            ->options([
+                                'sandbox' => '🧪 تجريبي (Sandbox) — api.dev.togo.ps',
+                                'live'    => '🚀 مباشر (Live) — api.togo.ps',
+                            ])
+                            ->default('sandbox')
+                            ->required()
+                            ->helperText('في وضع Sandbox تُستخدم بيانات وهمية ولا تتم معاملات حقيقية'),
+
                         Forms\Components\TextInput::make('togo_api_key')
                             ->label('مفتاح API (x-api-key)')
                             ->password()
@@ -180,6 +191,7 @@ class PaymentSettings extends Page
             'togo_api_key'             => $data['togo_api_key']               ?? '',
             'togo_receiver_address_id' => $data['togo_receiver_address_id']   ?? '',
             'togo_currency'            => $data['togo_currency']               ?? 'ILS',
+            'togo_mode'                => $data['togo_mode']                   ?? 'sandbox',
             // أسعار الخطط محذوفة — مصدرها config/billing.php حصراً
         ];
 
@@ -207,10 +219,13 @@ class PaymentSettings extends Page
             return;
         }
 
+        $mode    = $data['togo_mode'] ?? 'sandbox';
+        $baseUrl = $mode === 'live' ? 'https://api.togo.ps' : 'https://api.dev.togo.ps';
+
         try {
             $response = Http::withHeaders(['x-api-key' => $apiKey])
                 ->timeout(10)
-                ->get('https://api.togo.ps/api/v1/currency-exchange');
+                ->get("{$baseUrl}/api/v1/currency-exchange");
 
             if ($response->successful()) {
                 Notification::make()
@@ -286,8 +301,11 @@ class PaymentSettings extends Page
         }
 
         try {
-            // اضبط الـ key في config أولاً ثم أنشئ الـ service
-            config(['billing.togo.api_key' => $apiKey]);
+            // اضبط الـ key والـ mode في config أولاً ثم أنشئ الـ service
+            config([
+                'billing.togo.api_key' => $apiKey,
+                'billing.togo.mode'    => $data['togo_mode'] ?? 'sandbox',
+            ]);
             $togo = new TogoPaymentService();
 
             $result = $togo->createReceiverAddress(
@@ -304,9 +322,12 @@ class PaymentSettings extends Page
             $this->data['togo_receiver_address_id'] = $result['id'];
             $this->form->fill($this->data);
 
+            // احفظ الـ ID في DB فوراً — لا نُطالب المستخدم بضغط "حفظ" يدوياً
+            Setting::set('togo_receiver_address_id', $result['id'], 'payment');
+
             Notification::make()
-                ->title('✅ تم إنشاء Receiver Address')
-                ->body("الـ ID: {$result['id']} — احفظ الإعدادات الآن.")
+                ->title('✅ تم إنشاء Receiver Address وحفظه')
+                ->body("الـ ID: {$result['id']} — جاهز للاستخدام.")
                 ->success()
                 ->persistent()
                 ->send();

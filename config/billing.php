@@ -72,6 +72,7 @@ return [
         'api_key'             => env('TOGO_API_KEY'),
         'receiver_address_id' => env('TOGO_RECEIVER_ADDRESS_ID'),
         'currency'            => env('TOGO_CURRENCY', 'ILS'), // ILS | USD
+        'mode'                => env('TOGO_MODE', 'sandbox'),  // 'sandbox' | 'live'
     ],
 
 ];

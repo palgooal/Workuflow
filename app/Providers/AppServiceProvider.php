@@ -92,6 +92,9 @@ class AppServiceProvider extends ServiceProvider
             if (! empty($p['togo_currency'])) {
                 Config::set('billing.togo.currency', $p['togo_currency']);
             }
+            if (! empty($p['togo_mode'])) {
+                Config::set('billing.togo.mode', $p['togo_mode']);
+            }
 
             // ملاحظة: أسعار الخطط لا تُضبط من هنا.
             // مصدر الحقيقة: config/billing.php (billing.plans.{plan}.{cycle}.price)

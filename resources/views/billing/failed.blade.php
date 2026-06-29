@@ -27,6 +27,14 @@
         إذا تم خصم المبلغ من حسابك، تواصل معنا على واتساب وسنحل المشكلة فوراً.
     </p>
 
+    {{-- DEBUG مؤقت — يُحذف بعد حل المشكلة --}}
+    @if(session('togo_debug_response'))
+    <div class="mt-4 mb-6 p-4 bg-slate-100 dark:bg-slate-800 rounded-xl text-left text-xs font-mono text-slate-600 dark:text-slate-300 overflow-auto max-h-48">
+        <div class="font-bold mb-2 text-slate-700 dark:text-slate-200">Togo Raw Response:</div>
+        <pre>{{ json_encode(session('togo_debug_response'), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+    </div>
+    @endif
+
     {{-- Actions --}}
     <div class="flex flex-col sm:flex-row gap-3 justify-center">
         <a href="{{ route('billing.index') }}"

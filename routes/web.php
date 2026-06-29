@@ -177,14 +177,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Togo Payment Gateway
         Route::get('/togo/pending',  [BillingController::class, 'togoPending'])->name('togo.pending');   // صفحة تأكيد ما قبل الدفع
-        Route::get('/togo/callback', [BillingController::class, 'togoCallback'])->name('togo.callback'); // بعد نجاح الدفع
-        Route::get('/togo/cancel',   [BillingController::class, 'togoCancel'])->name('togo.cancel');     // بعد إلغاء الدفع
     });
 
     // Profile (Breeze)
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ── Togo callbacks — بدون Auth (Session قد تنتهي أثناء الدفع) ──────────
+Route::prefix('billing')->name('billing.')->group(function () {
+    Route::get('/togo/callback', [BillingController::class, 'togoCallback'])->name('togo.callback');
+    Route::get('/togo/cancel',   [BillingController::class, 'togoCancel'])->name('togo.cancel');
 });
 
 // ══════════════════════════════════════════════════════

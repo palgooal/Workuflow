@@ -19,17 +19,22 @@ use Illuminate\Support\Facades\Log;
  */
 class TogoPaymentService implements PaymentProviderInterface
 {
-    private const BASE_URL = 'https://api.togo.ps';
+    private const URL_LIVE    = 'https://api.togo.ps';
+    private const URL_SANDBOX = 'https://api.dev.togo.ps';
 
     private string $apiKey;
     private string $receiverAddressId;
     private string $currency;
+    private string $baseUrl;
 
     public function __construct()
     {
         $this->apiKey            = config('billing.togo.api_key', '');
         $this->receiverAddressId = config('billing.togo.receiver_address_id', '');
         $this->currency          = config('billing.togo.currency', 'ILS');
+        $this->baseUrl           = config('billing.togo.mode', 'sandbox') === 'live'
+            ? self::URL_LIVE
+            : self::URL_SANDBOX;
     }
 
     // ──────────────────────────────────────────────────────────
@@ -53,7 +58,7 @@ class TogoPaymentService implements PaymentProviderInterface
 
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(15)
-            ->post(self::BASE_URL . '/api/v1/actions', [
+            ->post($this->baseUrl . '/api/v1/actions', [
                 'event' => 'Create_Visa',
                 'data'  => [
                     'type'                          => 'RFP',
@@ -86,7 +91,7 @@ class TogoPaymentService implements PaymentProviderInterface
         }
 
         // بناء رابط صفحة الدفع مسبقاً — يُخزَّن في metadata لاستخدامه في صفحة التأكيد
-        $checkoutUrl = self::BASE_URL
+        $checkoutUrl = $this->baseUrl
             . '/api/v1/direct-pay'
             . '?orderId=' . urlencode($data['hashed_id'])
             . '&receiverEmail=' . urlencode($user->email);
@@ -173,7 +178,7 @@ class TogoPaymentService implements PaymentProviderInterface
 
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(10)
-            ->get(self::BASE_URL . '/api/v1/orders', ['id' => $orderId]);
+            ->get($this->baseUrl . '/api/v1/orders', ['id' => $orderId]);
 
         if (! $response->successful()) {
             Log::error('Togo verifyOrder failed', [
@@ -184,7 +189,25 @@ class TogoPaymentService implements PaymentProviderInterface
             throw new \RuntimeException('فشل التحقق من حالة الدفع.');
         }
 
-        return $response->json('data', []);
+        $json = $response->json();
+
+        // Live API:    {"data": {"status": "PAID", ...}}
+        // Sandbox API: {"items": [{...}], "totalItems": N}
+        if (isset($json['data']) && is_array($json['data'])) {
+            $data = $json['data'];
+        } elseif (isset($json['items'][0]) && is_array($json['items'][0])) {
+            $data = $json['items'][0];
+        } else {
+            $data = [];
+        }
+
+        Log::info('Togo verifyOrder parsed', [
+            'order_id' => $orderId,
+            'status'   => $data['status'] ?? 'NOT_FOUND',
+            'data'     => $data,
+        ]);
+
+        return $data;
     }
 
     /**
@@ -214,7 +237,7 @@ class TogoPaymentService implements PaymentProviderInterface
 
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(15)
-            ->post(self::BASE_URL . '/api/v1/receivers-addresses', [
+            ->post($this->baseUrl . '/api/v1/receivers-addresses', [
                 'receiver_name'            => $name,
                 'receiver_phone_number'    => $phone,
                 'country_code'             => $countryCode,
