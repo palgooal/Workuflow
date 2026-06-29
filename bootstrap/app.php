@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ثق بالـ Proxy (Nginx/Cloudflare) — يحل مشكلة 419 على HTTPS
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'subscription'   => \App\Http\Middleware\CheckSubscriptionLimits::class,
             'active.account' => \App\Http\Middleware\EnsureUserIsActive::class,
