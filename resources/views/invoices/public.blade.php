@@ -124,9 +124,9 @@
                 @foreach($invoice->items as $item)
                 <tr>
                     <td>{{ $item->description }}</td>
-                    <td style="text-align:center">{{ number_format($item->quantity, 2) }}</td>
-                    <td style="text-align:center">{{ number_format($item->unit_price, 2) }} {{ $invoice->currency }}</td>
-                    <td style="text-align:center;font-weight:600">{{ number_format($item->quantity * $item->unit_price, 2) }} {{ $invoice->currency }}</td>
+                    <td style="text-align:center">{{ number_format($item->quantity, \App\Support\Helpers\Currency::decimals($invoice->currency)) }}</td>
+                    <td style="text-align:center">{{ number_format($item->unit_price, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
+                    <td style="text-align:center;font-weight:600">{{ number_format($item->quantity * $item->unit_price, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -136,13 +136,13 @@
         <div class="totals">
             <div class="totals-box">
                 @if($invoice->discount > 0)
-                <div class="row"><span>المجموع الفرعي</span><span>{{ number_format($invoice->subtotal, 2) }} {{ $invoice->currency }}</span></div>
-                <div class="row"><span>الخصم</span><span>- {{ number_format($invoice->discount, 2) }} {{ $invoice->currency }}</span></div>
+                <div class="row"><span>المجموع الفرعي</span><span>{{ number_format($invoice->subtotal, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span></div>
+                <div class="row"><span>الخصم</span><span>- {{ number_format($invoice->discount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span></div>
                 @endif
                 @if($invoice->tax > 0)
-                <div class="row"><span>الضريبة</span><span>{{ number_format($invoice->tax, 2) }} {{ $invoice->currency }}</span></div>
+                <div class="row"><span>الضريبة</span><span>{{ number_format($invoice->tax, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span></div>
                 @endif
-                <div class="total"><span>الإجمالي</span><span>{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span></div>
+                <div class="total"><span>الإجمالي</span><span>{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span></div>
             </div>
         </div>
 

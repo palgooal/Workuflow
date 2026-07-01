@@ -72,7 +72,7 @@
 
             {{-- زر واتساب + PDF معاً --}}
             @php
-                $whatsappMessage = "مرحباً {$invoice->client->name}،\n\nيسعدني إشعارك بأن الفاتورة رقم *{$invoice->number}* بمبلغ *" . number_format($invoice->total, 2) . " {$invoice->currency}* جاهزة.\n\nتاريخ الاستحقاق: " . ($invoice->due_date?->format('Y/m/d') ?? '—') . "\n\nمرفق ملف الفاتورة PDF 📎\n\nشكراً لتعاملك معنا 🙏";
+                $whatsappMessage = "مرحباً {$invoice->client->name}،\n\nيسعدني إشعارك بأن الفاتورة رقم *{$invoice->number}* بمبلغ *" . number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) . " {$invoice->currency}* جاهزة.\n\nتاريخ الاستحقاق: " . ($invoice->due_date?->format('Y/m/d') ?? '—') . "\n\nمرفق ملف الفاتورة PDF 📎\n\nشكراً لتعاملك معنا 🙏";
                 $whatsappPhone = preg_replace('/[^0-9]/', '', $invoice->client->phone ?? '');
                 $whatsappUrl = 'https://wa.me/' . $whatsappPhone . '?text=' . rawurlencode($whatsappMessage);
                 $pdfUrl = route('invoices.pdf', $invoice->ulid);
@@ -127,7 +127,7 @@
                         </div>
                         <div class="flex justify-between text-muted">
                             <span>المبلغ</span>
-                            <span class="font-bold text-brand-600 nums">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
+                            <span class="font-bold text-brand-600 nums">{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                         </div>
                     </div>
                     <form method="POST" action="{{ route('invoices.send-client', $invoice->ulid) }}" class="space-y-3">
@@ -301,9 +301,9 @@
                 @foreach($invoice->items as $item)
                 <tr class="border-b border-slate-50">
                     <td class="py-3 text-ink">{{ $item->description }}</td>
-                    <td class="py-3 text-center text-muted nums">{{ number_format($item->quantity, 2) }}</td>
-                    <td class="py-3 text-end text-muted nums">{{ number_format($item->unit_price, 2) }} {{ $invoice->currency }}</td>
-                    <td class="py-3 text-end font-medium text-ink nums">{{ number_format($item->total, 2) }} {{ $invoice->currency }}</td>
+                    <td class="py-3 text-center text-muted nums">{{ number_format($item->quantity, \App\Support\Helpers\Currency::decimals($invoice->currency)) }}</td>
+                    <td class="py-3 text-end text-muted nums">{{ number_format($item->unit_price, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
+                    <td class="py-3 text-end font-medium text-ink nums">{{ number_format($item->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -315,29 +315,29 @@
                 @if($invoice->discount > 0 || $invoice->tax_amount > 0)
                 <div class="flex justify-between text-muted">
                     <span>المجموع الفرعي</span>
-                    <span class="nums">{{ number_format($invoice->subtotal, 2) }} {{ $invoice->currency }}</span>
+                    <span class="nums">{{ number_format($invoice->subtotal, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                 </div>
                 @endif
                 @if($invoice->tax_amount > 0)
                 <div class="flex justify-between text-muted">
                     <span>الضريبة ({{ number_format($invoice->tax_rate, 0) }}%)</span>
-                    <span class="nums">{{ number_format($invoice->tax_amount, 2) }} {{ $invoice->currency }}</span>
+                    <span class="nums">{{ number_format($invoice->tax_amount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                 </div>
                 @endif
                 @if($invoice->discount > 0)
                 <div class="flex justify-between text-muted">
                     @if($invoice->discount_type === 'percentage')
                         <span>الخصم ({{ number_format($invoice->discount, 0) }}%)</span>
-                        <span class="nums">- {{ number_format($invoice->discount_amount, 2) }} {{ $invoice->currency }}</span>
+                        <span class="nums">- {{ number_format($invoice->discount_amount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                     @else
                         <span>الخصم</span>
-                        <span class="nums">- {{ number_format($invoice->discount, 2) }} {{ $invoice->currency }}</span>
+                        <span class="nums">- {{ number_format($invoice->discount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                     @endif
                 </div>
                 @endif
                 <div class="flex justify-between font-bold text-ink border-t border-subtle pt-2">
                     <span>الإجمالي</span>
-                    <span class="nums">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
+                    <span class="nums">{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                 </div>
             </div>
         </div>
@@ -371,7 +371,7 @@
         <p class="text-sm text-muted mb-5">
             الفاتورة: <span class="font-semibold text-ink">{{ $invoice->number }}</span>
             {{-- IS3: teal-700 → brand --}}
-            — المبلغ: <span class="font-bold text-brand nums">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
+            — المبلغ: <span class="font-bold text-brand nums">{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
         </p>
 
         <form method="POST" action="{{ route('invoices.mark-paid', $invoice->ulid) }}">

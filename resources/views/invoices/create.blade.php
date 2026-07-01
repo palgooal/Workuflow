@@ -127,7 +127,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </span>
-                        <select name="currency" class="dash-field pr-9 py-2.5">
+                        <select name="currency" x-model="currency" @change="recalc()" class="dash-field pr-9 py-2.5">
                             @foreach($currencies as $code => $label)
                                 <option value="{{ $code }}"
                                     {{ old('currency', auth()->user()->currency ?? 'SAR') === $code ? 'selected' : '' }}>
@@ -186,13 +186,13 @@
                         <div class="col-span-4 md:col-span-2">
                             <input type="number" :name="`items[${index}][quantity]`"
                                    x-model.number="item.quantity" @input="recalc()"
-                                   placeholder="1" min="0.01" step="0.01" required
+                                   placeholder="1" min="0.01" :step="priceStep" required
                                    class="dash-field px-3 py-2 text-center nums">
                         </div>
                         <div class="col-span-7 md:col-span-3">
                             <input type="number" :name="`items[${index}][unit_price]`"
                                    x-model.number="item.unit_price" @input="recalc()"
-                                   placeholder="0.00" min="0" step="0.01" required
+                                   :placeholder="unitPricePlaceholder" min="0" :step="priceStep" required
                                    class="dash-field px-3 py-2 text-left nums">
                         </div>
                         <div class="col-span-1 flex justify-center">
@@ -238,9 +238,9 @@
                     </div>
                     <div class="relative">
                         <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted text-xs font-bold"
-                              x-text="discountType==='percentage' ? '%' : '₪'"></span>
+                              x-text="discountType==='percentage' ? '%' : currencySymbol"></span>
                         <input type="number" name="discount" value="{{ old('discount', 0) }}"
-                               min="0" step="0.01"
+                               min="0" :step="discountType==='percentage' ? '0.01' : priceStep"
                                :max="discountType==='percentage' ? 100 : undefined"
                                x-model.number="discountValue" @input="recalc()"
                                class="dash-field pr-8 py-2.5 nums">
@@ -310,6 +310,13 @@
 <script>
 function invoiceForm() {
     return {
+        // خريطة code => عدد الخانات العشرية (3 لعملات الفلس JOD/KWD/BHD/OMR، وإلا 2)
+        // مصدرها Currency::decimalsMap() — لا تُكرَّر يدوياً هنا حتى تبقى متزامنة
+        // مع app/Support/Helpers/Currency.php. راجع docs/INVOICES.md.
+        currencyDecimals: @json(\App\Support\Helpers\Currency::decimalsMap()),
+        // خريطة code => رمز العملة — لعرض رمز الخصم الصحيح بدل "₪" الثابتة سابقاً
+        currencySymbols: @json(\App\Support\Helpers\Currency::symbolsMap()),
+        currency: '{{ old('currency', auth()->user()->currency ?? 'SAR') }}',
         items: [{ description: '', quantity: 1, unit_price: 0 }],
         taxRate: {{ old('tax_rate', 0) }},
         discountValue: {{ old('discount', 0) }},
@@ -318,6 +325,19 @@ function invoiceForm() {
         taxAmount: 0,
         discountAmount: 0,
         total: 0,
+
+        get decimals() {
+            return this.currencyDecimals[this.currency] ?? 2;
+        },
+        get priceStep() {
+            return (1 / Math.pow(10, this.decimals)).toFixed(this.decimals);
+        },
+        get unitPricePlaceholder() {
+            return (0).toFixed(this.decimals);
+        },
+        get currencySymbol() {
+            return this.currencySymbols[this.currency] ?? this.currency;
+        },
 
         addItem() {
             this.items.push({ description: '', quantity: 1, unit_price: 0 });
@@ -336,7 +356,7 @@ function invoiceForm() {
             this.total = Math.max(0, this.subtotal + this.taxAmount - this.discountAmount);
         },
         formatMoney(val) {
-            return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(val || 0);
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: this.decimals, maximumFractionDigits: this.decimals }).format(val || 0);
         }
     }
 }

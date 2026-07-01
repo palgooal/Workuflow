@@ -203,9 +203,9 @@
         @foreach($invoice->items as $item)
         <tr>
             <td>{{ $item->description }}</td>
-            <td style="text-align:center">{{ number_format($item->quantity, 2) }}</td>
-            <td style="text-align:center">{{ number_format($item->unit_price, 2) }} {{ $invoice->currency }}</td>
-            <td style="text-align:center; font-weight:bold">{{ number_format($item->quantity * $item->unit_price, 2) }} {{ $invoice->currency }}</td>
+            <td style="text-align:center">{{ number_format($item->quantity, \App\Support\Helpers\Currency::decimals($invoice->currency)) }}</td>
+            <td style="text-align:center">{{ number_format($item->unit_price, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
+            <td style="text-align:center; font-weight:bold">{{ number_format($item->quantity * $item->unit_price, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
         </tr>
         @endforeach
     </tbody>
@@ -218,29 +218,29 @@
             @if($invoice->discount > 0 || $invoice->tax_amount > 0)
             <tr class="subtotal-row">
                 <td>المجموع الفرعي</td>
-                <td style="text-align:left">{{ number_format($invoice->subtotal, 2) }} {{ $invoice->currency }}</td>
+                <td style="text-align:left">{{ number_format($invoice->subtotal, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
             </tr>
             @endif
             @if($invoice->tax_amount > 0)
             <tr class="subtotal-row">
                 <td>الضريبة ({{ number_format($invoice->tax_rate, 0) }}%)</td>
-                <td style="text-align:left">{{ number_format($invoice->tax_amount, 2) }} {{ $invoice->currency }}</td>
+                <td style="text-align:left">{{ number_format($invoice->tax_amount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
             </tr>
             @endif
             @if($invoice->discount > 0)
             <tr class="subtotal-row">
                 @if($invoice->discount_type === 'percentage')
                 <td>الخصم ({{ number_format($invoice->discount, 0) }}%)</td>
-                <td style="text-align:left">- {{ number_format($invoice->discount_amount, 2) }} {{ $invoice->currency }}</td>
+                <td style="text-align:left">- {{ number_format($invoice->discount_amount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
                 @else
                 <td>الخصم</td>
-                <td style="text-align:left">- {{ number_format($invoice->discount, 2) }} {{ $invoice->currency }}</td>
+                <td style="text-align:left">- {{ number_format($invoice->discount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
                 @endif
             </tr>
             @endif
             <tr class="total-row">
                 <td>الإجمالي</td>
-                <td style="text-align:left">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</td>
+                <td style="text-align:left">{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</td>
             </tr>
         </table>
     </div>

@@ -14,9 +14,10 @@ class InvoiceItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity'   => 'decimal:2',
-            'unit_price' => 'decimal:2',
-            'total'      => 'decimal:2',
+            // ⚠️ decimal:3 لدعم عملات الفلس (JOD/KWD/BHD/OMR) — راجع Invoice::casts()
+            'quantity'   => 'decimal:3',
+            'unit_price' => 'decimal:3',
+            'total'      => 'decimal:3',
         ];
     }
 

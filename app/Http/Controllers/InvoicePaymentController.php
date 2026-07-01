@@ -38,7 +38,13 @@ class InvoicePaymentController extends Controller
 
         $latestCollection = $invoice->paymentCollections()->latest()->first();
 
-        return view('invoices.pay', compact('invoice', 'latestCollection'));
+        // ── حماية العملات غير المدعومة للدفع الإلكتروني عبر Togo ─────────
+        // عملة الفاتورة نفسها تبقى بلا أي قيد (أي عملة مدعومة في النظام)،
+        // لكن زر "ادفع الآن" لا يظهر إلا إذا كانت هذه العملة تحديداً مدعومة
+        // من بوابة الدفع. الفاتورة تبقى قابلة للعرض/الإرسال/الطباعة دائماً.
+        $isCurrencySupported = app(TogoPaymentService::class)->isInvoiceCurrencySupported($invoice->currency);
+
+        return view('invoices.pay', compact('invoice', 'latestCollection', 'isCurrencySupported'));
     }
 
     // ==================== بدء الدفع عبر البوابة ====================
@@ -61,6 +67,16 @@ class InvoicePaymentController extends Controller
         if (config('billing.provider') !== 'togo') {
             return redirect()->route('pay.invoice.show', $invoice->ulid)
                 ->with('error', 'بوابة الدفع غير مفعّلة بعد. تواصل مع صاحب الفاتورة.');
+        }
+
+        // ── حماية العملات غير المدعومة للدفع الإلكتروني عبر Togo ─────────
+        // فحص صارم قبل أي إنشاء لـ PaymentCollection أو استدعاء لـ Togo API.
+        // عملة الفاتورة نفسها لا تتغيّر أبداً هنا — هذا فقط يمنع محاولة دفع
+        // إلكتروني لعملة لا تدعمها البوابة أصلاً.
+        if (! app(TogoPaymentService::class)->isInvoiceCurrencySupported($invoice->currency)) {
+            return redirect()
+                ->route('pay.invoice.show', $invoice)
+                ->with('error', 'هذه العملة غير مدعومة للدفع الإلكتروني حالياً.');
         }
 
         $receiverEmail = $invoice->client->email ?: $invoice->user->email;

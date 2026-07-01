@@ -50,6 +50,15 @@
         </div>
         @endif
 
+        {{-- عملة الفاتورة غير مدعومة للدفع الإلكتروني عبر Togo — الفاتورة تبقى
+             معروضة/قابلة للطباعة كالمعتاد، فقط زر الدفع يختفي. --}}
+        @if($isPayable && ! $isCurrencySupported)
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center no-print">
+            <div class="text-2xl mb-2">⚠️</div>
+            <p class="font-semibold text-amber-800">هذه العملة غير مدعومة للدفع الإلكتروني حالياً. العملات المدعومة: ILS, USD.</p>
+        </div>
+        @endif
+
         {{-- حالة دائمة: مدفوعة (تظهر حتى بدون flash عند العودة للرابط لاحقاً) --}}
         @if($isPaid && ! session('success'))
         <div class="bg-teal-50 border border-teal-200 rounded-2xl p-5 text-center">
@@ -64,7 +73,7 @@
             {{-- رأس ملوّن --}}
             <div class="bg-gradient-to-l from-brand to-brand-700 text-white p-8 text-center">
                 <p class="text-brand-100 text-sm mb-1">فاتورة رقم {{ $invoice->number }}</p>
-                <p class="text-4xl font-extrabold nums">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</p>
+                <p class="text-4xl font-extrabold nums">{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</p>
                 <div class="mt-3">
                     @if($isPaid)
                         <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-white text-teal-700">
@@ -126,9 +135,9 @@
                             @foreach($invoice->items as $item)
                             <tr>
                                 <td class="py-3 text-slate-800">{{ $item->description }}</td>
-                                <td class="py-3 text-center text-slate-600 px-3 nums">{{ number_format($item->quantity, 2) }}</td>
-                                <td class="py-3 text-slate-600 px-2 nums">{{ number_format($item->unit_price, 2) }}</td>
-                                <td class="py-3 font-medium text-slate-800 nums">{{ number_format($item->total, 2) }}</td>
+                                <td class="py-3 text-center text-slate-600 px-3 nums">{{ number_format($item->quantity, \App\Support\Helpers\Currency::decimals($invoice->currency)) }}</td>
+                                <td class="py-3 text-slate-600 px-2 nums">{{ number_format($item->unit_price, \App\Support\Helpers\Currency::decimals($invoice->currency)) }}</td>
+                                <td class="py-3 font-medium text-slate-800 nums">{{ number_format($item->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -141,24 +150,24 @@
                         @if($invoice->discount > 0 || $invoice->tax_amount > 0)
                         <div class="flex justify-between text-slate-600">
                             <span>المجموع الفرعي</span>
-                            <span class="nums">{{ number_format($invoice->subtotal, 2) }} {{ $invoice->currency }}</span>
+                            <span class="nums">{{ number_format($invoice->subtotal, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                         </div>
                         @endif
                         @if($invoice->tax_amount > 0)
                         <div class="flex justify-between text-slate-600">
                             <span>الضريبة ({{ number_format($invoice->tax_rate, 0) }}%)</span>
-                            <span class="nums">{{ number_format($invoice->tax_amount, 2) }} {{ $invoice->currency }}</span>
+                            <span class="nums">{{ number_format($invoice->tax_amount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                         </div>
                         @endif
                         @if($invoice->discount > 0)
                         <div class="flex justify-between text-red-600">
                             <span>الخصم</span>
-                            <span class="nums">- {{ number_format($invoice->discount_amount, 2) }} {{ $invoice->currency }}</span>
+                            <span class="nums">- {{ number_format($invoice->discount_amount, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                         </div>
                         @endif
                         <div class="border-t-2 border-slate-200 pt-2 flex justify-between font-bold text-slate-900 text-base">
                             <span>الإجمالي</span>
-                            <span class="nums">{{ number_format($invoice->total, 2) }} {{ $invoice->currency }}</span>
+                            <span class="nums">{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }} {{ $invoice->currency }}</span>
                         </div>
                     </div>
                 </div>
@@ -174,8 +183,8 @@
             </div>
         </div>
 
-        {{-- زر الدفع — يظهر فقط إذا كانت الفاتورة قابلة للدفع --}}
-        @if($isPayable)
+        {{-- زر الدفع — يظهر فقط إذا كانت الفاتورة قابلة للدفع وعملتها مدعومة إلكترونياً --}}
+        @if($isPayable && $isCurrencySupported)
         <form method="POST" action="{{ route('pay.invoice.checkout', $invoice->ulid) }}" class="no-print">
             @csrf
             <button type="submit"

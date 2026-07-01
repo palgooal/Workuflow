@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Enums\QuoteStatus;
+use App\Support\Helpers\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,11 +33,12 @@ class Quote extends Model
             'status'       => QuoteStatus::class,
             'issue_date'   => 'date',
             'valid_until'  => 'date',
-            'subtotal'     => 'decimal:2',
+            // ⚠️ decimal:3 عمداً — راجع Invoice::casts() لنفس المنطق (عملات الفلس)
+            'subtotal'     => 'decimal:3',
             'tax_rate'     => 'decimal:2',
-            'tax_amount'   => 'decimal:2',
-            'discount'     => 'decimal:2',
-            'total'        => 'decimal:2',
+            'tax_amount'   => 'decimal:3',
+            'discount'     => 'decimal:3',
+            'total'        => 'decimal:3',
             'sent_at'      => 'datetime',
             'viewed_at'    => 'datetime',
             'accepted_at'  => 'datetime',
@@ -122,7 +124,7 @@ class Quote extends Model
     public function recalculate(): void
     {
         $subtotal  = $this->items->sum(fn ($i) => $i->quantity * $i->unit_price);
-        $taxAmount = round($subtotal * ($this->tax_rate / 100), 2);
+        $taxAmount = round($subtotal * ($this->tax_rate / 100), Currency::decimals($this->currency));
         $total     = $subtotal + $taxAmount - $this->discount;
 
         $this->update([

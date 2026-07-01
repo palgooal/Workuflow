@@ -85,7 +85,7 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-ink mb-1.5">العملة <span class="text-red-500">*</span></label>
-                    <select name="currency" required
+                    <select name="currency" required x-model="currency" @change="recalc()"
                             class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm
                                    focus:outline-none focus:ring-2 focus:ring-accent/40">
                         @foreach($currencies as $cur)
@@ -143,19 +143,19 @@
                     <div class="w-24">
                         <input type="number" :name="`items[${index}][quantity]`"
                                x-model.number="item.quantity" @input="recalc()"
-                               min="0.01" step="0.01"
+                               min="0.01" :step="priceStep"
                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200
                                       focus:outline-none focus:ring-2 focus:ring-accent/40" required>
                     </div>
                     <div class="w-28">
                         <input type="number" :name="`items[${index}][unit_price]`"
                                x-model.number="item.unit_price" @input="recalc()"
-                               min="0" step="0.01"
+                               min="0" :step="priceStep"
                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200
                                       focus:outline-none focus:ring-2 focus:ring-accent/40" required>
                     </div>
                     <div class="w-28 py-2 px-3 text-sm text-slate-500 bg-slate-50 rounded-lg text-center">
-                        <span x-text="(item.quantity * item.unit_price).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2})"></span>
+                        <span x-text="(item.quantity * item.unit_price).toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"></span>
                     </div>
                     <button type="button" @click="removeItem(index)"
                             class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition mt-0.5">
@@ -197,7 +197,7 @@
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between text-slate-600">
                         <span>المجموع الفرعي</span>
-                        <span x-text="subtotal.toLocaleString('en', {minimumFractionDigits:2})"></span>
+                        <span x-text="subtotal.toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"></span>
                     </div>
                     <div class="flex items-center justify-between gap-3">
                         <label class="text-slate-600 whitespace-nowrap">ضريبة %</label>
@@ -205,21 +205,21 @@
                                min="0" max="100" step="0.1"
                                class="w-20 px-2 py-1.5 text-sm rounded-lg border border-slate-200
                                       focus:outline-none focus:ring-2 focus:ring-accent/40 text-center">
-                        <span x-text="taxAmount.toLocaleString('en', {minimumFractionDigits:2})"
+                        <span x-text="taxAmount.toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"
                               class="text-slate-500 min-w-16 text-left"></span>
                     </div>
                     <div class="flex items-center justify-between gap-3">
                         <label class="text-slate-600 whitespace-nowrap">خصم</label>
                         <input type="number" name="discount" x-model.number="discount" @input="recalc()"
-                               min="0" step="0.01"
+                               min="0" :step="priceStep"
                                class="w-20 px-2 py-1.5 text-sm rounded-lg border border-slate-200
                                       focus:outline-none focus:ring-2 focus:ring-accent/40 text-center">
-                        <span x-text="'- ' + discount.toLocaleString('en', {minimumFractionDigits:2})"
+                        <span x-text="'- ' + discount.toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"
                               class="text-red-500 min-w-16 text-left"></span>
                     </div>
                     <div class="border-t border-slate-100 pt-2 flex justify-between font-bold text-slate-900">
                         <span>الإجمالي</span>
-                        <span x-text="total.toLocaleString('en', {minimumFractionDigits:2})"></span>
+                        <span x-text="total.toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"></span>
                     </div>
                 </div>
             </div>
@@ -243,18 +243,29 @@
 <script>
 function quoteForm() {
     return {
+        // خريطة code => عدد الخانات العشرية (3 لعملات الفلس JOD/KWD/BHD/OMR، وإلا 2)
+        currencyDecimals: @json(\App\Support\Helpers\Currency::decimalsMap()),
+        currency: '{{ old('currency', $quote->currency) }}',
         items: @json($quote->items->map(fn($i) => ['description' => $i->description, 'quantity' => (float)$i->quantity, 'unit_price' => (float)$i->unit_price])),
         taxRate:  {{ (float)$quote->tax_rate }},
         discount: {{ (float)$quote->discount }},
         subtotal: 0, taxAmount: 0, total: 0,
+
+        get decimals() {
+            return this.currencyDecimals[this.currency] ?? 2;
+        },
+        get priceStep() {
+            return (1 / Math.pow(10, this.decimals)).toFixed(this.decimals);
+        },
 
         init() { this.recalc(); },
         addItem() { this.items.push({ description: '', quantity: 1, unit_price: 0 }); },
         addServiceItem(name) { this.items.push({ description: name, quantity: 1, unit_price: 0 }); },
         removeItem(index) { if (this.items.length > 1) { this.items.splice(index, 1); this.recalc(); } },
         recalc() {
+            const scale = Math.pow(10, this.decimals);
             this.subtotal  = this.items.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
-            this.taxAmount = Math.round(this.subtotal * (this.taxRate / 100) * 100) / 100;
+            this.taxAmount = Math.round(this.subtotal * (this.taxRate / 100) * scale) / scale;
             this.total     = Math.max(0, this.subtotal + this.taxAmount - this.discount);
         },
     };

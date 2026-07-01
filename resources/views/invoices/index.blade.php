@@ -154,7 +154,7 @@
                     @endif
                 </td>
                 <td class="dash-td text-left">
-                    <span class="font-semibold text-ink nums">{{ number_format($invoice->total, 2) }}</span>
+                    <span class="font-semibold text-ink nums">{{ number_format($invoice->total, \App\Support\Helpers\Currency::decimals($invoice->currency)) }}</span>
                     <span class="text-xs text-muted mr-0.5">{{ $invoice->currency }}</span>
                 </td>
                 <td class="dash-td">

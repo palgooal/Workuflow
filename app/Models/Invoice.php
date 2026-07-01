@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Enums\InvoiceStatus;
+use App\Support\Helpers\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,11 +30,15 @@ class Invoice extends Model
             'status'     => InvoiceStatus::class,
             'issue_date' => 'date',
             'due_date'   => 'date',
-            'subtotal'   => 'decimal:2',
+            // ⚠️ decimal:3 عمداً (وليس 2) — عملات الفلس (JOD/KWD/BHD/OMR) تحتاج
+            // ثلاث خانات عشرية فعلية. tax_rate نسبة مئوية وليست مبلغاً بعملة،
+            // تبقى decimal:2. عند العرض استخدم Currency::decimals($invoice->currency)
+            // لعدد الخانات الصحيح لهذه الفاتورة تحديداً — راجع docs/INVOICES.md.
+            'subtotal'   => 'decimal:3',
             'tax_rate'   => 'decimal:2',
-            'tax_amount' => 'decimal:2',
-            'discount'   => 'decimal:2',
-            'total'      => 'decimal:2',
+            'tax_amount' => 'decimal:3',
+            'discount'   => 'decimal:3',
+            'total'      => 'decimal:3',
             'sent_at'    => 'datetime',
             'paid_at'    => 'datetime',
         ];
@@ -113,11 +118,13 @@ class Invoice extends Model
 
     public function recalculate(): void
     {
+        $decimals = Currency::decimals($this->currency);
+
         $subtotal = $this->items->sum(fn($i) => $i->quantity * $i->unit_price);
-        $taxAmount = round($subtotal * ($this->tax_rate / 100), 2);
+        $taxAmount = round($subtotal * ($this->tax_rate / 100), $decimals);
 
         $discountAmount = ($this->discount_type === 'percentage')
-            ? round($subtotal * ($this->discount / 100), 2)
+            ? round($subtotal * ($this->discount / 100), $decimals)
             : (float) $this->discount;
 
         $this->update([
@@ -131,7 +138,7 @@ class Invoice extends Model
     public function getDiscountAmountAttribute(): float
     {
         if ($this->discount_type === 'percentage') {
-            return round((float) $this->subtotal * ($this->discount / 100), 2);
+            return round((float) $this->subtotal * ($this->discount / 100), Currency::decimals($this->currency));
         }
         return (float) $this->discount;
     }

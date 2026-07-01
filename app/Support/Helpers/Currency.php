@@ -88,4 +88,59 @@ class Currency
     {
         return isset(self::$list[$code]);
     }
+
+    /**
+     * عملات "الفلس" ذات الثلاث خانات العشرية فعلياً (1 دينار = 1000 فلس) —
+     * على عكس أغلب العملات الأخرى المدعومة هنا (خانتان عشريتان).
+     */
+    private static array $threeDecimalCodes = ['JOD', 'KWD', 'BHD', 'OMR'];
+
+    /**
+     * عدد الخانات العشرية الصحيح لهذه العملة — 3 لعملات الفلس (JOD/KWD/BHD/OMR)
+     * و2 لكل ما عداها. استخدمها بدل تثبيت "2" يدوياً عند تنسيق أي مبلغ مرتبط
+     * بعملة الفاتورة/العرض (number_format, step على حقول HTML, إلخ).
+     */
+    public static function decimals(?string $code): int
+    {
+        return in_array(strtoupper((string) $code), self::$threeDecimalCodes, true) ? 3 : 2;
+    }
+
+    /**
+     * قيمة step المناسبة لحقل <input type="number"> بهذه العملة — "0.001" أو "0.01".
+     */
+    public static function step(?string $code): string
+    {
+        return '0.' . str_repeat('0', self::decimals($code) - 1) . '1';
+    }
+
+    /**
+     * تنسيق مبلغ بعدد الخانات العشرية الصحيح لعملته.
+     */
+    public static function format(float|int|string $amount, ?string $code): string
+    {
+        return number_format((float) $amount, self::decimals($code));
+    }
+
+    /**
+     * مصفوفة code => عدد الخانات العشرية — لتمريرها لـ JS (Alpine/JSON) بدل
+     * تكرار نفس القائمة الثابتة (JOD/KWD/BHD/OMR) في كل ملف Blade.
+     */
+    public static function decimalsMap(): array
+    {
+        return collect(self::codes())
+            ->mapWithKeys(fn ($code) => [$code => self::decimals($code)])
+            ->all();
+    }
+
+    /**
+     * مصفوفة code => رمز العملة — لتمريرها لـ JS (Alpine/JSON) حتى تعرض
+     * حقول مثل "الخصم" رمز العملة المختارة فعلياً، لا رمزاً ثابتاً (كان
+     * النموذج يعرض "₪" دائماً بغض النظر عن العملة المختارة).
+     */
+    public static function symbolsMap(): array
+    {
+        return collect(self::$list)
+            ->map(fn ($v) => $v['symbol'])
+            ->all();
+    }
 }

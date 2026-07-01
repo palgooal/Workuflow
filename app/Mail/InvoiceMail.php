@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\EmailTemplate;
 use App\Models\Invoice;
+use App\Support\Helpers\Currency;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
@@ -111,7 +112,7 @@ class InvoiceMail extends Mailable
         $vars = [
             '{{client_name}}'      => $invoice->client->name,
             '{{invoice_number}}'   => $invoice->number,
-            '{{invoice_total}}'    => number_format($invoice->total, 2),
+            '{{invoice_total}}'    => number_format($invoice->total, Currency::decimals($invoice->currency)),
             '{{invoice_currency}}' => $invoice->currency,
             '{{invoice_due_date}}' => $dueDate . ($isOverdue ? ' ⚠️ متأخرة' : ''),
             '{{invoice_notes}}'    => $invoice->notes ?? '',
@@ -152,9 +153,9 @@ class InvoiceMail extends Mailable
                 </tr>',
                 $bg,
                 htmlspecialchars($item->description),
-                number_format($item->quantity, 2),
-                number_format($item->unit_price, 2), $invoice->currency,
-                number_format($item->quantity * $item->unit_price, 2), $invoice->currency
+                number_format($item->quantity, Currency::decimals($invoice->currency)),
+                number_format($item->unit_price, Currency::decimals($invoice->currency)), $invoice->currency,
+                number_format($item->quantity * $item->unit_price, Currency::decimals($invoice->currency)), $invoice->currency
             );
         }
 
@@ -183,12 +184,12 @@ class InvoiceMail extends Mailable
             {$itemsHtml}
 
             <table style='width:100%;font-size:14px;margin-top:4px;'>
-                " . ($invoice->discount > 0 ? "<tr><td style='padding:4px 12px;color:#6b7280;'>المجموع الفرعي</td><td style='padding:4px 12px;text-align:left;'>" . number_format($invoice->subtotal, 2) . " {$invoice->currency}</td></tr>
-                <tr><td style='padding:4px 12px;color:#6b7280;'>الخصم</td><td style='padding:4px 12px;text-align:left;'>- " . number_format($invoice->discount, 2) . " {$invoice->currency}</td></tr>" : '') . "
-                " . ($invoice->tax > 0 ? "<tr><td style='padding:4px 12px;color:#6b7280;'>الضريبة</td><td style='padding:4px 12px;text-align:left;'>" . number_format($invoice->tax, 2) . " {$invoice->currency}</td></tr>" : '') . "
+                " . ($invoice->discount > 0 ? "<tr><td style='padding:4px 12px;color:#6b7280;'>المجموع الفرعي</td><td style='padding:4px 12px;text-align:left;'>" . number_format($invoice->subtotal, Currency::decimals($invoice->currency)) . " {$invoice->currency}</td></tr>
+                <tr><td style='padding:4px 12px;color:#6b7280;'>الخصم</td><td style='padding:4px 12px;text-align:left;'>- " . number_format($invoice->discount, Currency::decimals($invoice->currency)) . " {$invoice->currency}</td></tr>" : '') . "
+                " . ($invoice->tax > 0 ? "<tr><td style='padding:4px 12px;color:#6b7280;'>الضريبة</td><td style='padding:4px 12px;text-align:left;'>" . number_format($invoice->tax, Currency::decimals($invoice->currency)) . " {$invoice->currency}</td></tr>" : '') . "
                 <tr style='border-top:2px solid {$color};'>
                     <td style='padding:10px 12px;font-weight:700;font-size:16px;color:{$color};'>الإجمالي</td>
-                    <td style='padding:10px 12px;font-weight:700;font-size:16px;color:{$color};text-align:left;'>" . number_format($invoice->total, 2) . " {$invoice->currency}</td>
+                    <td style='padding:10px 12px;font-weight:700;font-size:16px;color:{$color};text-align:left;'>" . number_format($invoice->total, Currency::decimals($invoice->currency)) . " {$invoice->currency}</td>
                 </tr>
             </table>
 

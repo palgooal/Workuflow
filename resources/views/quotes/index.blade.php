@@ -119,7 +119,7 @@
                     {{ $quote->valid_until?->format('d/m/Y') ?? '—' }}
                 </td>
                 <td class="dash-td text-left font-semibold text-ink nums">
-                    {{ number_format($quote->total, 2) }}
+                    {{ number_format($quote->total, \App\Support\Helpers\Currency::decimals($quote->currency)) }}
                     <span class="text-xs font-normal text-muted">{{ $quote->currency }}</span>
                 </td>
                 <td class="dash-td">

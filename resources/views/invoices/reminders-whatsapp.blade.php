@@ -54,8 +54,8 @@
                     $typeBadge = $reminder->type === 'before_due' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700';
                     $phone = preg_replace('/[^0-9]/', '', $reminder->client_phone ?? '');
                     $message = $reminder->type === 'before_due'
-                        ? "مرحباً {$reminder->client_name}،\n\nتذكير بأن الفاتورة رقم *{$reminder->number}* بمبلغ *" . number_format($reminder->total, 2) . " {$reminder->currency}* تستحق بتاريخ " . \Carbon\Carbon::parse($reminder->due_date)->format('Y/m/d') . ".\n\nنرجو السداد في الوقت المحدد 🙏"
-                        : "مرحباً {$reminder->client_name}،\n\nنودّ تنبيهك بأن الفاتورة رقم *{$reminder->number}* بمبلغ *" . number_format($reminder->total, 2) . " {$reminder->currency}* تجاوزت تاريخ الاستحقاق.\n\nنرجو التواصل لتسوية المبلغ في أقرب وقت 🙏";
+                        ? "مرحباً {$reminder->client_name}،\n\nتذكير بأن الفاتورة رقم *{$reminder->number}* بمبلغ *" . number_format($reminder->total, \App\Support\Helpers\Currency::decimals($reminder->currency)) . " {$reminder->currency}* تستحق بتاريخ " . \Carbon\Carbon::parse($reminder->due_date)->format('Y/m/d') . ".\n\nنرجو السداد في الوقت المحدد 🙏"
+                        : "مرحباً {$reminder->client_name}،\n\nنودّ تنبيهك بأن الفاتورة رقم *{$reminder->number}* بمبلغ *" . number_format($reminder->total, \App\Support\Helpers\Currency::decimals($reminder->currency)) . " {$reminder->currency}* تجاوزت تاريخ الاستحقاق.\n\nنرجو التواصل لتسوية المبلغ في أقرب وقت 🙏";
                     $waUrl = 'https://wa.me/' . $phone . '?text=' . rawurlencode($message);
                 @endphp
                 <div class="flex items-center gap-4 px-5 py-4" id="reminder-{{ $reminder->id }}">
@@ -70,7 +70,7 @@
                         <p class="text-sm font-medium text-slate-800">{{ $reminder->client_name }}</p>
                         <p class="text-xs text-slate-500">
                             {{ $reminder->number }} —
-                            {{ number_format($reminder->total, 2) }} {{ $reminder->currency }}
+                            {{ number_format($reminder->total, \App\Support\Helpers\Currency::decimals($reminder->currency)) }} {{ $reminder->currency }}
                             @if($reminder->due_date)
                                 · استحقاق {{ \Carbon\Carbon::parse($reminder->due_date)->format('Y/m/d') }}
                             @endif

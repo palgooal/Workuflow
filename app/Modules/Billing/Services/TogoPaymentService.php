@@ -214,6 +214,32 @@ class TogoPaymentService implements PaymentProviderInterface
     }
 
     /**
+     * العملات التي تدعمها بوابة Togo فعلياً للدفع الإلكتروني لفواتير المستقلين
+     * (createInvoicePaymentOrder). عملة الفاتورة نفسها (invoice.currency) يمكن
+     * أن تكون أي عملة من القائمة الكاملة في App\Support\Helpers\Currency — هذا
+     * القيد خاص فقط بمسار الدفع عبر Togo، وليس بإنشاء الفاتورة أو عرضها.
+     *
+     * ⚠️ لا تُستخدم هذه القائمة لأي تحويل عملة تلقائي ("الدفع بما يعادلها
+     * بالشيكل" غير مُنفَّذ بعد لغياب سعر صرف رسمي) — فقط لمنع فتح checkout
+     * لعملة لا تدعمها Togo أصلاً. راجع docs/PAYMENT-COLLECTION.md.
+     *
+     * @return string[]
+     */
+    public function supportedInvoiceCurrencies(): array
+    {
+        return ['ILS', 'USD'];
+    }
+
+    /**
+     * هل عملة الفاتورة مدعومة للدفع الإلكتروني عبر Togo؟ فحص غير حسّاس لحالة
+     * الأحرف (مثلاً "ils" أو "ILS" كلاهما مدعوم).
+     */
+    public function isInvoiceCurrencySupported(string $currency): bool
+    {
+        return in_array(strtoupper($currency), $this->supportedInvoiceCurrencies(), true);
+    }
+
+    /**
      * يحاول استخراج مبلغ عمولة Togo من بيانات الطلب المُرجَعة عند verifyOrder().
      *
      * ⚠️ Togo لا تُوثِّق حقلاً رسمياً ثابتاً لعمولة الـ RFP حالياً، لذا نتحقق

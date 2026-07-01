@@ -124,13 +124,13 @@
                             <tr>
                                 <td class="py-3 text-slate-800">{{ $item->description }}</td>
                                 <td class="py-3 text-center text-slate-600 px-3">
-                                    {{ number_format($item->quantity, 2) }}
+                                    {{ number_format($item->quantity, \App\Support\Helpers\Currency::decimals($quote->currency)) }}
                                 </td>
                                 <td class="py-3 text-slate-600 px-2">
-                                    {{ number_format($item->unit_price, 2) }}
+                                    {{ number_format($item->unit_price, \App\Support\Helpers\Currency::decimals($quote->currency)) }}
                                 </td>
                                 <td class="py-3 font-medium text-slate-800">
-                                    {{ number_format($item->total, 2) }}
+                                    {{ number_format($item->total, \App\Support\Helpers\Currency::decimals($quote->currency)) }}
                                 </td>
                             </tr>
                             @endforeach
@@ -143,24 +143,24 @@
                     <div class="w-64 space-y-2 text-sm">
                         <div class="flex justify-between text-slate-600">
                             <span>المجموع الفرعي</span>
-                            <span>{{ number_format($quote->subtotal, 2) }} {{ $quote->currency }}</span>
+                            <span>{{ number_format($quote->subtotal, \App\Support\Helpers\Currency::decimals($quote->currency)) }} {{ $quote->currency }}</span>
                         </div>
                         @if($quote->tax_rate > 0)
                         <div class="flex justify-between text-slate-600">
                             <span>ضريبة ({{ number_format($quote->tax_rate, 1) }}%)</span>
-                            <span>{{ number_format($quote->tax_amount, 2) }} {{ $quote->currency }}</span>
+                            <span>{{ number_format($quote->tax_amount, \App\Support\Helpers\Currency::decimals($quote->currency)) }} {{ $quote->currency }}</span>
                         </div>
                         @endif
                         @if($quote->discount > 0)
                         <div class="flex justify-between text-red-600">
                             <span>خصم</span>
-                            <span>- {{ number_format($quote->discount, 2) }} {{ $quote->currency }}</span>
+                            <span>- {{ number_format($quote->discount, \App\Support\Helpers\Currency::decimals($quote->currency)) }} {{ $quote->currency }}</span>
                         </div>
                         @endif
                         <div class="border-t-2 border-slate-200 pt-2 flex justify-between
                                     font-bold text-slate-900 text-base">
                             <span>الإجمالي النهائي</span>
-                            <span>{{ number_format($quote->total, 2) }} {{ $quote->currency }}</span>
+                            <span>{{ number_format($quote->total, \App\Support\Helpers\Currency::decimals($quote->currency)) }} {{ $quote->currency }}</span>
                         </div>
                     </div>
                 </div>
