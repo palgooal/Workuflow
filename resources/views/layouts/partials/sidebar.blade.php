@@ -50,6 +50,16 @@
                 المعاملات
             </x-nav-item>
 
+            <x-nav-item href="{{ route('collections.index') }}" :active="request()->routeIs('collections.*')">
+                <x-slot name="icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                    </svg>
+                </x-slot>
+                تحصيلاتي
+            </x-nav-item>
+
             @if(auth()->user()->currentPlan()->can('wallets'))
             <x-nav-item href="{{ route('wallets.index') }}" :active="request()->routeIs('wallets.*')">
                 <x-slot name="icon">

@@ -4,20 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Mail\InvoiceMail;
 use App\Models\Client;
-use App\Modules\CRM\Jobs\RecalculateClientHealthScoreJob;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Wallet;
 use App\Models\Project;
-use App\Models\Transaction;
+use App\Services\InvoicePaymentService;
 use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use App\Support\Helpers\Currency;
 use App\Support\Enums\InvoiceStatus;
-use App\Support\Enums\TransactionType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -261,7 +258,7 @@ class InvoiceController extends Controller
         return back()->with('success', 'تم تحديث حالة الفاتورة إلى مُرسَلة.');
     }
 
-    public function markPaid(Request $request, string $ulid): RedirectResponse
+    public function markPaid(Request $request, string $ulid, InvoicePaymentService $invoicePaymentService): RedirectResponse
     {
         $request->validate([
             'wallet_id' => ['required', 'string', 'exists:wallets,id'],
@@ -280,62 +277,9 @@ class InvoiceController extends Controller
             return back()->with('info', 'الفاتورة مسجّلة كمدفوعة مسبقاً.');
         }
 
-        $paidAt = now();
-
-        $invoice->update([
-            'status'  => InvoiceStatus::Paid,
-            'paid_at' => $paidAt,
-        ]);
-
-        // ── تسجيل معاملة دخل تلقائياً ──────────────────────────────
-        $txData = [
-            'user_id'          => $invoice->user_id,
-            'type'             => TransactionType::Income,
-            'amount'           => $invoice->total,
-            'currency'         => $invoice->currency,
-            'description'      => 'فاتورة ' . $invoice->number
-                                  . ($invoice->title ? ' — ' . $invoice->title : ''),
-            'payee'            => $invoice->client->name,
-            'transaction_date' => $paidAt->toDateString(),
-            'reference'        => $invoice->number,
-            'wallet_id'        => $request->wallet_id,
-            'notes'            => 'تم الإنشاء تلقائياً عند تسجيل دفع الفاتورة.',
-        ];
-
-        if ($invoice->project_id) {
-            $txData['project_id'] = $invoice->project_id;
-        }
-
-        Transaction::create($txData);
-
-        // ── تحديث إحصائيات العميل (total_paid + last_payment_at) ─────
-        if ($invoice->client_id) {
-            $client = \App\Models\Client::find($invoice->client_id);
-            if ($client) {
-                $paid = \App\Models\Invoice::where('client_id', $client->id)
-                    ->where('user_id', $invoice->user_id)
-                    ->where('status', InvoiceStatus::Paid)
-                    ->sum('total');
-
-                $revenue = \App\Models\Invoice::where('client_id', $client->id)
-                    ->where('user_id', $invoice->user_id)
-                    ->whereNotIn('status', [InvoiceStatus::Cancelled])
-                    ->sum('total');
-
-                $client->update([
-                    'total_paid'      => $paid,
-                    'total_revenue'   => $revenue,
-                    'last_payment_at' => $paidAt,
-                ]);
-            }
-        }
-
-        // ── إعادة حساب Health Score للعميل في الخلفية (GAP-02) ─────
-        if ($invoice->client_id) {
-            RecalculateClientHealthScoreJob::dispatch($invoice->client_id)
-                ->onQueue('crm-default')
-                ->delay(now()->addSeconds(5)); // تأخير قصير لضمان commit DB أولاً
-        }
+        // منطق التحديث + معاملة الدخل + إحصائيات العميل مُستخرج إلى
+        // InvoicePaymentService ليُعاد استخدامه من التحصيل عبر بوابة الدفع أيضاً.
+        $invoicePaymentService->markPaid($invoice, $request->wallet_id);
 
         return back()->with('success', '✅ تم تسجيل الدفع وإضافة معاملة الدخل بنجاح.');
     }

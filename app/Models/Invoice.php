@@ -75,6 +75,11 @@ class Invoice extends Model
         return $this->hasMany(InvoiceItem::class)->orderBy('sort_order');
     }
 
+    public function paymentCollections(): HasMany
+    {
+        return $this->hasMany(PaymentCollection::class);
+    }
+
     // ==================== Scopes ====================
 
     public function scopeForUser($query, int $userId)

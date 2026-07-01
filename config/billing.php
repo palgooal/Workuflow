@@ -75,4 +75,16 @@ return [
         'mode'                => env('TOGO_MODE', 'sandbox'),  // 'sandbox' | 'live'
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Invoice Collection Fee (التحصيل عبر دراهم — PaymentCollection.platform_fee)
+    |--------------------------------------------------------------------------
+    | ⚠️ لم تعد تُقرأ من هنا. عمولة تحصيل الفواتير تُدار الآن بالكامل من
+    | لوحة الإدارة: Filament → بوابة الدفع (app/Filament/Pages/PaymentSettings.php)
+    | وتُخزَّن في جدول settings (group = 'payment') بالمفاتيح:
+    |   invoice_collection_fee_enabled | invoice_collection_fee_rate | invoice_collection_fixed_fee
+    | راجع InvoicePaymentController@callback و docs/PAYMENT-COLLECTION.md.
+    | لا تُضِف قراءة config() لهذه القيم مجدداً — أبقِ العمولة مُدارة من DB فقط.
+    */
+
 ];

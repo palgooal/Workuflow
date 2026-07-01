@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoicePaymentController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\BudgetController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\SettlementRequestController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -122,6 +125,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('subscription:transactions')
         ->name('transactions.store');
 
+    // ── تحصيلاتي — عرض المشترك لعمليات تحصيل فواتيره عبر بوابة الدفع (قراءة فقط) ──
+    Route::get('/collections', [CollectionController::class, 'index'])->name('collections.index');
+
+    // ── طلب تسوية — المشترك يطلب فقط، الاعتماد/الدفع الفعلي من الأدمن حصراً ──
+    Route::post('/settlement-requests', [SettlementRequestController::class, 'store'])->name('settlement-requests.store');
+
     // Debts — Phase 8
     Route::resource('debts', DebtController::class)->only(['index', 'create', 'store', 'destroy']);
     Route::post('/debts/{debt}/record-payment', [DebtController::class, 'recordPayment'])->name('debts.record-payment');
@@ -198,6 +207,17 @@ Route::prefix('billing')->name('billing.')->group(function () {
 Route::get('/invoice/{ulid}/view', [InvoiceController::class, 'publicView'])
     ->name('invoices.public-view')
     ->middleware('signed');
+
+// ══════════════════════════════════════════════════════
+// التحصيل عبر دراهم — دفع الفاتورة عبر بوابة الدفع نيابة عن المشترك
+// بدون Auth عمداً — الوصول فقط عبر ULID الفاتورة غير القابل للتخمين.
+// ══════════════════════════════════════════════════════
+Route::prefix('pay')->name('pay.')->group(function () {
+    Route::get('/invoice/{invoice:ulid}',          [InvoicePaymentController::class, 'show'])->name('invoice.show');
+    Route::post('/invoice/{invoice:ulid}/checkout', [InvoicePaymentController::class, 'checkout'])->name('invoice.checkout');
+    Route::get('/invoice/{invoice:ulid}/callback',  [InvoicePaymentController::class, 'callback'])->name('invoice.callback');
+    Route::get('/invoice/{invoice:ulid}/cancel',    [InvoicePaymentController::class, 'cancel'])->name('invoice.cancel');
+});
 
 Route::prefix('q')->name('quotes.')->group(function () {
     Route::get('/{token}',         [QuoteController::class, 'portal'])->name('portal');

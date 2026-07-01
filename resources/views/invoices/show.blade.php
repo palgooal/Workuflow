@@ -183,6 +183,16 @@
                 </svg>
                 تسجيل الدفع
             </button>
+
+            {{-- زر ادفع الآن — رابط الدفع العام عبر بوابة الدفع (التحصيل عبر دراهم) --}}
+            <a href="{{ route('pay.invoice.show', $invoice->ulid) }}" target="_blank"
+               class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-brand bg-brand-50 border border-brand/30 rounded-xl hover:bg-brand-100 transition"
+               aria-label="فتح رابط الدفع العام للعميل">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a4 4 0 00-8 0v2m-2 0h12a2 2 0 012 2v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a2 2 0 012-2z"/>
+                </svg>
+                ادفع الآن
+            </a>
             @endif
 
             {{-- طباعة --}}

@@ -117,6 +117,7 @@ app/
 │   │   ├── DashboardController.php
 │   │   ├── DebtController.php
 │   │   ├── InvoiceController.php          ← CRUD + markSent + markPaid + cancel
+│   │   ├── InvoicePaymentController.php   ← التحصيل عبر دراهم — بدون Auth (public: /pay/invoice/{ulid})
 │   │   ├── OnboardingController.php
 │   │   ├── ProjectController.php
 │   │   ├── QuoteController.php            ← CRUD + markSent + convert + portal
@@ -138,6 +139,8 @@ app/
 │   ├── Debt.php
 │   ├── Invoice.php                        ← BelongsToUser, SoftDeletes, ULID
 │   ├── InvoiceItem.php
+│   ├── PaymentCollection.php               ← تحصيل الفواتير عبر بوابة الدفع نيابة عن المشترك
+│   ├── PaymentOrder.php                    ← اشتراكات (Togo) — لا علاقة بفواتير العملاء
 │   ├── Project.php
 │   ├── Quote.php                          ← BelongsToUser, SoftDeletes, ULID, token
 │   ├── QuoteItem.php
@@ -216,10 +219,14 @@ app/
 │   ├── RecurringPolicy.php
 │   └── TransactionPolicy.php
 │
+├── Services/
+│   └── InvoicePaymentService.php           ← markPaid() مُستخرَج — يُستخدم من InvoiceController و InvoicePaymentController
+│
 ├── Support/
 │   ├── Enums/
 │   │   ├── DebtStatus.php / DebtType.php
 │   │   ├── InvoiceStatus.php              ← draft|sent|paid|overdue|cancelled
+│   │   ├── PaymentCollectionStatus.php    ← pending|collected|settled|failed|refunded
 │   │   ├── ProjectType.php                ← personal|business
 │   │   ├── QuoteStatus.php                ← draft|sent|viewed|accepted|rejected|expired|converted
 │   │   ├── RecurringFrequency.php

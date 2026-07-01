@@ -34,6 +34,14 @@ class PaymentSettings extends Page
             'togo_currency'                => $saved['togo_currency']                ?? config('billing.togo.currency', 'ILS'),
             'togo_mode'                    => $saved['togo_mode']                    ?? config('billing.togo.mode', 'sandbox'),
 
+            // عمولة تحصيل الفواتير (PaymentCollection.platform_fee) — تُدار من هنا حصراً، لا من .env
+            'invoice_collection_fee_enabled' => filter_var(
+                $saved['invoice_collection_fee_enabled'] ?? true,
+                FILTER_VALIDATE_BOOLEAN
+            ),
+            'invoice_collection_fee_rate'    => $saved['invoice_collection_fee_rate']  ?? '2.5',
+            'invoice_collection_fixed_fee'   => $saved['invoice_collection_fixed_fee'] ?? '0',
+
             // حقول إنشاء receiver address (مؤقتة — لا تُحفظ)
             'receiver_name'                => '',
             'receiver_phone'               => '',
@@ -172,6 +180,43 @@ class PaymentSettings extends Page
                             ->columnSpan(2),
                     ]),
 
+                // ── القسم 4: عمولة تحصيل الفواتير (التحصيل عبر دراهم) ──
+                Forms\Components\Section::make('عمولة تحصيل الفواتير')
+                    ->icon('heroicon-o-receipt-percent')
+                    ->description('العمولة التي تُخصم من صافي المبلغ عند تحصيل فواتير المستقلين عبر بوابة الدفع نيابة عنهم — راجع docs/PAYMENT-COLLECTION.md')
+                    ->schema([
+                        Forms\Components\Toggle::make('invoice_collection_fee_enabled')
+                            ->label('تفعيل عمولة تحصيل الفواتير')
+                            ->helperText('عند التعطيل: platform_fee = 0 لكل التحصيلات الجديدة (ما لم يُرجِع المزود عمولة فعلية).')
+                            ->live()
+                            ->default(true),
+
+                        Forms\Components\Grid::make(2)
+                            ->visible(fn (Forms\Get $get) => (bool) $get('invoice_collection_fee_enabled'))
+                            ->schema([
+                                Forms\Components\TextInput::make('invoice_collection_fee_rate')
+                                    ->label('نسبة العمولة %')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->step(0.01)
+                                    ->suffix('%')
+                                    ->default('2.5')
+                                    ->helperText('مثال: 2.5 تعني 2.5% من مبلغ كل تحصيل')
+                                    ->required(fn (Forms\Get $get) => (bool) $get('invoice_collection_fee_enabled')),
+
+                                Forms\Components\TextInput::make('invoice_collection_fixed_fee')
+                                    ->label('عمولة ثابتة')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->step(0.01)
+                                    ->suffix('ILS')
+                                    ->default('0')
+                                    ->helperText('مثال: 1.00 شيكل تُضاف على كل عملية تحصيل بغض النظر عن المبلغ')
+                                    ->required(fn (Forms\Get $get) => (bool) $get('invoice_collection_fee_enabled')),
+                            ]),
+                    ]),
+
                 // ملاحظة: أسعار الخطط تُقرأ من config/billing.php فقط
                 // (billing.plans.{plan}.{cycle}.price) — لا تُعدَّل من هنا.
 
@@ -193,6 +238,11 @@ class PaymentSettings extends Page
             'togo_currency'            => $data['togo_currency']               ?? 'ILS',
             'togo_mode'                => $data['togo_mode']                   ?? 'sandbox',
             // أسعار الخطط محذوفة — مصدرها config/billing.php حصراً
+
+            // عمولة تحصيل الفواتير — تُقرأ من InvoicePaymentController@callback مباشرة من DB
+            'invoice_collection_fee_enabled' => ! empty($data['invoice_collection_fee_enabled']) ? '1' : '0',
+            'invoice_collection_fee_rate'    => $data['invoice_collection_fee_rate']  ?? '2.5',
+            'invoice_collection_fixed_fee'   => $data['invoice_collection_fixed_fee'] ?? '0',
         ];
 
         // احفظ كل قيمة بشكل مستقل حتى تُحفظ القيم الفارغة (مثل مسح togo_receiver_address_id)

@@ -144,6 +144,147 @@ class TogoPaymentService implements PaymentProviderInterface
     }
 
     /**
+     * إنشاء RFP order لتحصيل فاتورة (مبلغ حر، ليس خطة اشتراك) نيابة عن مشترك.
+     *
+     * تُستخدم من InvoicePaymentController — الأموال تُحصَّل في حساب دراهم
+     * على Togo، ثم تُسوَّى مع المشترك يدوياً لاحقاً (PaymentCollection.status).
+     *
+     * @param  float  $amount        المبلغ المطلوب تحصيله
+     * @param  string $currency      عملة الفاتورة
+     * @param  string $receiverEmail بريد العميل الدافع (أو المشترك كبديل)
+     * @param  string $successUrl    رابط العودة عند نجاح الدفع
+     * @param  string $cancelUrl     رابط العودة عند إلغاء الدفع
+     * @return array{checkout_url: string, provider_order_id: string, provider_hashed_id: string, raw: array}
+     * @throws \RuntimeException إذا فشل API
+     */
+    public function createInvoicePaymentOrder(
+        float $amount,
+        string $currency,
+        string $receiverEmail,
+        string $successUrl,
+        string $cancelUrl,
+    ): array {
+        $this->assertConfigured();
+
+        $response = Http::withHeaders(['x-api-key' => $this->apiKey])
+            ->timeout(15)
+            ->post($this->baseUrl . '/api/v1/actions', [
+                'event' => 'Create_Visa',
+                'data'  => [
+                    'type'                          => 'RFP',
+                    'value'                         => $amount,
+                    'receiver_address_id'           => $this->receiverAddressId,
+                    'receiver_email'                => $receiverEmail,
+                    'currency'                      => $currency,
+                    'source'                        => 'external_website',
+                    'prevent_sms_link'              => false,
+                    'payment_success_redirect_link' => $successUrl,
+                    'payment_cancel_redirect_link'  => $cancelUrl,
+                ],
+            ]);
+
+        if (! $response->successful()) {
+            Log::error('Togo createInvoicePaymentOrder failed', [
+                'status'   => $response->status(),
+                'body'     => $response->body(),
+                'amount'   => $amount,
+                'currency' => $currency,
+            ]);
+            throw new \RuntimeException('فشل الاتصال ببوابة Togo. حاول مجدداً.');
+        }
+
+        $data = $response->json('data');
+
+        if (empty($data['hashed_id']) || empty($data['id'])) {
+            Log::error('Togo: بيانات order ناقصة (invoice payment)', ['response' => $response->json()]);
+            throw new \RuntimeException('استجابة Togo غير مكتملة.');
+        }
+
+        $checkoutUrl = $this->baseUrl
+            . '/api/v1/direct-pay'
+            . '?orderId=' . urlencode($data['hashed_id'])
+            . '&receiverEmail=' . urlencode($receiverEmail);
+
+        return [
+            'checkout_url'       => $checkoutUrl,
+            'provider_order_id'  => $data['id'],
+            'provider_hashed_id' => $data['hashed_id'],
+            'raw'                => $data,
+        ];
+    }
+
+    /**
+     * يحاول استخراج مبلغ عمولة Togo من بيانات الطلب المُرجَعة عند verifyOrder().
+     *
+     * ⚠️ Togo لا تُوثِّق حقلاً رسمياً ثابتاً لعمولة الـ RFP حالياً، لذا نتحقق
+     * من عدة أسماء حقول محتملة بأمان (بدون افتراض بنية غير موجودة). تُستخدم
+     * من InvoicePaymentController@callback؛ إن لم يوجد أي حقل مطابق تُعاد
+     * null ليعتمد المستدعي على إعدادات العمولة من لوحة الإدارة (Filament →
+     * بوابة الدفع → عمولة تحصيل الفواتير، جدول settings group=payment).
+     */
+    public function extractCommissionAmount(array $orderData): ?float
+    {
+        foreach (['commission_amount', 'commission', 'fee_amount', 'fee', 'platform_fee'] as $key) {
+            if (isset($orderData[$key]) && is_numeric($orderData[$key])) {
+                return (float) $orderData[$key];
+            }
+        }
+
+        // بعض الردود المحتملة قد تُغلِّف العمولة داخل fees{} أو breakdown{}
+        if (isset($orderData['fees']) && is_array($orderData['fees'])) {
+            foreach (['commission', 'platform', 'gateway'] as $nestedKey) {
+                if (isset($orderData['fees'][$nestedKey]) && is_numeric($orderData['fees'][$nestedKey])) {
+                    return (float) $orderData['fees'][$nestedKey];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * يحاول استخراج مبلغ التسوية بالشيكل (ILS) من بيانات الطلب المُرجَعة عند
+     * verifyOrder() — Togo تُحصِّل وتُسوِّي فعلياً بالشيكل دائماً بغض النظر عن
+     * عملة الفاتورة الأصلية. مثل extractCommissionAmount()، هذه محاولة "قدر
+     * المستطاع" لعدة أسماء حقول محتملة؛ تُعيد null إن لم يوجد أي حقل مطابق
+     * ليعتمد المستدعي (InvoicePaymentController@callback) على سعر صرف مُرجَع
+     * (extractExchangeRate) أو على المراجعة اليدوية من الأدمن.
+     */
+    public function extractSettlementAmount(array $orderData): ?float
+    {
+        foreach (['settlement_amount', 'settled_amount', 'ils_amount', 'amount_ils', 'converted_amount', 'local_amount'] as $key) {
+            if (isset($orderData[$key]) && is_numeric($orderData[$key])) {
+                return (float) $orderData[$key];
+            }
+        }
+
+        if (isset($orderData['settlement']) && is_array($orderData['settlement'])) {
+            foreach (['amount', 'ils_amount', 'value'] as $nestedKey) {
+                if (isset($orderData['settlement'][$nestedKey]) && is_numeric($orderData['settlement'][$nestedKey])) {
+                    return (float) $orderData['settlement'][$nestedKey];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * يحاول استخراج سعر الصرف المُستخدَم لتحويل مبلغ الفاتورة إلى الشيكل من
+     * بيانات الطلب المُرجَعة عند verifyOrder(). راجع extractSettlementAmount().
+     */
+    public function extractExchangeRate(array $orderData): ?float
+    {
+        foreach (['exchange_rate', 'fx_rate', 'conversion_rate', 'rate'] as $key) {
+            if (isset($orderData[$key]) && is_numeric($orderData[$key])) {
+                return (float) $orderData[$key];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Togo لا تملك صفحة إدارة اشتراك — نُعيد صفحة الفواتير.
      */
     public function createPortalUrl(User $user): string
