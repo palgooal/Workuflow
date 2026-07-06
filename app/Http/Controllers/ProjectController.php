@@ -78,32 +78,26 @@ class ProjectController extends Controller
             ProjectData::fromRequest($validated)
         );
 
-        // حفظ العميل
+        // حفظ العميل — بعد التحقق من أنه يخص المستخدم الحالي
         if (! empty($validated['client_id'])) {
+            Client::where('id', $validated['client_id'])
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
             $project->update(['client_id' => $validated['client_id']]);
         }
 
-        // حفظ الخدمات
+        // حفظ الخدمات — بعد التحقق من أن كل خدمة عامة أو تخص المستخدم الحالي
         if (! empty($validated['services'])) {
-            $syncData = [];
-            foreach ($validated['services'] as $svc) {
-                $syncData[$svc['service_id']] = [
-                    'amount'            => $svc['amount'],
-                    'type'              => 'income',
-                    'notes'             => $svc['notes'] ?? null,
-                    'target_margin_pct' => isset($svc['target_margin_pct']) && $svc['target_margin_pct'] !== ''
-                                          ? (int) $svc['target_margin_pct'] : null,
-                ];
-            }
+            $syncData = $this->buildValidatedServiceSyncData($validated['services']);
             $project->services()->sync($syncData);
 
-            // حفظ منفذي كل خدمة
+            // حفظ منفذي كل خدمة (بعد التحقق من ملكية كل منفذ)
             $this->syncServiceMembers($project, $validated['services']);
         }
 
         // ── إنشاء فاتورة مسودة تلقائياً عند ربط المشروع بعميل ──
         if (! empty($validated['client_id'])) {
-            $this->createDraftInvoice($project, $validated);
+            $this->createDraftInvoice($project);
         }
 
         return redirect()
@@ -161,24 +155,20 @@ class ProjectController extends Controller
             ProjectData::fromRequest($validated)
         );
 
-        // تحديث العميل
+        // تحديث العميل — بعد التحقق من أنه يخص المستخدم الحالي
+        if (! empty($validated['client_id'])) {
+            Client::where('id', $validated['client_id'])
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
+        }
         $project->update(['client_id' => $validated['client_id'] ?? null]);
 
-        // تحديث الخدمات
+        // تحديث الخدمات — بعد التحقق من أن كل خدمة عامة أو تخص المستخدم الحالي
         if (isset($validated['services'])) {
-            $syncData = [];
-            foreach ($validated['services'] as $svc) {
-                $syncData[$svc['service_id']] = [
-                    'amount'            => $svc['amount'],
-                    'type'              => 'income',
-                    'notes'             => $svc['notes'] ?? null,
-                    'target_margin_pct' => isset($svc['target_margin_pct']) && $svc['target_margin_pct'] !== ''
-                                          ? (int) $svc['target_margin_pct'] : null,
-                ];
-            }
+            $syncData = $this->buildValidatedServiceSyncData($validated['services']);
             $project->services()->sync($syncData);
 
-            // تحديث منفذي كل خدمة
+            // تحديث منفذي كل خدمة (بعد التحقق من ملكية كل منفذ)
             $this->syncServiceMembers($project, $validated['services']);
         } else {
             $project->services()->detach();
@@ -308,6 +298,19 @@ class ProjectController extends Controller
 
     private function syncServiceMembers(Project $project, array $services): void
     {
+        // نجيب مسبقاً معرّفات منفذي الفريق اللي فعلاً تخص المستخدم الحالي
+        // (TeamMember محمي بـ BelongsToUser global scope، فـ find/where هنا تلقائياً مقيّدة بالمستخدم)
+        $requestedMemberIds = collect($services)
+            ->flatMap(fn ($svc) => $svc['members'] ?? [])
+            ->pluck('team_member_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $ownedMemberIds = $requestedMemberIds->isEmpty()
+            ? collect()
+            : TeamMember::whereIn('id', $requestedMemberIds)->pluck('id')->map(fn ($id) => (string) $id);
+
         foreach ($services as $svc) {
             $pivotRow = DB::table('project_service')
                 ->where('project_id', $project->id)
@@ -321,10 +324,13 @@ class ProjectController extends Controller
             // حذف المنفذين القدامى لهذه الخدمة
             ProjectServiceMember::where('project_service_id', $pivotRow->id)->delete();
 
-            // إدراج المنفذين الجدد
+            // إدراج المنفذين الجدد — بعد التحقق من أن كل منفذ يخص المستخدم الحالي فعلاً
             if (! empty($svc['members'])) {
                 foreach ($svc['members'] as $memberData) {
                     if (empty($memberData['team_member_id'])) {
+                        continue;
+                    }
+                    if (! $ownedMemberIds->contains((string) $memberData['team_member_id'])) {
                         continue;
                     }
                     ProjectServiceMember::create([
@@ -339,11 +345,45 @@ class ProjectController extends Controller
     }
 
     /**
+     * يبني بيانات sync() لجدول project_service بعد استبعاد أي service_id
+     * لا يكون عاماً (is_global) ولا يخص المستخدم الحالي — يمنع ربط
+     * خدمة خاصة تابعة لمستخدم آخر بالمشروع.
+     */
+    private function buildValidatedServiceSyncData(array $services): array
+    {
+        $requestedIds = array_column($services, 'service_id');
+
+        $ownedOrGlobalIds = Service::whereIn('id', $requestedIds)
+            ->where(function ($q) {
+                $q->where('is_global', true)->orWhere('user_id', auth()->id());
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+
+        $syncData = [];
+        foreach ($services as $svc) {
+            if (! in_array((string) $svc['service_id'], $ownedOrGlobalIds, true)) {
+                continue;
+            }
+            $syncData[$svc['service_id']] = [
+                'amount'            => $svc['amount'],
+                'type'              => 'income',
+                'notes'             => $svc['notes'] ?? null,
+                'target_margin_pct' => isset($svc['target_margin_pct']) && $svc['target_margin_pct'] !== ''
+                                      ? (int) $svc['target_margin_pct'] : null,
+            ];
+        }
+
+        return $syncData;
+    }
+
+    /**
      * إنشاء فاتورة مسودة مرتبطة بالمشروع والعميل.
      * تُضاف بنود تلقائية من خدمات المشروع (إن وُجدت)،
      * أو بند واحد من قيمة العقد.
      */
-    private function createDraftInvoice(Project $project, array $validated): void
+    private function createDraftInvoice(Project $project): void
     {
         $invoice = Invoice::create([
             'user_id'    => auth()->id(),
@@ -361,25 +401,20 @@ class ProjectController extends Controller
             'total'      => 0,
         ]);
 
-        // فقط خدمات الدخل تُضاف للفاتورة — خدمات expense هي تكاليف تشغيلية لا تُفاتَر للعميل
-        $services = array_filter(
-            $validated['services'] ?? [],
-            fn ($svc) => ($svc['type'] ?? 'income') === 'income'
-        );
+        // نبني بنود الفاتورة من خدمات المشروع كما حُفظت فعلياً (بعد التحقق من الملكية
+        // في buildValidatedServiceSyncData) لا من مُدخلات الطلب الخام — يمنع تسريب
+        // اسم خدمة خاصة تابعة لمستخدم آخر حتى لو أُرسلت في الطلب الأصلي.
+        $attachedServices = $project->services()->wherePivot('type', 'income')->get();
 
-        if (! empty($services)) {
-            // بند لكل خدمة دخل مضافة للمشروع
-            $serviceModels = Service::whereIn('id', array_column($services, 'service_id'))
-                ->pluck('name_ar', 'id');
-
-            foreach (array_values($services) as $index => $svc) {
-                $amount = (float) ($svc['amount'] ?? 0);
+        if ($attachedServices->isNotEmpty()) {
+            foreach ($attachedServices as $index => $service) {
+                $amount = (float) ($service->pivot->amount ?? 0);
                 if ($amount <= 0) {
                     continue;
                 }
                 InvoiceItem::create([
                     'invoice_id'  => $invoice->id,
-                    'description' => $serviceModels[$svc['service_id']] ?? 'خدمة',
+                    'description' => $service->name_ar ?? $service->name ?? 'خدمة',
                     'quantity'    => 1,
                     'unit_price'  => $amount,
                     'total'       => $amount,
