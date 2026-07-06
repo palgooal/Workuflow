@@ -88,9 +88,10 @@
                     <select name="currency" required x-model="currency" @change="recalc()"
                             class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm
                                    focus:outline-none focus:ring-2 focus:ring-accent/40">
-                        @foreach($currencies as $cur)
-                            <option value="{{ $cur }}" {{ old('currency', $quote->currency) === $cur ? 'selected' : '' }}>
-                                {{ $cur }}
+                        @foreach($currencies as $code => $label)
+                            <option value="{{ $code }}"
+                                {{ old('currency', $quote->currency) === $code ? 'selected' : '' }}>
+                                {{ $label }}
                             </option>
                         @endforeach
                     </select>
@@ -208,14 +209,42 @@
                         <span x-text="taxAmount.toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"
                               class="text-slate-500 min-w-16 text-left"></span>
                     </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <label class="text-slate-600 whitespace-nowrap">خصم</label>
-                        <input type="number" name="discount" x-model.number="discount" @input="recalc()"
-                               min="0" :step="priceStep"
-                               class="w-20 px-2 py-1.5 text-sm rounded-lg border border-slate-200
-                                      focus:outline-none focus:ring-2 focus:ring-accent/40 text-center">
-                        <span x-text="'- ' + discount.toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"
-                              class="text-red-500 min-w-16 text-left"></span>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <label class="text-slate-600 whitespace-nowrap">خصم</label>
+                            <div class="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-semibold">
+                                <button type="button"
+                                        @click="discountType='fixed'; recalc()"
+                                        :class="discountType==='fixed'
+                                            ? 'bg-brand text-white'
+                                            : 'bg-white text-slate-500 hover:bg-slate-50'"
+                                        class="px-2.5 py-1 transition-colors">
+                                    قيمة
+                                </button>
+                                <button type="button"
+                                        @click="discountType='percentage'; recalc()"
+                                        :class="discountType==='percentage'
+                                            ? 'bg-brand text-white'
+                                            : 'bg-white text-slate-500 hover:bg-slate-50'"
+                                        class="px-2.5 py-1 transition-colors">
+                                    نسبة %
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="relative flex-1 max-w-[6.5rem]">
+                                <span class="absolute inset-y-0 right-2 flex items-center pointer-events-none text-slate-400 text-xs font-bold"
+                                      x-text="discountType==='percentage' ? '%' : currencySymbol"></span>
+                                <input type="number" name="discount" x-model.number="discountValue" @input="recalc()"
+                                       min="0" :step="discountType==='percentage' ? '0.01' : priceStep"
+                                       :max="discountType==='percentage' ? 100 : undefined"
+                                       class="w-full pr-6 pl-2 py-1.5 text-sm rounded-lg border border-slate-200
+                                              focus:outline-none focus:ring-2 focus:ring-accent/40 text-center">
+                                <input type="hidden" name="discount_type" :value="discountType">
+                            </div>
+                            <span x-text="'- ' + discountAmount.toLocaleString('en', {minimumFractionDigits: decimals, maximumFractionDigits: decimals})"
+                                  class="text-red-500 min-w-16 text-left"></span>
+                        </div>
                     </div>
                     <div class="border-t border-slate-100 pt-2 flex justify-between font-bold text-slate-900">
                         <span>الإجمالي</span>
@@ -245,17 +274,22 @@ function quoteForm() {
     return {
         // خريطة code => عدد الخانات العشرية (3 لعملات الفلس JOD/KWD/BHD/OMR، وإلا 2)
         currencyDecimals: @json(\App\Support\Helpers\Currency::decimalsMap()),
+        currencySymbols: @json(\App\Support\Helpers\Currency::symbolsMap()),
         currency: '{{ old('currency', $quote->currency) }}',
         items: @json($quote->items->map(fn($i) => ['description' => $i->description, 'quantity' => (float)$i->quantity, 'unit_price' => (float)$i->unit_price])),
         taxRate:  {{ (float)$quote->tax_rate }},
-        discount: {{ (float)$quote->discount }},
-        subtotal: 0, taxAmount: 0, total: 0,
+        discountValue: {{ (float) old('discount', $quote->discount) }},
+        discountType: '{{ old('discount_type', $quote->discount_type) }}',
+        subtotal: 0, taxAmount: 0, discountAmount: 0, total: 0,
 
         get decimals() {
             return this.currencyDecimals[this.currency] ?? 2;
         },
         get priceStep() {
             return (1 / Math.pow(10, this.decimals)).toFixed(this.decimals);
+        },
+        get currencySymbol() {
+            return this.currencySymbols[this.currency] ?? this.currency;
         },
 
         init() { this.recalc(); },
@@ -266,7 +300,11 @@ function quoteForm() {
             const scale = Math.pow(10, this.decimals);
             this.subtotal  = this.items.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
             this.taxAmount = Math.round(this.subtotal * (this.taxRate / 100) * scale) / scale;
-            this.total     = Math.max(0, this.subtotal + this.taxAmount - this.discount);
+            this.discountAmount = this.discountType === 'percentage'
+                ? Math.round(this.subtotal * (this.discountValue / 100) * scale) / scale
+                : this.discountValue;
+            this.discountAmount = Math.max(0, this.discountAmount);
+            this.total     = Math.max(0, this.subtotal + this.taxAmount - this.discountAmount);
         },
     };
 }

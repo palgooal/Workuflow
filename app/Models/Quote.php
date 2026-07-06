@@ -21,7 +21,7 @@ class Quote extends Model
         'user_id', 'client_id', 'project_id',
         'number', 'title', 'status',
         'issue_date', 'valid_until',
-        'subtotal', 'tax_rate', 'tax_amount', 'discount', 'total',
+        'subtotal', 'tax_rate', 'tax_amount', 'discount', 'discount_type', 'total',
         'currency', 'notes', 'terms',
         'sent_at', 'viewed_at', 'accepted_at', 'rejected_at', 'converted_at',
         'client_ip', 'rejection_reason',
@@ -123,15 +123,27 @@ class Quote extends Model
 
     public function recalculate(): void
     {
+        $decimals  = Currency::decimals($this->currency);
         $subtotal  = $this->items->sum(fn ($i) => $i->quantity * $i->unit_price);
-        $taxAmount = round($subtotal * ($this->tax_rate / 100), Currency::decimals($this->currency));
-        $total     = $subtotal + $taxAmount - $this->discount;
+        $taxAmount = round($subtotal * ($this->tax_rate / 100), $decimals);
+
+        $discountAmount = ($this->discount_type === 'percentage')
+            ? round($subtotal * ($this->discount / 100), $decimals)
+            : (float) $this->discount;
 
         $this->update([
             'subtotal'   => $subtotal,
             'tax_amount' => $taxAmount,
-            'total'      => max(0, $total),
+            'total'      => max(0, $subtotal + $taxAmount - $discountAmount),
         ]);
+    }
+
+    public function getDiscountAmountAttribute(): float
+    {
+        if ($this->discount_type === 'percentage') {
+            return round((float) $this->subtotal * ($this->discount / 100), Currency::decimals($this->currency));
+        }
+        return (float) $this->discount;
     }
 
     public function isExpired(): bool

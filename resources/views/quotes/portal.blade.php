@@ -153,8 +153,8 @@
                         @endif
                         @if($quote->discount > 0)
                         <div class="flex justify-between text-red-600">
-                            <span>خصم</span>
-                            <span>- {{ number_format($quote->discount, \App\Support\Helpers\Currency::decimals($quote->currency)) }} {{ $quote->currency }}</span>
+                            <span>خصم{{ $quote->discount_type === 'percentage' ? ' (' . number_format($quote->discount, 2) . '%)' : '' }}</span>
+                            <span>- {{ number_format($quote->discount_amount, \App\Support\Helpers\Currency::decimals($quote->currency)) }} {{ $quote->currency }}</span>
                         </div>
                         @endif
                         <div class="border-t-2 border-slate-200 pt-2 flex justify-between
