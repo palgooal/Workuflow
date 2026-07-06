@@ -349,6 +349,13 @@
         </div>
         @endif
 
+        @if($invoice->terms)
+        <div class="border-t border-subtle pt-4">
+            <p class="text-xs font-medium text-muted mb-1">الشروط والأحكام</p>
+            <p class="text-sm text-ink whitespace-pre-line">{{ $invoice->terms }}</p>
+        </div>
+        @endif
+
     </div>
 </div>
 

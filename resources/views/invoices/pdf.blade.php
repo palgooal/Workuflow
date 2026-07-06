@@ -253,6 +253,13 @@
 </div>
 @endif
 
+{{-- ── الشروط والأحكام ─────────────────────────────────── --}}
+@if($invoice->terms)
+<div class="notes">
+    <strong>الشروط والأحكام:</strong> {{ $invoice->terms }}
+</div>
+@endif
+
 {{-- ── فوتر ────────────────────────────────────────────── --}}
 <div class="footer">
     @if($footer)

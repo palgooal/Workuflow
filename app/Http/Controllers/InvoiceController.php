@@ -40,7 +40,8 @@ class InvoiceController extends Controller
     {
         $clients  = Client::where('user_id', $request->user()->id)
             ->where('is_archived', false)->orderBy('name')->get();
-        $projects = Project::active()->orderBy('name')->get();
+        $projects = Project::where('user_id', $request->user()->id)
+            ->active()->orderBy('name')->get();
         $statuses = InvoiceStatus::cases();
 
         // pre-fill client if passed via query string
@@ -77,6 +78,13 @@ class InvoiceController extends Controller
         $client = Client::where('id', $data['client_id'])
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
+
+        // تحقق من أن المشروع (إن وُجد) يخص المستخدم أيضاً — يمنع ربط مشروع مستخدم آخر
+        if (! empty($data['project_id'])) {
+            Project::where('id', $data['project_id'])
+                ->where('user_id', $request->user()->id)
+                ->firstOrFail();
+        }
 
         $invoice = Invoice::create([
             'user_id'       => $request->user()->id,
@@ -184,7 +192,8 @@ class InvoiceController extends Controller
 
         $clients  = Client::where('user_id', $request->user()->id)
             ->where('is_archived', false)->orderBy('name')->get();
-        $projects = Project::active()->orderBy('name')->get();
+        $projects = Project::where('user_id', $request->user()->id)
+            ->active()->orderBy('name')->get();
 
         $currencies = Currency::all();
         return view('invoices.edit', compact('invoice', 'clients', 'projects', 'currencies'));
@@ -213,6 +222,17 @@ class InvoiceController extends Controller
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'required|numeric|min:0',
         ]);
+
+        // تحقق من أن العميل والمشروع (إن وُجدا) يخصّان المستخدم — يمنع ربط بيانات مستخدم آخر
+        Client::where('id', $data['client_id'])
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        if (! empty($data['project_id'])) {
+            Project::where('id', $data['project_id'])
+                ->where('user_id', $request->user()->id)
+                ->firstOrFail();
+        }
 
         $invoice->update([
             'client_id'     => $data['client_id'],

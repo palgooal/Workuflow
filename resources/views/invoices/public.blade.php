@@ -151,6 +151,11 @@
         <div class="notes"><strong>ملاحظات:</strong> {{ $invoice->notes }}</div>
         @endif
 
+        {{-- الشروط والأحكام --}}
+        @if($invoice->terms)
+        <div class="notes"><strong>الشروط والأحكام:</strong> {{ $invoice->terms }}</div>
+        @endif
+
         {{-- Footer --}}
         <div class="footer-section">
             @if($footer)<div class="footer-custom">{{ $footer }}</div>@endif
