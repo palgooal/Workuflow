@@ -32,6 +32,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'status',
         'onboarding_dismissed_at',
         'payment_customer_id',  // يُملأ عند ربط مزود الدفع
+        'payment_name',            // اسم بديل ASCII لبوابة الدفع (Togo)
+        'billing_address',         // عنوان فوترة المشترك — receiver_address الخاص به عند Togo
+        'billing_city',
+        'billing_country',
+        'togo_receiver_address_id',
         'registration_ip',
         'registration_user_agent',
         'last_login_at',
@@ -215,6 +220,39 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function isSuspended(): bool
     {
         return $this->status === UserStatus::Suspended;
+    }
+
+    // ==================== الدفع الإلكتروني عبر Togo (عنوان فوترة المشترك) ====================
+    // نفس فكرة Client::paymentReceiverName() لكن لعنوان فوترة المشترك نفسه
+    // عند دفع اشتراك الباقة (Pro/Business) — راجع docs/PAYMENT-COLLECTION.md.
+
+    public function paymentReceiverName(): ?string
+    {
+        if (! empty($this->payment_name) && mb_check_encoding($this->payment_name, 'ASCII')) {
+            return $this->payment_name;
+        }
+
+        if (! empty($this->name) && mb_check_encoding($this->name, 'ASCII')) {
+            return $this->name;
+        }
+
+        return null;
+    }
+
+    public function isReadyForElectronicPayment(): bool
+    {
+        return $this->missingElectronicPaymentField() === null;
+    }
+
+    /** أول حقل ناقص (بالترتيب) — أو null لو كل شي مكتمل. */
+    public function missingElectronicPaymentField(): ?string
+    {
+        if ($this->paymentReceiverName() === null) return 'name';
+        if (empty($this->phone))                    return 'phone';
+        if (empty($this->billing_city))              return 'city';
+        if (empty($this->billing_address))           return 'address';
+
+        return null;
     }
 
     // ==================== Notifications ====================

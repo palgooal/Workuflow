@@ -1,6 +1,6 @@
 # التحصيل عبر دراهم (Payment Collection)
 
-> تاريخ الإضافة: 1 يوليو 2026 | آخر تحديث: 1 يوليو 2026 | الإصدار: 1.7.2
+> تاريخ الإضافة: 1 يوليو 2026 | آخر تحديث: 8 يوليو 2026 | الإصدار: 1.9.0
 
 ---
 
@@ -11,6 +11,58 @@
 هذا يختلف عن `MANUAL-BILLING-FLOW.md` (فوترة اشتراك دراهم نفسها) — هنا الحديث عن تحصيل فواتير **عملاء المستقلين**.
 
 **لا توجد payouts تلقائية في هذا الإصدار.** التسوية مع المشترك (تحويل المبلغ الصافي له) عملية يدوية بحتة، تُنفَّذ حالياً بتحديث `payment_collections.status` إلى `settled` مباشرة (لا واجهة إدارية بعد).
+
+---
+
+## نافذة دفع منبثقة + بيانات العميل الفعلية لـ Togo — v1.8.0 (7 يوليو 2026)
+
+**التغيير الأول — تجربة الدفع:** زر "ادفع الآن" في `/pay/invoice/{ulid}` لم يعد يُحوِّل الصفحة بالكامل لـ togo.ps. جُرِّب أولاً تضمينه بـ `<iframe>` وفشل — **Togo يمنع تضمين صفحته داخل iframe فعلياً** (X-Frame-Options، مؤكَّد ميدانياً وليس افتراضاً). الحل النهائي: نافذة منبثقة (`window.open`)، بشرط استدعائها **بشكل متزامن** مع الضغطة مباشرة (قبل أي `fetch`) — استدعاؤها بعد انتظار رد الشبكة يفقد "بصمة المستخدم" (user activation) فيفتحها المتصفح كتبويب كامل عادي بدل نافذة مضغوطة. شريط عنوان togo.ps يبقى ظاهراً داخل النافذة المنبثقة (قيد أمان من كل المتصفحات الحديثة ضد التصيّد — لا توجد طريقة برمجية لإخفائه، ولا حتى Stripe/PayPal يقدروا). نفس النمط طُبِّق على دفع الباقات/الاشتراك في `resources/views/billing/togo-pending.blade.php`.
+
+**التغيير الثاني — بيانات العميل المُرسَلة لـ Togo:**
+- **البريد الإلكتروني (إلزامي الآن):** `InvoicePaymentController::checkout()` كان يرجع لبريد *المشترك نفسه* كـ fallback لو العميل بلا بريد مسجَّل — سلوك خاطئ (يُرسِل طلب الدفع لصاحب الفاتورة بدل العميل الحقيقي). أُزيل الـ fallback: الآن يُمنَع الدفع صراحة برسالة واضحة للعميل الزائر لو ماله بريد مسجَّل.
+- **اسم العميل (تجريبي):** `TogoPaymentService::createInvoicePaymentOrder()` صار يقبل `receiverName` اختياري ويُرسِله كـ `receiver_name` لـ Togo — **لكن فقط لو كان الاسم ASCII بالكامل** (Togo يرفض الحقول غير ASCII في نقاط موثَّقة أخرى من الـ API، ولا يوجد توثيق رسمي يؤكد قبول هذا الحقل تحديداً لطلب RFP). أسماء العملاء العربية تُتجاهَل بصمت بدل المخاطرة بكسر طلب الدفع كاملاً. **لو Togo رفض الطلب حتى مع اسم إنجليزي، احذف الحقل من `createInvoicePaymentOrder()`.**
+- **⚠️ تأكيد ميداني مهم:** قسم "المُستقبِل" بلوحة إدارة Togo (اسم/هاتف/مدينة) هو دائماً بيانات `receiver_address` الثابتة (هوية التاجر، مُسجَّلة مرة واحدة عبر `togo:setup-receiver`) — **لا يوجد أي حقل بطلب RFP يقدر يغيّر هذا القسم ليعرض بيانات العميل بدلاً منه.** هذا تصميم Togo نفسه (RFP = تاجر يطلب دفعة، والمُستقبِل = التاجر دائماً)، وليس قابلاً للإصلاح من طرفنا.
+- **⚠️ حادثة وإصلاح (نفس اليوم):** جُرِّب أيضاً تعبئة قسم "ملاحظات" (فارغ افتراضياً بلوحة Togo) عبر 4 حقول تجريبية معاً (`notes`/`note`/`details`/`description`) — **Togo رفض الطلب بالكامل (HTTP 500 — `"note is not allowed"`)**، ما كسر الدفع الفعلي مؤقتاً لحين الاكتشاف والإصلاح بنفس الجلسة. الكود الآن يرسل `receiver_name` فقط (مُتحقَّق أنه يعمل)، بدون أي حقل "ملاحظات" تجريبي. **الدرس:** Togo يتحقق بصرامة من قائمة حقول مسموحة ويرفض الطلب كاملاً عند وجود أي حقل واحد غير معروف — لا تُضِف حقولاً تجريبية متعددة دفعة واحدة لأي طلب Togo مستقبلاً.
+
+---
+
+## receiver_address لكل عميل/مشترك — v1.9.0 (8 يوليو 2026)
+
+**المشكلة (بلاغ ميداني من Togo، محادثة واتساب مع +970 598 062 708):** كل عمليات الدفع — بغض النظر عن العميل الفعلي الذي دفع — كانت تظهر بلوحة إدارة Togo بنفس "المُستقبِل" الثابت (اسم/هاتف/عنوان `receiver_address` واحد مُسجَّل مرة عبر `togo:setup-receiver`)، وعنوانه كان يحوي قيم "N/A". Togo حذّر أن تكرار "N/A" بنفس العنوان عبر مئات الطلبات يبدو كنمط احتيال على بيئة الإنتاج (Live) رغم قبوله على Sandbox.
+
+**السبب الجذري المؤكَّد رسمياً (من PDF توثيق Togo API الرسمي):** طلب RFP (`POST /api/v1/actions`, `event: Create_Visa`) **لا يحوي أي حقل اسم/عنوان خاص بالمُرسِل لكل عملية** — الحقول الموثَّقة فقط: `type`, `value`, `receiver_address_id`, `receiver_email`, `currency`, `source`, `payment_success_redirect_link`, `payment_cancel_redirect_link`, `prevent_sms_link`. قسم "المُستقبِل" بلوحة Togo يُقرأ **حصراً** من سجل `receiver_address` المربوط بـ `receiver_address_id` — وهذا يؤكد ما وثَّقناه سابقاً في v1.8.0 (السطر أعلاه عن "لا يوجد حقل RFP يغيّر هذا القسم") لكن يحله بشكل مختلف: **بدل محاولة تمرير اسم لكل عملية (فشل)، ننشئ `receiver_address` منفصل لكل عميل/مشترك مرة واحدة عبر Step 1 من API (`POST /api/v1/receivers-addresses`)، ونمرّر `receiver_address_id` المناسب في كل RFP.**
+
+### التصميم
+
+- **`Client::paymentReceiverName()` / `User::paymentReceiverName()`** — يُرجع `payment_name` (حقل بديل ASCII صريح) إن وُجد، وإلا `name` نفسه لو كان ASCII بالفعل، وإلا `null`. Togo يقبل ASCII فقط بحقول `receiver_name`/`country_name`/`city`/`details`.
+- **`Client::isReadyForElectronicPayment()` / `missingElectronicPaymentField()`** — تتحقق من اكتمال (الاسم ASCII + الهاتف + المدينة + العنوان التفصيلي). نفس المنطق على `User` لكن بحقول `billing_city`/`billing_address` بدل `city`/`address`.
+- **`TogoPaymentService::getOrCreateReceiverAddressForClient(Client $client)` / `getOrCreateReceiverAddressForUser(User $user)`** — نمط get-or-create: لو `togo_receiver_address_id` مُخزَّن مسبقاً يُعاد مباشرة، وإلا يُستدعى Step 1 من API وتُحفظ النتيجة على العميل/المستخدم للاستخدام الدائم.
+- **الفواتير (عملاء) — حظر صارم:** `InvoicePaymentController::checkout()` يمنع الدفع الإلكتروني كلياً لو `!$invoice->client->isReadyForElectronicPayment()`، برسالة تحدد الحقل الناقص بالضبط. بانر تحذيري مطابق يظهر بصفحة `invoices/show.blade.php` (غير قابل للطباعة) مع رابط مباشر لإكمال بيانات العميل.
+- **الاشتراكات (مشترك/باقات) — تساهل متعمَّد:** `TogoPaymentService::createCheckoutUrl()` **لا يمنع** الدفع لو عنوان فوترة المشترك ناقص — يستخدم `receiver_address` الثابت للمنصة كـ fallback بدل حظر اشتراكه بالكامل. `BillingController::checkout()` لا يحتوي أي تحقق إضافي؛ السلوك الكامل داخل الخدمة. بانر غير معطِّل (informational فقط) يظهر بصفحة `billing/index.blade.php` يشجع المشترك على إكمال عنوان الفوترة من الإعدادات. **لماذا التفاوت؟** بيانات العملاء (آلاف السجلات المستوردة تاريخياً) غالباً ناقصة ولا يتحكم بها صاحب الفاتورة نفسه وقت الدفع؛ عنوان المشترك حقل واحد يملأه مرة واحدة بنفسه وقتما شاء دون أن يمنعه هذا من استخدام المنصة.
+
+### الحقول الجديدة
+
+- `clients.payment_name` (نص، بديل إنجليزي اختياري)، `clients.togo_receiver_address_id` — migration `2026_07_08_000001_add_togo_payment_fields_to_clients_table`.
+- `users.payment_name`, `users.billing_address`, `users.billing_city`, `users.billing_country` (افتراضي `PS`), `users.togo_receiver_address_id` — migration `2026_07_08_000002_add_togo_billing_fields_to_users_table`.
+- نماذج `crm/clients/create.blade.php` و`edit.blade.php`: قسم "بيانات الدفع الإلكتروني" (اسم إنجليزي + عنوان تفصيلي)، بالإضافة لحقول المدينة/الدولة الموجودة أصلاً (الدولة الآن `<select>` عبر `App\Support\Helpers\Country::all()` بدل حقل نصي حر).
+- صفحة الإعدادات (`settings/index.blade.php`, تبويب "الملف الشخصي"): قسم "عنوان الفوترة" (اسم إنجليزي + عنوان + مدينة + دولة) يُحفظ عبر `SettingsController::updateProfile` / `UpdateProfileRequest`.
+- `App\Support\Helpers\Country` — مصفوفة أكواد دول ISO 3166-1 alpha-2 ↔ اسم عربي (للعرض) واسم إنجليزي ASCII (لإرسال `country_name` لـ Togo)، بنفس أسلوب `Currency.php`.
+
+### ⚠️ خطوة يدوية مطلوبة قبل التشغيل
+
+ملفات الـ migration مكتوبة لكن **لم تُنفَّذ بعد على قاعدة البيانات** — شغّل `php artisan migrate` محلياً (Laragon) قبل استخدام أي من الحقول أعلاه، وإلا ستفشل نماذج العميل/الإعدادات عند الحفظ (عمود غير موجود).
+
+### إصلاح: تنظيف تنسيق رقم الهاتف قبل إنشاء receiver_address (نفس اليوم)
+
+**العرَض:** بعد تطبيق migrate، محاولة دفع فاتورة حقيقية أرجعت "تعذّر بدء عملية الدفع" رغم اكتمال بيانات العميل ظاهرياً (اسم/هاتف/مدينة/عنوان كلها معبّأة). فُحص السبب عبر تفعيل رسالة تشخيص مؤقتة في `InvoicePaymentController::checkout()` (أُزيلت فوراً بعد التشخيص):
+
+```
+فشل إنشاء receiver address: {"message":"Phone number must be valid national or international number","status":500}
+```
+
+**السبب:** حقل `clients.phone` نص حر تماماً بلا أي قيد تنسيق (`StoreClientRequest`: `['nullable','string','max:30']`) — رقم مثل `"+1 (597) 601-4765"` (مسافات/أقواس/شرطة) يُرسَل كما هو لـ Togo فيرفضه بالكامل رغم كونه رقماً "صحيحاً" منطقياً لو نُظِّف. **الإصلاح:** `TogoPaymentService::createReceiverAddress()` صار يُنظِّف الرقم عبر `normalizePhone()` (يُبقي فقط '+' البادئة + أرقام) قبل إرساله لـ Togo في كل من مسار العميل والمشترك.
+
+**⚠️ تنبيه مهم:** التنظيف يحل مشاكل *التنسيق* فقط (مسافات/أقواس/شرطات حول رقم حقيقي صحيح). لا يحل أرقاماً وهمية بالكامل (مثل بيانات Faker التجريبية بأكواد مناطق غير موجودة فعلياً) — Togo يتحقق من صحة الرقم الفعلية وليس فقط شكله. اختبار نهائي فعلي بعميل ببيانات حقيقية (`+970599123456`) بعد هذا الإصلاح أرجع **`status: 200` مع `checkout_url` صالح** — السلسلة الكاملة (get-or-create receiver_address → إنشاء RFP order) تعمل بنجاح تام من طرف إلى طرف.
 
 ---
 
@@ -98,8 +150,8 @@ GET  /pay/invoice/{invoice:ulid}/cancel     pay.invoice.cancel    إلغاء م�
 | `app/Support/Enums/PaymentCollectionStatus.php` | حالات التحصيل |
 | `app/Modules/Billing/Services/TogoPaymentService.php` | `createInvoicePaymentOrder()`, `extractCommissionAmount()`, `extractSettlementAmount()`, `extractExchangeRate()` — إضافات جديدة، لا تُغيّر منطق الاشتراكات الحالي |
 | `app/Filament/Pages/PaymentSettings.php` | قسم "عمولة تحصيل الفواتير" — Toggle + نسبة % + عمولة ثابتة (مصدر الحقيقة الوحيد لنسبة/قيمة العمولة، تُطبَّق على `settlement_amount` منذ v1.6.0) |
-| `resources/views/invoices/pay.blade.php` | صفحة الدفع العامة (standalone، بدون layout) |
-| `resources/views/invoices/show.blade.php` | زر "ادفع الآن" — يفتح رابط الدفع في تبويب جديد |
+| `resources/views/invoices/pay.blade.php` | صفحة الدفع العامة (standalone، بدون layout) — زر "ادفع الآن" يفتح نافذة منبثقة (popup) بدل تحويل كامل الصفحة (7 يوليو 2026) |
+| `resources/views/invoices/show.blade.php` | زر "ادفع الآن" (للمشترك، معاينة) — يفتح `/pay/invoice/{ulid}` في تبويب جديد `target="_blank"` |
 | `database/migrations/2026_07_01_000001_create_payment_collections_table.php` | |
 | `database/migrations/2026_07_01_000002_add_unique_invoice_id_to_payment_collections_table.php` | تنظيف تكرارات `invoice_id` (إن وُجدت) ثم `unique(invoice_id)` — سجل تحصيل واحد لكل فاتورة |
 | `database/migrations/2026_07_02_000001_add_settlement_columns_to_payment_collections_table.php` | يضيف `settlement_currency`/`settlement_amount`/`settlement_platform_fee`/`settlement_net_amount`/`exchange_rate` + يُنسِّق السجلات القديمة تلقائياً (راجع v1.6.0 أدناه) |
@@ -120,11 +172,21 @@ GET  /pay/invoice/{invoice:ulid}/cancel     pay.invoice.cancel    إلغاء م�
 المستقل يضغط "ادفع الآن" في /invoices/{ulid}  → يفتح /pay/invoice/{ulid} (نفس الرابط يُشارَك مع العميل)
   → العميل يضغط "ادفع الآن" → POST /pay/invoice/{ulid}/checkout
     → InvoicePaymentController::checkout()
-        - يتحقق: غير مدفوعة، غير ملغاة، البوابة مفعّلة، يوجد بريد إلكتروني
-        - TogoPaymentService::createInvoicePaymentOrder() → RFP order لدى Togo
+        - يتحقق: غير مدفوعة، غير ملغاة، البوابة مفعّلة، العملة مدعومة
+        - يتحقق: العميل (Client) نفسه عنده بريد إلكتروني مسجَّل — إلزامي، **لا
+          يوجد fallback لبريد المشترك** (أُزيل 7 يوليو 2026 — كان يُرسِل طلب
+          الدفع فعلياً لبريد صاحب الفاتورة بدل العميل الحقيقي كلما كان
+          العميل بلا بريد، وهذا خاطئ). لو العميل بلا بريد → رسالة واضحة
+          للزائر "تواصل مع مُصدِر الفاتورة" بدل إتمام الدفع بشكل خاطئ
+        - TogoPaymentService::createInvoicePaymentOrder() → RFP order لدى
+          Togo — يُرسِل `receiver_email` (إلزامي) و`receiver_name` **تجريبياً**
+          (اسم العميل، فقط لو ASCII بالكامل — غير موثَّق رسمياً من Togo،
+          راجع docs/TOGO-PAYMENT-GATEWAY.md)
         - ينشئ/يُحدِّث PaymentCollection (status = pending)
-        - Redirect خارجي → صفحة دفع Togo
-  → العميل يدفع على Togo → Redirect إلى GET /pay/invoice/{ulid}/callback
+        - يُرجِع `checkout_url` كـ JSON (لطلبات fetch من الواجهة) — الواجهة
+          تفتحه في نافذة منبثقة (`window.open`) وليس تحويل كامل للصفحة أو
+          تبويب جديد (Togo يمنع تضمينه بـ iframe؛ راجع resources/views/invoices/pay.blade.php)
+  → العميل يدفع على Togo (في النافذة المنبثقة) → Redirect إلى GET /pay/invoice/{ulid}/callback
     → InvoicePaymentController::callback()
         - TogoPaymentService::verifyOrder() يتحقق من حالة الطلب فعلياً (لا يثق بمجرد الرجوع للرابط)
         - عند النجاح: DB::transaction تُنفِّذ معاً:

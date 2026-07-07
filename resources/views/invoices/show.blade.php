@@ -232,6 +232,35 @@
 
     {{-- Flash handled globally by layouts/app.blade.php --}}
 
+    {{-- تنبيه: بيانات العميل غير مكتملة لتفعيل الدفع الإلكتروني --}}
+    @if(!in_array($invoice->status, [\App\Support\Enums\InvoiceStatus::Paid, \App\Support\Enums\InvoiceStatus::Cancelled]) && !$invoice->client->isReadyForElectronicPayment())
+    @php
+        $missingLabels = [
+            'name'    => 'الاسم بالإنجليزية',
+            'phone'   => 'رقم الهاتف',
+            'city'    => 'المدينة',
+            'address' => 'العنوان التفصيلي',
+        ];
+        $missingField = $invoice->client->missingElectronicPaymentField();
+    @endphp
+    <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 print:hidden">
+        <svg class="w-5 h-5 shrink-0 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div class="flex-1 text-sm">
+            <p class="font-semibold text-amber-800">لا يمكن للعميل الدفع إلكترونياً حالياً</p>
+            <p class="text-amber-700 mt-0.5">
+                بيانات العميل غير مكتملة لتفعيل الدفع عبر بوابة الدفع — الحقل الناقص: <strong>{{ $missingLabels[$missingField] ?? 'بيانات ناقصة' }}</strong>.
+                أكمل بيانات العميل حتى يتمكن من الدفع بالبطاقة عبر رابط "ادفع الآن".
+            </p>
+            <a href="{{ route('clients.edit', $invoice->client->public_id) }}"
+               class="inline-flex items-center gap-1 mt-2 text-amber-800 font-medium underline hover:no-underline">
+                إكمال بيانات العميل الآن
+            </a>
+        </div>
+    </div>
+    @endif
+
     {{-- ورقة الفاتورة --}}
     <div class="dash-card p-8 shadow-sm print:shadow-none print:border-0" id="invoice-paper">
 

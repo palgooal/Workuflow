@@ -58,6 +58,25 @@
         </div>
     @endif
 
+    {{-- تنبيه غير معطِّل: عنوان الفوترة غير مكتمل — الدفع سيتم بعنوان المنصة الافتراضي بدل عنوانك الخاص --}}
+    @if(! $user->isReadyForElectronicPayment())
+        <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <svg class="w-5 h-5 shrink-0 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div class="flex-1 text-sm">
+                <p class="font-semibold text-amber-800">عنوان الفوترة غير مكتمل</p>
+                <p class="text-amber-700 mt-0.5">
+                    أكمل عنوان الفوترة في الإعدادات حتى تظهر عمليات دفع اشتراكك باسمك وعنوانك الخاص عند بوابة الدفع — يمكنك الدفع الآن على أي حال.
+                </p>
+                <a href="{{ route('settings.index') }}#profile"
+                   class="inline-flex items-center gap-1 mt-2 text-amber-800 font-medium underline hover:no-underline">
+                    إكمال عنوان الفوترة
+                </a>
+            </div>
+        </div>
+    @endif
+
     {{-- WhatsApp manual upgrade CTA — shown only when payment gateway is disabled --}}
     @if(! $providerReady && $currentPlan->value === 'free')
         @php $ownerWa = config('billing.owner_whatsapp'); @endphp

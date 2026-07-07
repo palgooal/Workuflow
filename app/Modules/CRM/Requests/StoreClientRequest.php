@@ -18,6 +18,7 @@ class StoreClientRequest extends FormRequest
     {
         return [
             'name'    => ['required', 'string', 'max:100'],
+            'payment_name' => ['nullable', 'string', 'max:100', 'ascii'],
             'phone'   => ['nullable', 'string', 'max:30'],
             'email'   => [
                 'nullable',
@@ -56,6 +57,7 @@ class StoreClientRequest extends FormRequest
         return [
             'name.required'  => 'اسم العميل مطلوب.',
             'name.max'       => 'اسم العميل لا يتجاوز 100 حرف.',
+            'payment_name.ascii' => 'الاسم البديل يجب أن يكون بأحرف إنجليزية فقط (يُستخدم في الدفع الإلكتروني).',
             'email.email'    => 'صيغة البريد الإلكتروني غير صحيحة.',
             'email.unique'   => 'يوجد عميل بنفس البريد الإلكتروني.',
             'status.in'      => 'حالة العميل غير صحيحة.',

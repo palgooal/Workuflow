@@ -2,9 +2,11 @@
 
 namespace App\Modules\Billing\Services;
 
+use App\Models\Client;
 use App\Models\PaymentOrder;
 use App\Models\User;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
+use App\Support\Helpers\Country;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -56,6 +58,26 @@ class TogoPaymentService implements PaymentProviderInterface
         $price    = $this->getPlanPrice($plan, $cycle);
         $currency = $this->currency;
 
+        // receiver_address خاص بالمشترك نفسه (اسمه/عنوانه) لو بياناته مكتملة
+        // — بدل receiver_address الثابت للمنصة دائماً. راجع
+        // docs/PAYMENT-COLLECTION.md — "receiver_address لكل عميل/مشترك".
+        // بخلاف الفواتير (حيث نمنع الدفع كلياً لو بيانات العميل ناقصة)، هنا
+        // نتساهل عمداً: لو المشترك لسه ما عبّى عنوان الفوترة في الإعدادات
+        // (users.billing_address/billing_city)، نكمل الدفع بالعنوان الثابت
+        // للمنصة بدل منعه من الاشتراك. البانر في settings.index يشجعه يكمل
+        // بياناته لاحقاً حتى تظهر عملياته باسمه الخاص عند Togo.
+        $receiverAddressId = $this->receiverAddressId;
+        if ($user->isReadyForElectronicPayment()) {
+            try {
+                $receiverAddressId = $this->getOrCreateReceiverAddressForUser($user);
+            } catch (\Throwable $e) {
+                Log::warning('Togo: فشل الحصول على receiver_address خاص بالمشترك — استخدام العنوان الثابت', [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage(),
+                ]);
+            }
+        }
+
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(15)
             ->post($this->baseUrl . '/api/v1/actions', [
@@ -63,7 +85,7 @@ class TogoPaymentService implements PaymentProviderInterface
                 'data'  => [
                     'type'                          => 'RFP',
                     'value'                         => $price,
-                    'receiver_address_id'           => $this->receiverAddressId,
+                    'receiver_address_id'           => $receiverAddressId,
                     'receiver_email'                => $user->email,
                     'currency'                      => $currency,
                     'source'                        => 'external_website',
@@ -149,11 +171,14 @@ class TogoPaymentService implements PaymentProviderInterface
      * تُستخدم من InvoicePaymentController — الأموال تُحصَّل في حساب دراهم
      * على Togo، ثم تُسوَّى مع المشترك يدوياً لاحقاً (PaymentCollection.status).
      *
-     * @param  float  $amount        المبلغ المطلوب تحصيله
-     * @param  string $currency      عملة الفاتورة
-     * @param  string $receiverEmail بريد العميل الدافع (أو المشترك كبديل)
-     * @param  string $successUrl    رابط العودة عند نجاح الدفع
-     * @param  string $cancelUrl     رابط العودة عند إلغاء الدفع
+     * @param  float   $amount             المبلغ المطلوب تحصيله
+     * @param  string  $currency           عملة الفاتورة
+     * @param  string  $receiverEmail      بريد العميل الدافع
+     * @param  string  $successUrl         رابط العودة عند نجاح الدفع
+     * @param  string  $cancelUrl          رابط العودة عند إلغاء الدفع
+     * @param  ?string $receiverAddressId  receiver_address خاص بالعميل الدافع (من
+     *         getOrCreateReceiverAddressForClient) — لو null يُستخدَم العنوان الثابت
+     *         للمنصة (fallback قديم، غير مستحسن الاعتماد عليه بعد الآن).
      * @return array{checkout_url: string, provider_order_id: string, provider_hashed_id: string, raw: array}
      * @throws \RuntimeException إذا فشل API
      */
@@ -163,24 +188,27 @@ class TogoPaymentService implements PaymentProviderInterface
         string $receiverEmail,
         string $successUrl,
         string $cancelUrl,
+        ?string $receiverAddressId = null,
     ): array {
         $this->assertConfigured();
+
+        $data = [
+            'type'                          => 'RFP',
+            'value'                         => $amount,
+            'receiver_address_id'           => $receiverAddressId ?: $this->receiverAddressId,
+            'receiver_email'                => $receiverEmail,
+            'currency'                      => $currency,
+            'source'                        => 'external_website',
+            'prevent_sms_link'              => false,
+            'payment_success_redirect_link' => $successUrl,
+            'payment_cancel_redirect_link'  => $cancelUrl,
+        ];
 
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(15)
             ->post($this->baseUrl . '/api/v1/actions', [
                 'event' => 'Create_Visa',
-                'data'  => [
-                    'type'                          => 'RFP',
-                    'value'                         => $amount,
-                    'receiver_address_id'           => $this->receiverAddressId,
-                    'receiver_email'                => $receiverEmail,
-                    'currency'                      => $currency,
-                    'source'                        => 'external_website',
-                    'prevent_sms_link'              => false,
-                    'payment_success_redirect_link' => $successUrl,
-                    'payment_cancel_redirect_link'  => $cancelUrl,
-                ],
+                'data'  => $data,
             ]);
 
         if (! $response->successful()) {
@@ -402,11 +430,26 @@ class TogoPaymentService implements PaymentProviderInterface
         $this->assertAscii($city,        'المدينة (city)');
         $this->assertAscii($details,     'التفاصيل (details)');
 
+        // ── تنظيف رقم الهاتف قبل الإرسال ──────────────────────────────────
+        // Togo يرفض الطلب كاملاً (500 — "Phone number must be valid national
+        // or international number") لو الرقم فيه مسافات/أقواس/شرطات، حتى لو
+        // كان صحيحاً منطقياً — مثال حقيقي وُوجِه فعلاً: "+1 (597) 601-4765"
+        // (بيانات Faker تجريبية بحقل phone حر بلا قيود تنسيق في نموذج العميل).
+        // نُبقي فقط '+' البادئة والأرقام، بنفس منطق تنظيف رقم واتساب الموجود
+        // مسبقاً في invoices/show.blade.php.
+        $normalizedPhone = self::normalizePhone($phone);
+
+        if ($normalizedPhone === '' || strlen(ltrim($normalizedPhone, '+')) < 7) {
+            throw new \RuntimeException(
+                "رقم الهاتف \"{$phone}\" غير صالح لإنشاء عنوان دفع عند Togo — تأكد أنه رقم دولي كامل (مثال: +970599123456)."
+            );
+        }
+
         $response = Http::withHeaders(['x-api-key' => $this->apiKey])
             ->timeout(15)
             ->post($this->baseUrl . '/api/v1/receivers-addresses', [
                 'receiver_name'            => $name,
-                'receiver_phone_number'    => $phone,
+                'receiver_phone_number'    => $normalizedPhone,
                 'country_code'             => $countryCode,
                 'country_name'             => $countryName,
                 'phone_connected_to_whats' => $phoneConnectedToWhatsapp,
@@ -427,6 +470,94 @@ class TogoPaymentService implements PaymentProviderInterface
         }
 
         return $data;
+    }
+
+    /**
+     * receiver_address خاص بعميل مُعيَّن (get-or-create) — بدل استخدام
+     * receiver_address ثابت للمنصة في كل عملية دفع، ما كان يُظهر نفس
+     * الاسم/الهاتف/العنوان لكل الفواتير ("نفس النمط متكرر" — راجع
+     * docs/PAYMENT-COLLECTION.md وتحذير Togo الرسمي في ملف الـ API عن
+     * البيانات المضلِّلة/الناقصة).
+     *
+     * لو العميل عنده togo_receiver_address_id مخزَّن مسبقاً يُعاد استخدامه
+     * مباشرة بدون أي استدعاء API. أول استدعاء فقط ينشئ السجل عند Togo
+     * ويُخزِّن الـ id على $client دائماً.
+     *
+     * @throws \RuntimeException لو بيانات العميل ناقصة — تحقّق دائماً من
+     *         Client::isReadyForElectronicPayment() قبل استدعاء هذه الدالة
+     *         لتعرض رسالة واضحة بدل استثناء عام.
+     */
+    public function getOrCreateReceiverAddressForClient(Client $client): string
+    {
+        if (! empty($client->togo_receiver_address_id)) {
+            return $client->togo_receiver_address_id;
+        }
+
+        $name = $client->paymentReceiverName();
+
+        if ($name === null || empty($client->phone) || empty($client->city) || empty($client->address)) {
+            throw new \RuntimeException('بيانات العميل غير مكتملة لإنشاء عنوان دفع عند Togo.');
+        }
+
+        $countryCode = $client->country ?: 'PS';
+
+        $data = $this->createReceiverAddress(
+            name:        $name,
+            phone:       $client->phone,
+            countryCode: $countryCode,
+            countryName: Country::name($countryCode),
+            city:        $client->city,
+            details:     $client->address,
+        );
+
+        $client->update(['togo_receiver_address_id' => $data['id']]);
+
+        Log::info('Togo: receiver_address created for client', [
+            'client_id'           => $client->id,
+            'receiver_address_id' => $data['id'],
+        ]);
+
+        return $data['id'];
+    }
+
+    /**
+     * نفس فكرة getOrCreateReceiverAddressForClient() لكن لعنوان فوترة
+     * المشترك نفسه (يُستخدَم عند دفع اشتراك الباقة Pro/Business).
+     *
+     * @throws \RuntimeException لو بيانات فوترة المشترك ناقصة — تحقّق دائماً
+     *         من User::isReadyForElectronicPayment() أولاً.
+     */
+    public function getOrCreateReceiverAddressForUser(User $user): string
+    {
+        if (! empty($user->togo_receiver_address_id)) {
+            return $user->togo_receiver_address_id;
+        }
+
+        $name = $user->paymentReceiverName();
+
+        if ($name === null || empty($user->phone) || empty($user->billing_city) || empty($user->billing_address)) {
+            throw new \RuntimeException('بيانات فوترة المشترك غير مكتملة لإنشاء عنوان دفع عند Togo.');
+        }
+
+        $countryCode = $user->billing_country ?: 'PS';
+
+        $data = $this->createReceiverAddress(
+            name:        $name,
+            phone:       $user->phone,
+            countryCode: $countryCode,
+            countryName: Country::name($countryCode),
+            city:        $user->billing_city,
+            details:     $user->billing_address,
+        );
+
+        $user->update(['togo_receiver_address_id' => $data['id']]);
+
+        Log::info('Togo: receiver_address created for user', [
+            'user_id'             => $user->id,
+            'receiver_address_id' => $data['id'],
+        ]);
+
+        return $data['id'];
     }
 
     // ──────────────────────────────────────────────────────────
@@ -451,6 +582,19 @@ class TogoPaymentService implements PaymentProviderInterface
                 );
             }
         }
+    }
+
+    /**
+     * ينظّف رقم هاتف حر التنسيق (مسافات/أقواس/شرطات) لصيغة يقبلها Togo —
+     * '+' بادئة اختيارية متبوعة بأرقام فقط. راجع createReceiverAddress()
+     * أعلاه لسبب وجود هذه الخطوة (حادثة حقيقية: "+1 (597) 601-4765" مرفوض).
+     */
+    private static function normalizePhone(string $phone): string
+    {
+        $hasPlus = str_starts_with(trim($phone), '+');
+        $digits  = preg_replace('/\D/', '', $phone) ?? '';
+
+        return $digits === '' ? '' : ($hasPlus ? '+' . $digits : $digits);
     }
 
     private function assertConfigured(): void

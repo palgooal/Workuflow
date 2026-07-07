@@ -33,8 +33,9 @@ class Client extends Model
 
     protected $fillable = [
         'user_id', 'public_id',
-        'name', 'phone', 'email', 'company',
+        'name', 'payment_name', 'phone', 'email', 'company',
         'position', 'website', 'address', 'city', 'country',
+        'togo_receiver_address_id',
         'notes',
         'is_active',
         'status', 'source', 'is_archived',
@@ -247,5 +248,52 @@ class Client extends Model
     public function hasActivePortal(): bool
     {
         return $this->activePortalTokens()->exists();
+    }
+
+    // ==================== الدفع الإلكتروني عبر Togo ====================
+    // راجع docs/PAYMENT-COLLECTION.md — "receiver_address لكل عميل"
+
+    /**
+     * الاسم اللي يُرسَل لـ Togo كـ receiver_name عند إنشاء receiver_address
+     * خاص بهذا العميل. Togo يقبل ASCII فقط — payment_name (اسم بديل
+     * بالإنجليزية) له الأولوية دائماً إن وُجد، وإلا name نفسه لو كان ASCII
+     * بالفعل، وإلا null (يعني العميل غير جاهز للدفع الإلكتروني).
+     */
+    public function paymentReceiverName(): ?string
+    {
+        if (! empty($this->payment_name) && mb_check_encoding($this->payment_name, 'ASCII')) {
+            return $this->payment_name;
+        }
+
+        if (! empty($this->name) && mb_check_encoding($this->name, 'ASCII')) {
+            return $this->name;
+        }
+
+        return null;
+    }
+
+    /**
+     * هل بيانات العميل مكتملة بما يكفي لإنشاء receiver_address خاص به عند
+     * Togo وتفعيل الدفع الإلكتروني؟ الاسم (ASCII) + الهاتف + المدينة +
+     * العنوان التفصيلي كلها إلزامية — بدونها Togo قد يرفض الطلب أو يُعامله
+     * كعملية مشبوهة (بيانات ناقصة/مكرّرة).
+     */
+    public function isReadyForElectronicPayment(): bool
+    {
+        return $this->missingElectronicPaymentField() === null;
+    }
+
+    /**
+     * أول حقل ناقص (بالترتيب) لعرض رسالة دقيقة بدل رسالة عامة — أو null لو
+     * كل شي مكتمل.
+     */
+    public function missingElectronicPaymentField(): ?string
+    {
+        if ($this->paymentReceiverName() === null) return 'name';
+        if (empty($this->phone))                    return 'phone';
+        if (empty($this->city))                      return 'city';
+        if (empty($this->address))                   return 'address';
+
+        return null;
     }
 }

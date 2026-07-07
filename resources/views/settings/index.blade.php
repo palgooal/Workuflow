@@ -233,6 +233,64 @@
                     @enderror
                 </div>
 
+                {{-- عنوان الفوترة — لتفعيل دفع الاشتراك (Pro/Business) إلكترونياً --}}
+                <div class="border-t border-subtle pt-4 mt-2">
+                    <p class="text-sm font-semibold text-ink mb-1">عنوان الفوترة</p>
+                    <p class="text-xs text-muted mb-3">
+                        يُستخدم مرة واحدة فقط عند دفع اشتراك الباقة (Pro/Business) بالبطاقة، ويُعاد استخدامه تلقائياً في كل عملية دفع لاحقة.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-ink mb-1.5">
+                                الاسم بالإنجليزية <span class="text-xs font-normal text-muted">(اختياري — إن كان اسمك أعلاه بالعربية)</span>
+                            </label>
+                            <input type="text" name="payment_name" value="{{ old('payment_name', $user->payment_name) }}"
+                                   placeholder="مثال: Ahmed Mohammed" dir="ltr"
+                                   class="dash-field px-4 py-2.5
+                                          @error('payment_name') dash-field-error @enderror">
+                            @error('payment_name')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-ink mb-1.5">العنوان التفصيلي</label>
+                            <input type="text" name="billing_address" value="{{ old('billing_address', $user->billing_address) }}"
+                                   placeholder="الحي، الشارع، رقم المبنى…"
+                                   class="dash-field px-4 py-2.5
+                                          @error('billing_address') dash-field-error @enderror">
+                            @error('billing_address')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-ink mb-1.5">المدينة</label>
+                            <input type="text" name="billing_city" value="{{ old('billing_city', $user->billing_city) }}"
+                                   class="dash-field px-4 py-2.5
+                                          @error('billing_city') dash-field-error @enderror">
+                            @error('billing_city')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-ink mb-1.5">الدولة</label>
+                            <select name="billing_country"
+                                    class="dash-field px-4 py-2.5 bg-white
+                                           @error('billing_country') dash-field-error @enderror">
+                                @foreach(\App\Support\Helpers\Country::all() as $code => $label)
+                                <option value="{{ $code }}" {{ old('billing_country', $user->billing_country ?? 'PS') === $code ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('billing_country')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="pt-2">
                     <button type="submit"
                             class="px-6 py-2.5 bg-brand hover:bg-brand-600 text-white text-sm font-semibold rounded-btn transition-colors">

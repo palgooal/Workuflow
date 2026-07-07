@@ -86,6 +86,40 @@
             </div>
         </div>
 
+        {{-- بيانات الدفع الإلكتروني --}}
+        <div class="dash-card p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M3 10h18M7 15h1m4 0h1m-7 4h16a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                بيانات الدفع الإلكتروني
+            </h2>
+            <p class="text-xs text-slate-500 -mt-2">
+                هذه البيانات مطلوبة لتفعيل الدفع الإلكتروني (فيزا/بطاقة) لهذا العميل — الاسم بالإنجليزية، الهاتف، المدينة، والعنوان التفصيلي. بدونها لن يتمكن العميل من الدفع إلكترونياً عند استلام فاتورة.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-ink mb-1">
+                        الاسم بالإنجليزية <span class="text-slate-400 text-xs">(اختياري — إن كان الاسم أعلاه بالعربية)</span>
+                    </label>
+                    <input type="text" name="payment_name" value="{{ old('payment_name') }}"
+                           placeholder="مثال: Ahmed Mohammed" dir="ltr"
+                           class="w-full px-4 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-accent/40 outline-none
+                                  {{ $errors->has('payment_name') ? 'border-red-400 bg-red-50' : 'border-slate-200' }}">
+                    @error('payment_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-ink mb-1">العنوان التفصيلي</label>
+                    <input type="text" name="address" value="{{ old('address') }}"
+                           placeholder="الحي، الشارع، رقم المبنى…"
+                           class="w-full px-4 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-accent/40 outline-none
+                                  {{ $errors->has('address') ? 'border-red-400 bg-red-50' : 'border-slate-200' }}">
+                    @error('address') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+
         {{-- الحالة والمصدر --}}
         <div class="dash-card p-5 space-y-4">
             <h2 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -180,11 +214,14 @@
                                   focus:ring-2 focus:ring-accent/40 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-ink mb-1">الدولة <span class="text-slate-400 text-xs">(رمز دولة مكوّن من حرفين: PS، IL…)</span></label>
-                    <input type="text" name="country" value="{{ old('country', 'PS') }}"
-                           placeholder="PS" maxlength="2"
-                           class="w-full px-4 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-accent/40 outline-none
-                                  {{ $errors->has('country') ? 'border-red-400 bg-red-50' : 'border-slate-200' }}">
+                    <label class="block text-sm font-semibold text-ink mb-1">الدولة</label>
+                    <select name="country"
+                            class="w-full px-4 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-accent/40 outline-none bg-white
+                                   {{ $errors->has('country') ? 'border-red-400 bg-red-50' : 'border-slate-200' }}">
+                        @foreach(\App\Support\Helpers\Country::all() as $code => $label)
+                        <option value="{{ $code }}" {{ old('country', 'PS') === $code ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
                     @error('country') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                 </div>
             </div>

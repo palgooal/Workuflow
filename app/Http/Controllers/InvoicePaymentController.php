@@ -83,10 +83,49 @@ class InvoicePaymentController extends Controller
             return $this->checkoutError($invoice, $wantsJson, 'هذه العملة غير مدعومة للدفع الإلكتروني حالياً.');
         }
 
-        $receiverEmail = $invoice->client->email ?: $invoice->user->email;
+        // ── بريد العميل الفعلي إلزامي — لا نرجع لإيميل المشترك كبديل ────────
+        // (كان سابقاً `?: $invoice->user->email` فيُرسِل طلب الدفع فعلياً
+        // لإيميل صاحب الفاتورة نفسه بدل العميل الحقيقي كلما كان العميل بلا
+        // إيميل مسجَّل — سلوك غير صحيح ومُربِك). الآن: نمنع الدفع صراحة ونطلب
+        // من العميل (زائر الصفحة العامة) التواصل مع مُصدِر الفاتورة لإضافة
+        // بريده أولاً.
+        $receiverEmail = $invoice->client->email;
 
         if (! $receiverEmail) {
-            return $this->checkoutError($invoice, $wantsJson, 'لا يوجد بريد إلكتروني مسجَّل لإتمام الدفع. تواصل مع صاحب الفاتورة.');
+            Log::warning('InvoicePaymentController::checkout — client has no email, blocking payment', [
+                'invoice_id' => $invoice->id,
+                'client_id'  => $invoice->client_id,
+            ]);
+
+            return $this->checkoutError($invoice, $wantsJson, 'لا يمكن إتمام الدفع الإلكتروني حالياً — لا يوجد بريد إلكتروني مسجَّل لهذا العميل. تواصل مع مُصدِر الفاتورة.');
+        }
+
+        // ── بيانات العميل الكاملة (اسم ASCII + هاتف + مدينة + عنوان) إلزامية ──
+        // منذ أن أصبح لكل عميل receiver_address خاص به عند Togo (بدل عنوان
+        // ثابت للمنصة) — راجع docs/PAYMENT-COLLECTION.md "receiver_address
+        // لكل عميل". Togo يحذّر رسمياً إن بيانات receiver address الناقصة أو
+        // المضلِّلة تُفشِل الدفع فعلياً، فنمنع صراحة بدل المخاطرة بإرسال بيانات
+        // غير مكتملة.
+        if (! $invoice->client->isReadyForElectronicPayment()) {
+            $missingLabels = [
+                'name'    => 'اسم العميل بالإنجليزية',
+                'phone'   => 'رقم هاتف العميل',
+                'city'    => 'مدينة العميل',
+                'address' => 'عنوان العميل التفصيلي',
+            ];
+            $missingField = $invoice->client->missingElectronicPaymentField();
+
+            Log::warning('InvoicePaymentController::checkout — client payment data incomplete, blocking payment', [
+                'invoice_id'    => $invoice->id,
+                'client_id'     => $invoice->client_id,
+                'missing_field' => $missingField,
+            ]);
+
+            return $this->checkoutError(
+                $invoice,
+                $wantsJson,
+                'لا يمكن إتمام الدفع الإلكتروني حالياً — بيانات العميل غير مكتملة (' . ($missingLabels[$missingField] ?? 'بيانات ناقصة') . '). تواصل مع مُصدِر الفاتورة لإكمالها.'
+            );
         }
 
         // ── سجل تحصيل واحد فقط لكل فاتورة (invoice_id فريد على مستوى DB) ──
@@ -121,12 +160,18 @@ class InvoicePaymentController extends Controller
             /** @var TogoPaymentService $togo */
             $togo = app(TogoPaymentService::class);
 
+            // receiver_address خاص بهذا العميل تحديداً (get-or-create) — هذا
+            // ما يجعل اسم/هاتف/عنوان العميل الفعلي يظهر عند Togo بدل عنوان
+            // المنصة الثابت المتكرر لكل الفواتير.
+            $receiverAddressId = $togo->getOrCreateReceiverAddressForClient($invoice->client);
+
             $order = $togo->createInvoicePaymentOrder(
-                amount:        (float) $invoice->total,
-                currency:      $invoice->currency,
-                receiverEmail: $receiverEmail,
-                successUrl:    route('pay.invoice.callback', $invoice->ulid),
-                cancelUrl:     route('pay.invoice.cancel', $invoice->ulid),
+                amount:             (float) $invoice->total,
+                currency:           $invoice->currency,
+                receiverEmail:      $receiverEmail,
+                successUrl:         route('pay.invoice.callback', $invoice->ulid),
+                cancelUrl:          route('pay.invoice.cancel', $invoice->ulid),
+                receiverAddressId:  $receiverAddressId,
             );
         } catch (\Throwable $e) {
             Log::error('InvoicePaymentController::checkout failed', [

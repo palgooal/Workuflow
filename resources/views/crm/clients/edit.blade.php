@@ -59,6 +59,34 @@
             </div>
         </div>
 
+        {{-- بيانات الدفع الإلكتروني --}}
+        <div class="dash-card p-5 space-y-4">
+            <h2 class="text-sm font-semibold text-slate-700">بيانات الدفع الإلكتروني</h2>
+            <p class="text-xs text-slate-500 -mt-2">
+                هذه البيانات مطلوبة لتفعيل الدفع الإلكتروني (فيزا/بطاقة) لهذا العميل — الاسم بالإنجليزية، الهاتف، المدينة، والعنوان التفصيلي. بدونها لن يتمكن العميل من الدفع إلكترونياً عند استلام فاتورة.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-ink mb-1">
+                        الاسم بالإنجليزية <span class="text-slate-400 text-xs">(اختياري — إن كان الاسم أعلاه بالعربية)</span>
+                    </label>
+                    <input type="text" name="payment_name" value="{{ old('payment_name', $client->payment_name) }}"
+                           placeholder="مثال: Ahmed Mohammed" dir="ltr"
+                           class="w-full px-4 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-accent/40 outline-none
+                                  {{ $errors->has('payment_name') ? 'border-red-400' : 'border-slate-200' }}">
+                    @error('payment_name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-ink mb-1">العنوان التفصيلي</label>
+                    <input type="text" name="address" value="{{ old('address', $client->address) }}"
+                           placeholder="الحي، الشارع، رقم المبنى…"
+                           class="w-full px-4 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-accent/40 outline-none
+                                  {{ $errors->has('address') ? 'border-red-400' : 'border-slate-200' }}">
+                    @error('address') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+
         {{-- التصنيف --}}
         <div class="dash-card p-5 space-y-4">
             <h2 class="text-sm font-semibold text-slate-700">التصنيف والمصدر</h2>
@@ -124,8 +152,12 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-ink mb-1">الدولة</label>
-                    <input type="text" name="country" value="{{ old('country', $client->country ?? 'PS') }}"
-                           class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent/40 outline-none">
+                    <select name="country"
+                            class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-accent/40 outline-none bg-white">
+                        @foreach(\App\Support\Helpers\Country::all() as $code => $label)
+                        <option value="{{ $code }}" {{ old('country', $client->country ?? 'PS') === $code ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
             <div>
