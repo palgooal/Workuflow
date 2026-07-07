@@ -15,7 +15,7 @@
         </div>
         <h1 class="text-xl font-bold text-ink">الدفع الآمن عبر Togo.ps</h1>
         <p class="text-sm text-muted max-w-sm mx-auto">
-            سيتم تحويلك إلى بوابة دفع آمنة لإتمام العملية، ثم تعود تلقائياً إلى دراهم.
+            ستُفتح نافذة دفع آمنة صغيرة وتبقى هذه الصفحة مفتوحة — وتنتقل تلقائياً بعد اكتمال الدفع أو إلغائه.
         </p>
     </div>
 
@@ -77,15 +77,15 @@
 
     {{-- Actions --}}
     <div class="space-y-3">
-        {{-- Primary: proceed to Togo checkout --}}
-        <a href="{{ $checkoutUrl }}"
-           class="flex items-center justify-center gap-2 w-full py-3.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-600 transition text-sm">
+        {{-- Primary: proceed to Togo checkout — نافذة منبثقة بدل تحويل كامل --}}
+        <button type="button" id="togo-pay-btn" data-checkout-url="{{ $checkoutUrl }}"
+                class="flex items-center justify-center gap-2 w-full py-3.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-600 transition text-sm disabled:opacity-60 disabled:cursor-not-allowed">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
             </svg>
-            متابعة إلى الدفع
-        </a>
+            <span id="togo-pay-label">متابعة إلى الدفع</span>
+        </button>
 
         {{-- Secondary: back to plan selection --}}
         <a href="{{ route('billing.upgrade') }}"
@@ -96,9 +96,60 @@
 
     {{-- Redirect notice --}}
     <p class="text-center text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
-        بالضغط على "متابعة إلى الدفع"، ستنتقل إلى بوابة Togo.ps الآمنة.
-        بعد اكتمال الدفع أو إلغائه، ستعود تلقائياً إلى دراهم.
+        بالضغط على "متابعة إلى الدفع"، تُفتح نافذة دفع آمنة صغيرة من Togo.ps.
+        بعد اكتمال الدفع أو إلغائه، تنتقل هذه الصفحة تلقائياً للنتيجة.
     </p>
 
 </div>
+
+@push('scripts')
+<script>
+(function () {
+    var btn   = document.getElementById('togo-pay-btn');
+    var label = document.getElementById('togo-pay-label');
+    if (!btn) return;
+
+    var POPUP_NAME = 'darahem_togo_payment';
+    var popup = null;
+    var pollTimer = null;
+
+    function popupFeatures() {
+        var w = 480, h = 720;
+        var left = (window.screenX || 0) + Math.max(0, (window.outerWidth  - w) / 2);
+        var top  = (window.screenY || 0) + Math.max(0, (window.outerHeight - h) / 2);
+        return 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes';
+    }
+
+    btn.addEventListener('click', function () {
+        var url = btn.dataset.checkoutUrl;
+
+        // الرابط جاهز من الخادم مسبقاً (لا حاجة لـ fetch) — window.open()
+        // يُستدعى هنا مباشرة ومتزامناً مع الضغطة نفسها، وإلا يفقد "بصمة
+        // المستخدم" ويُفتح كتبويب متصفح كامل بدل نافذة منبثقة مضغوطة.
+        popup = window.open(url, POPUP_NAME, popupFeatures());
+
+        if (!popup) {
+            // popup blocker — تراجع للتحويل الكامل بنفس الصفحة كحل أخير.
+            window.location.href = url;
+            return;
+        }
+
+        popup.focus();
+        btn.disabled = true;
+        label.textContent = 'جارِ إتمام الدفع في النافذة المنبثقة...';
+
+        // لا يوجد postMessage من Togo — نتابع دورياً هل أُغلقت النافذة
+        // (تلقائياً بعد النجاح/الفشل عبر partials/togo-popup-return، أو
+        // يدوياً من المستخدم) لنُحدِّث هذه الصفحة وتعكس الحالة الفعلية.
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(function () {
+            if (popup.closed) {
+                clearInterval(pollTimer);
+                window.location.reload();
+            }
+        }, 700);
+    });
+})();
+</script>
+@endpush
 @endsection

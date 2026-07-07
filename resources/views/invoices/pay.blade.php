@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>دفع الفاتورة {{ $invoice->number }}</title>
+    <script>
+        // Togo يمنع تضمين صفحة الدفع داخل iframe (X-Frame-Options) — لذا
+        // نفتحها في نافذة منبثقة منفصلة (window.open) باسم مميّز
+        // "darahem_togo_payment" بدل تحويل كامل الصفحة. لما Togo يُعيد توجيه
+        // هذه النافذة إلى رابط النجاح/الإلغاء الخاص بنا (نفس نطاقنا)، تُغلق
+        // هذه النافذة نفسها هنا — والصفحة الأصلية (opener) تكتشف الإغلاق
+        // وتُحدِّث نفسها تلقائياً (انظر سكربت زر الدفع بالأسفل).
+        // window.name يُميّز نافذة الدفع تحديداً عن أي تبويب آخر يُفتح
+        // بـ target="_blank" (مثل معاينة الفاتورة من صفحة العرض).
+        if (window.opener && !window.opener.closed && window.name === 'darahem_togo_payment') {
+            window.close();
+        }
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @media print {
@@ -185,17 +198,138 @@
 
         {{-- زر الدفع — يظهر فقط إذا كانت الفاتورة قابلة للدفع وعملتها مدعومة إلكترونياً --}}
         @if($isPayable && $isCurrencySupported)
-        <form method="POST" action="{{ route('pay.invoice.checkout', $invoice->ulid) }}" class="no-print">
-            @csrf
-            <button type="submit"
-                    class="w-full py-4 bg-brand text-white font-bold rounded-2xl shadow-sm
-                           hover:bg-brand-600 transition text-base flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a4 4 0 00-8 0v2m-2 0h12a2 2 0 012 2v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a2 2 0 012-2z"/>
-                </svg>
-                ادفع الآن
-            </button>
-        </form>
+        <div id="pay-inline-message" class="hidden rounded-2xl p-4 text-center text-sm font-semibold no-print"></div>
+
+        <button type="button" id="pay-now-btn"
+                data-checkout-url="{{ route('pay.invoice.checkout', $invoice->ulid) }}"
+                class="w-full py-4 bg-brand text-white font-bold rounded-2xl shadow-sm
+                       hover:bg-brand-600 transition text-base flex items-center justify-center gap-2 no-print
+                       disabled:opacity-60 disabled:cursor-not-allowed">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a4 4 0 00-8 0v2m-2 0h12a2 2 0 012 2v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a2 2 0 012-2z"/>
+            </svg>
+            <span id="pay-now-label">ادفع الآن</span>
+        </button>
+
+        <p class="text-xs text-slate-400 text-center -mt-2 no-print">ستُفتح نافذة دفع آمنة صغيرة — صفحتك الحالية تبقى مفتوحة.</p>
+
+        <script>
+        (function () {
+            var btn    = document.getElementById('pay-now-btn');
+            var label  = document.getElementById('pay-now-label');
+            var msgBox = document.getElementById('pay-inline-message');
+            var csrfToken = '{{ csrf_token() }}';
+
+            var popup = null;
+            var pollTimer = null;
+
+            function showMessage(text, type) {
+                msgBox.textContent = text;
+                msgBox.className = 'rounded-2xl p-4 text-center text-sm font-semibold no-print ' +
+                    (type === 'info' ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-700 border border-red-200');
+                msgBox.classList.remove('hidden');
+            }
+
+            var POPUP_NAME = 'darahem_togo_payment';
+            var POPUP_FEATURES = (function () {
+                var w = 480, h = 720;
+                var left = (window.screenX || 0) + Math.max(0, (window.outerWidth  - w) / 2);
+                var top  = (window.screenY || 0) + Math.max(0, (window.outerHeight - h) / 2);
+                return 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes';
+            })();
+
+            function watchPopup() {
+                // لا يوجد postMessage من Togo، فنتابع دورياً هل أُغلقت النافذة
+                // (سواء تلقائياً بعد نجاح الدفع، أو يدوياً من العميل) لنُحدِّث
+                // صفحتنا وتظهر الحالة الفعلية للفاتورة.
+                if (pollTimer) clearInterval(pollTimer);
+                pollTimer = setInterval(function () {
+                    if (popup.closed) {
+                        clearInterval(pollTimer);
+                        window.location.reload();
+                    }
+                }, 700);
+            }
+
+            btn.addEventListener('click', function () {
+                btn.disabled = true;
+                label.textContent = 'جارِ التحضير...';
+                msgBox.classList.add('hidden');
+
+                // ⚠️ مهم: window.open() يجب أن يُستدعى مباشرة وبشكل متزامن
+                // (synchronous) داخل معالج الضغطة نفسها — قبل أي fetch/await.
+                // لو انتظرنا نتيجة الشبكة أولاً ثم فتحنا النافذة، يفقد الطلب
+                // "بصمة المستخدم" (user activation) ويتعامل معه المتصفح كنافذة
+                // غير موثوقة، فيفتحها كتبويب متصفح كامل عادي بدل نافذة منبثقة
+                // مضغوطة — وهذا بالضبط ما كان يحدث سابقاً.
+                popup = window.open('about:blank', POPUP_NAME, POPUP_FEATURES);
+
+                if (!popup) {
+                    // popup blocker منع النافذة من الأساس — نُلغي الزر ونُبلغ
+                    // العميل بدل محاولة فتح أي شيء لاحقاً بلا بصمة مستخدم.
+                    btn.disabled = false;
+                    label.textContent = 'ادفع الآن';
+                    showMessage('المتصفح منع فتح نافذة الدفع. فعِّل النوافذ المنبثقة لهذا الموقع وحاول مجدداً.', 'error');
+                    return;
+                }
+
+                // شاشة تحميل بسيطة ريثما يجهز رابط الدفع الفعلي من الخادم.
+                try {
+                    popup.document.write(
+                        '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8">' +
+                        '<title>جارِ التحضير...</title></head><body style="display:flex;align-items:center;' +
+                        'justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#64748b">' +
+                        'جارِ تجهيز صفحة الدفع الآمنة...</body></html>'
+                    );
+                    popup.document.close();
+                } catch (e) { /* تجاهل — ليس ضرورياً لنجاح العملية */ }
+
+                popup.focus();
+
+                fetch(btn.dataset.checkoutUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                })
+                .then(function (res) {
+                    return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+                })
+                .then(function (result) {
+                    btn.disabled = false;
+                    label.textContent = 'ادفع الآن';
+
+                    if (result.ok && result.data.checkout_url) {
+                        if (popup.closed) {
+                            // العميل قفل النافذة قبل ما يجهز الرابط — تراجع
+                            // للتحويل الكامل بنفس الصفحة.
+                            window.location.href = result.data.checkout_url;
+                            return;
+                        }
+                        popup.location.href = result.data.checkout_url;
+                        watchPopup();
+                        return;
+                    }
+
+                    if (!popup.closed) popup.close();
+                    showMessage(result.data.message || 'تعذّر بدء عملية الدفع. حاول مجدداً.', result.data.type || 'error');
+
+                    // حالات مثل "مدفوعة مسبقاً" — نعيد تحميل الصفحة لتعكس الحالة الفعلية
+                    if (result.data.type === 'info') {
+                        setTimeout(function () { window.location.reload(); }, 1200);
+                    }
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    label.textContent = 'ادفع الآن';
+                    if (!popup.closed) popup.close();
+                    showMessage('تعذّر الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مجدداً.', 'error');
+                });
+            });
+        })();
+        </script>
         @elseif($isCancelled)
         <div class="bg-slate-100 border border-slate-200 rounded-2xl p-5 text-center">
             <p class="text-slate-500 font-medium">❌ هذه الفاتورة ملغاة ولا يمكن دفعها.</p>

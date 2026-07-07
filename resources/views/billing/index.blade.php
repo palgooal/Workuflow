@@ -2,6 +2,8 @@
 
 @section('title', 'الاشتراك والفوترة')
 
+@include('billing.partials.togo-popup-return')
+
 @section('content')
 <div class="max-w-5xl mx-auto space-y-8">
 

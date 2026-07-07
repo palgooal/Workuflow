@@ -2,6 +2,8 @@
 
 @section('title', 'فشل الدفع')
 
+@include('billing.partials.togo-popup-return')
+
 @section('content')
 <div class="max-w-lg mx-auto text-center py-16">
 

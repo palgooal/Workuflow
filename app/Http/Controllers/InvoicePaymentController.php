@@ -9,7 +9,9 @@ use App\Modules\Billing\Services\TogoPaymentService;
 use App\Services\InvoicePaymentService;
 use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\PaymentCollectionStatus;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -49,24 +51,28 @@ class InvoicePaymentController extends Controller
 
     // ==================== بدء الدفع عبر البوابة ====================
 
-    public function checkout(Invoice $invoice): RedirectResponse
+    public function checkout(Invoice $invoice, Request $request): RedirectResponse|JsonResponse
     {
         $invoice->load('client', 'user');
 
+        // ── الواجهة (pay.blade.php) تستدعي هذا المسار عبر fetch() مع
+        // Accept: application/json لفتح رابط الدفع داخل iframe/modal بنفس
+        // الصفحة بدل تحويل كامل الصفحة إلى togo.ps (تجربة مستخدم أفضل +
+        // العميل لا يرى رابط بوابة الدفع). الفورم العادي (بدون JS) يبقى
+        // يعمل بالتحويل الكامل كـ fallback.
+        $wantsJson = $request->wantsJson();
+
         // ── منع الدفع المكرر ────────────────────────────────────────────
         if ($invoice->status === InvoiceStatus::Paid) {
-            return redirect()->route('pay.invoice.show', $invoice->ulid)
-                ->with('info', 'هذه الفاتورة مدفوعة مسبقاً.');
+            return $this->checkoutError($invoice, $wantsJson, 'هذه الفاتورة مدفوعة مسبقاً.', 'info');
         }
 
         if ($invoice->status === InvoiceStatus::Cancelled) {
-            return redirect()->route('pay.invoice.show', $invoice->ulid)
-                ->with('error', 'هذه الفاتورة ملغاة ولا يمكن دفعها.');
+            return $this->checkoutError($invoice, $wantsJson, 'هذه الفاتورة ملغاة ولا يمكن دفعها.');
         }
 
         if (config('billing.provider') !== 'togo') {
-            return redirect()->route('pay.invoice.show', $invoice->ulid)
-                ->with('error', 'بوابة الدفع غير مفعّلة بعد. تواصل مع صاحب الفاتورة.');
+            return $this->checkoutError($invoice, $wantsJson, 'بوابة الدفع غير مفعّلة بعد. تواصل مع صاحب الفاتورة.');
         }
 
         // ── حماية العملات غير المدعومة للدفع الإلكتروني عبر Togo ─────────
@@ -74,16 +80,13 @@ class InvoicePaymentController extends Controller
         // عملة الفاتورة نفسها لا تتغيّر أبداً هنا — هذا فقط يمنع محاولة دفع
         // إلكتروني لعملة لا تدعمها البوابة أصلاً.
         if (! app(TogoPaymentService::class)->isInvoiceCurrencySupported($invoice->currency)) {
-            return redirect()
-                ->route('pay.invoice.show', $invoice)
-                ->with('error', 'هذه العملة غير مدعومة للدفع الإلكتروني حالياً.');
+            return $this->checkoutError($invoice, $wantsJson, 'هذه العملة غير مدعومة للدفع الإلكتروني حالياً.');
         }
 
         $receiverEmail = $invoice->client->email ?: $invoice->user->email;
 
         if (! $receiverEmail) {
-            return redirect()->route('pay.invoice.show', $invoice->ulid)
-                ->with('error', 'لا يوجد بريد إلكتروني مسجَّل لإتمام الدفع. تواصل مع صاحب الفاتورة.');
+            return $this->checkoutError($invoice, $wantsJson, 'لا يوجد بريد إلكتروني مسجَّل لإتمام الدفع. تواصل مع صاحب الفاتورة.');
         }
 
         // ── سجل تحصيل واحد فقط لكل فاتورة (invoice_id فريد على مستوى DB) ──
@@ -111,8 +114,7 @@ class InvoicePaymentController extends Controller
 
         // حماية إضافية: لو كانت محصَّلة أو مُسوّاة مسبقاً لا نفتح checkout جديداً
         if (in_array($collection->status, [PaymentCollectionStatus::Collected, PaymentCollectionStatus::Settled], true)) {
-            return redirect()->route('pay.invoice.show', $invoice->ulid)
-                ->with('info', 'هذه الفاتورة مدفوعة مسبقاً.');
+            return $this->checkoutError($invoice, $wantsJson, 'هذه الفاتورة مدفوعة مسبقاً.', 'info');
         }
 
         try {
@@ -132,8 +134,7 @@ class InvoicePaymentController extends Controller
                 'error'      => $e->getMessage(),
             ]);
 
-            return redirect()->route('pay.invoice.show', $invoice->ulid)
-                ->with('error', 'تعذّر بدء عملية الدفع. حاول مجدداً لاحقاً.');
+            return $this->checkoutError($invoice, $wantsJson, 'تعذّر بدء عملية الدفع. حاول مجدداً لاحقاً.');
         }
 
         // نُحدِّث نفس سجل التحصيل بمعطيات المحاولة الجديدة (retry بعد
@@ -152,7 +153,29 @@ class InvoicePaymentController extends Controller
             ],
         ]);
 
+        // ── الاستدعاء عبر fetch() (JS): نُرجع رابط الدفع كـ JSON ليفتحه
+        // JS داخل iframe/modal بنفس الصفحة — بدون تحويل كامل الصفحة إلى
+        // togo.ps وبدون كشف رابط البوابة للعميل في شريط العنوان.
+        if ($wantsJson) {
+            return response()->json(['checkout_url' => $order['checkout_url']]);
+        }
+
+        // fallback بدون JS (نادر) — تحويل كامل للصفحة كالسابق.
         return redirect()->away($order['checkout_url']);
+    }
+
+    /**
+     * يُرجع خطأ/رسالة checkout بالشكل المناسب لنوع الطلب: JSON لطلبات
+     * fetch() (يعرضها JS داخل الصفحة الحالية بدل توجيه المستخدم)، أو
+     * redirect + flash للفورم العادي (fallback بدون JS).
+     */
+    private function checkoutError(Invoice $invoice, bool $wantsJson, string $message, string $type = 'error'): RedirectResponse|JsonResponse
+    {
+        if ($wantsJson) {
+            return response()->json(['message' => $message, 'type' => $type], $type === 'error' ? 422 : 200);
+        }
+
+        return redirect()->route('pay.invoice.show', $invoice->ulid)->with($type, $message);
     }
 
     // ==================== Callback بعد الدفع (بدون Auth) ====================
