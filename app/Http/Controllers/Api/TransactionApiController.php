@@ -10,9 +10,11 @@ use App\Modules\Transactions\Actions\DeleteTransactionAction;
 use App\Modules\Transactions\Actions\UpdateTransactionAction;
 use App\Modules\Transactions\DTOs\TransactionData;
 use App\Support\Enums\TransactionType;
+use App\Support\Helpers\Currency;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class TransactionApiController extends Controller
@@ -48,7 +50,7 @@ class TransactionApiController extends Controller
         $validated = $request->validate([
             'type'             => ['required', new Enum(TransactionType::class)],
             'amount'           => ['required', 'numeric', 'min:0.01', 'max:999999999'],
-            'currency'         => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'         => ['required', 'string', Rule::in(Currency::codes())],
             'description'      => ['required', 'string', 'max:255'],
             'transaction_date' => ['required', 'date'],
             'project_id'       => ['nullable', 'string', 'exists:projects,id'],
@@ -87,7 +89,7 @@ class TransactionApiController extends Controller
         $validated = $request->validate([
             'type'             => ['sometimes', new Enum(TransactionType::class)],
             'amount'           => ['sometimes', 'numeric', 'min:0.01', 'max:999999999'],
-            'currency'         => ['sometimes', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'         => ['sometimes', 'string', Rule::in(Currency::codes())],
             'description'      => ['sometimes', 'string', 'max:255'],
             'transaction_date' => ['sometimes', 'date'],
             'project_id'       => ['nullable', 'string', 'exists:projects,id'],

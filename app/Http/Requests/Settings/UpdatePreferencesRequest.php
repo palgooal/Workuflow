@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Support\Helpers\Currency;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePreferencesRequest extends FormRequest
 {
@@ -11,7 +13,7 @@ class UpdatePreferencesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'currency'          => ['required', 'string', 'in:SAR,AED,KWD,QAR,BHD,OMR,JOD,IQD,SYP,LBP,ILS,YER,EGP,LYD,TND,DZD,MAD,SDG,SOS,MRU,DJF,KMF,USD,EUR,GBP'],
+            'currency'          => ['required', 'string', Rule::in(Currency::codes())],
             'timezone'          => ['required', 'string', 'timezone'],
             'target_margin_pct' => ['required', 'integer', 'min:1', 'max:99'],
         ];

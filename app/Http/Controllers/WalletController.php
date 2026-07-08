@@ -8,6 +8,7 @@ use App\Support\Enums\WalletType;
 use App\Support\Helpers\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class WalletController extends Controller
@@ -58,7 +59,7 @@ class WalletController extends Controller
         $data = $request->validate([
             'name'            => ['required', 'string', 'max:100'],
             'type'            => ['required', 'in:cash,bank,custom'],
-            'currency'        => ['required', 'string', 'size:3'],
+            'currency'        => ['required', 'string', Rule::in(Currency::codes())],
             'initial_balance' => ['required', 'numeric', 'min:0'],
             'color'           => ['required', 'string', 'max:7'],
             'icon'            => ['nullable', 'string', 'max:10'],
@@ -109,7 +110,7 @@ class WalletController extends Controller
         $data = $request->validate([
             'name'            => ['required', 'string', 'max:100'],
             'type'            => ['required', 'in:cash,bank,custom'],
-            'currency'        => ['required', 'string', 'size:3'],
+            'currency'        => ['required', 'string', Rule::in(Currency::codes())],
             'initial_balance' => ['required', 'numeric'],
             'color'           => ['required', 'string', 'max:7'],
             'icon'            => ['nullable', 'string', 'max:10'],

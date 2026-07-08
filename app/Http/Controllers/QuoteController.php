@@ -13,6 +13,7 @@ use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\QuoteStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use App\Support\Helpers\Currency;
 
@@ -70,7 +71,7 @@ class QuoteController extends Controller
             'title'       => ['nullable', 'string', 'max:255'],
             'issue_date'  => ['required', 'date'],
             'valid_until' => ['nullable', 'date', 'after_or_equal:issue_date'],
-            'currency'    => ['required', 'string', 'size:3'],
+            'currency'    => ['required', 'string', Rule::in(Currency::codes())],
             'tax_rate'    => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount'      => ['nullable', 'numeric', 'min:0'],
             'discount_type' => ['nullable', 'in:fixed,percentage'],
@@ -174,7 +175,7 @@ class QuoteController extends Controller
             'title'       => ['nullable', 'string', 'max:255'],
             'issue_date'  => ['required', 'date'],
             'valid_until' => ['nullable', 'date', 'after_or_equal:issue_date'],
-            'currency'    => ['required', 'string', 'size:3'],
+            'currency'    => ['required', 'string', Rule::in(Currency::codes())],
             'tax_rate'    => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount'      => ['nullable', 'numeric', 'min:0'],
             'discount_type' => ['nullable', 'in:fixed,percentage'],

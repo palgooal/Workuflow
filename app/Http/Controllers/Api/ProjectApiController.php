@@ -10,9 +10,11 @@ use App\Modules\Projects\Actions\DeleteProjectAction;
 use App\Modules\Projects\Actions\UpdateProjectAction;
 use App\Modules\Projects\DTOs\ProjectData;
 use App\Support\Enums\ProjectType;
+use App\Support\Helpers\Currency;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class ProjectApiController extends Controller
@@ -46,7 +48,7 @@ class ProjectApiController extends Controller
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'color'       => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'currency'    => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'    => ['required', 'string', Rule::in(Currency::codes())],
             'type'        => ['required', new Enum(ProjectType::class)],
             'is_active'   => ['boolean'],
         ]);
@@ -80,7 +82,7 @@ class ProjectApiController extends Controller
             'name'        => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'color'       => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'currency'    => ['sometimes', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'    => ['sometimes', 'string', Rule::in(Currency::codes())],
             'type'        => ['sometimes', new Enum(ProjectType::class)],
             'is_active'   => ['boolean'],
         ]);

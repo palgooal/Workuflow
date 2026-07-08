@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Recurring;
 
+use App\Support\Helpers\Currency;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateRecurringRequest extends FormRequest
 {
@@ -22,7 +24,7 @@ class UpdateRecurringRequest extends FormRequest
             'end_date'    => ['nullable', 'date', 'after:start_date'],
             'category_id' => ['nullable', 'ulid', 'exists:categories,id'],
             'project_id'  => ['nullable', 'ulid', 'exists:projects,id'],
-            'currency'    => ['nullable', 'string', 'size:3'],
+            'currency'    => ['nullable', 'string', Rule::in(Currency::codes())],
         ];
     }
 

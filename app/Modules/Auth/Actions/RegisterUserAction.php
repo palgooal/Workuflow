@@ -6,9 +6,11 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Jobs\SendWelcomeEmailJob;
 use App\Models\Category;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Modules\Referral\Services\ReferralService;
 use App\Support\Enums\SubscriptionPlan;
 use App\Support\Enums\TransactionType;
+use App\Support\Enums\WalletType;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -73,6 +75,14 @@ class RegisterUserAction
         // إنشاء الفئات الافتراضية للمستخدم الجديد
         $this->createDefaultCategories($user);
 
+        // إنشاء صندوق افتراضي بعملة المستخدم المختارة عند التسجيل — بدون هذا
+        // الصندوق، المستخدم الجديد لا يمتلك أي wallet ولا يستطيع تسجيل أي
+        // معاملة (wallet_id مطلوب دائماً في StoreTransactionRequest)، ويضطر
+        // لإنشاء واحد يدوياً بنفسه. نفس أسلوب الحقول المستخدم في
+        // App\Console\Commands\AssignDefaultWallet (نفس الاسم ونفس الحقول)
+        // للحفاظ على الاتساق بين الصناديق الافتراضية المُنشأة تلقائياً.
+        $this->createDefaultWallet($user);
+
         // إرسال بريد الترحيب عبر Queue (لا يُعيق التسجيل)
         SendWelcomeEmailJob::dispatch($user)->delay(now()->addSeconds(5));
 
@@ -136,5 +146,25 @@ class RegisterUserAction
                 'is_default' => true,
             ]);
         }
+    }
+
+    /**
+     * صندوق افتراضي واحد بعملة المستخدم — نفس أسلوب الحقول المستخدم في
+     * wallets:assign-default (AssignDefaultWallet) حتى يبقى شكل "الصندوق
+     * الافتراضي" متّسقاً سواء أُنشئ عند التسجيل أو عبر أمر الـ backfill.
+     */
+    private function createDefaultWallet(User $user): void
+    {
+        Wallet::withoutGlobalScopes()->create([
+            'user_id'         => $user->id,
+            'name'            => 'الصندوق العام',
+            'type'            => WalletType::Cash,
+            'currency'        => $user->currency,
+            'initial_balance' => 0,
+            'color'           => '#6366f1',
+            'icon'            => '💵',
+            'description'     => 'صندوق افتراضي أُنشئ تلقائياً عند التسجيل — يمكنك تعديله أو إضافة صناديق أخرى لاحقاً.',
+            'is_active'       => true,
+        ]);
     }
 }

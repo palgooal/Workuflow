@@ -18,6 +18,7 @@ use App\Support\Enums\InvoiceStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class InvoiceController extends Controller
@@ -65,7 +66,7 @@ class InvoiceController extends Controller
             'tax_rate'      => 'nullable|numeric|min:0|max:100',
             'discount'      => 'nullable|numeric|min:0',
             'discount_type' => 'nullable|in:fixed,percentage',
-            'currency'      => 'required|string|size:3',
+            'currency'      => ['required', 'string', Rule::in(Currency::codes())],
             'notes'         => 'nullable|string',
             'terms'         => 'nullable|string',
             'items'         => 'required|array|min:1',
@@ -214,7 +215,7 @@ class InvoiceController extends Controller
             'tax_rate'      => 'nullable|numeric|min:0|max:100',
             'discount'      => 'nullable|numeric|min:0',
             'discount_type' => 'nullable|in:fixed,percentage',
-            'currency'      => 'required|string|size:3',
+            'currency'      => ['required', 'string', Rule::in(Currency::codes())],
             'notes'         => 'nullable|string',
             'terms'         => 'nullable|string',
             'items'         => 'required|array|min:1',

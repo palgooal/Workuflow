@@ -11,9 +11,11 @@ use App\Modules\Debts\Actions\MarkDebtAsPaidAction;
 use App\Modules\Debts\Actions\RecordPartialPaymentAction;
 use App\Modules\Debts\DTOs\DebtData;
 use App\Support\Enums\DebtType;
+use App\Support\Helpers\Currency;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
 class DebtApiController extends Controller
@@ -50,7 +52,7 @@ class DebtApiController extends Controller
             'type'       => ['required', new Enum(DebtType::class)],
             'party_name' => ['required', 'string', 'max:255'],
             'amount'     => ['required', 'numeric', 'min:0.01'],
-            'currency'   => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
+            'currency'   => ['required', 'string', Rule::in(Currency::codes())],
             'due_date'   => ['nullable', 'date', 'after:today'],
             'project_id' => ['nullable', 'string', 'exists:projects,id'],
             'notes'      => ['nullable', 'string', 'max:1000'],
