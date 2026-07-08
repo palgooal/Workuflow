@@ -2,9 +2,16 @@
 
     {{-- العنوان --}}
     <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900">إنشاء حساب جديد</h2>
+        <h1 class="text-2xl font-bold text-gray-900">إنشاء حساب جديد</h1>
         <p class="mt-1 text-gray-500 text-sm">ابدأ مجاناً — لا يلزم بطاقة ائتمان</p>
     </div>
+
+    {{-- خطأ نموذج التسجيل (توكن منتهي/مرفوض) — لا يجوز أن يُعاد تحميل الفورم بصمت --}}
+    @error('_form_token')
+        <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {{ $message }}
+        </div>
+    @enderror
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5">
         @csrf
@@ -36,7 +43,7 @@
                        transition @error('name') border-red-400 @enderror"
             >
             @error('name')
-                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
             @enderror
         </div>
 
@@ -53,7 +60,7 @@
                        transition @error('email') border-red-400 @enderror"
             >
             @error('email')
-                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
             @enderror
         </div>
 
@@ -78,11 +85,13 @@
                 }
             }"
         >
-            <label class="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
+            <label for="phone_local" class="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
             <div class="flex gap-2">
 
                 {{-- رمز الدولة --}}
+                <label for="phone_code" class="sr-only">رمز الدولة</label>
                 <select
+                    id="phone_code"
                     name="phone_code"
                     x-model="dialCode"
                     class="px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900
@@ -130,7 +139,7 @@
             </div>
 
             @error('phone')
-                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
             @enderror
         </div>
 
@@ -151,7 +160,7 @@
                     @endforeach
                 </select>
                 @error('currency')
-                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                    <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -170,7 +179,7 @@
                     @endforeach
                 </select>
                 @error('timezone')
-                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                    <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
                 @enderror
             </div>
         </div>
@@ -187,7 +196,7 @@
                        transition @error('password') border-red-400 @enderror"
             >
             @error('password')
-                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
             @enderror
         </div>
 
@@ -199,7 +208,8 @@
                 required autocomplete="new-password"
                 placeholder="أعد كتابة كلمة المرور"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
+                       transition @error('password') border-red-400 @enderror"
             >
         </div>
 

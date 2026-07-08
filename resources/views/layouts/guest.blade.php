@@ -32,10 +32,10 @@
 
             {{-- Headline --}}
             <div class="mt-16">
-                <h1 class="text-4xl font-bold text-white leading-snug">
+                <h2 class="text-4xl font-bold text-white leading-snug">
                     نظّم فلوسك ومشاريعك<br>
                     <span class="text-accent">من مكان واحد</span>
-                </h1>
+                </h2>
                 <p class="mt-4 text-white/70 text-lg leading-relaxed">
                     اعرف بالضبط أين يذهب ربحك — بدون تعقيد محاسبي.
                 </p>

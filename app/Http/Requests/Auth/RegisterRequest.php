@@ -13,6 +13,37 @@ class RegisterRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Fallback بدون JavaScript: الحقل المُرسَل فعلياً (phone) يُملأ عادة عبر Alpine.js
+     * من phone_code + phone_local (انظر resources/views/auth/register.blade.php).
+     * إذا تعطّل JS، يصل phone فارغاً بينما phone_code/phone_local يصلان بشكل طبيعي
+     * (حقول <select>/<input> عادية لا تعتمد على JS لإرسال قيمتها).
+     * هذا التابع يعيد بناء نفس صيغة E.164 يدوياً في هذه الحالة فقط، دون أي تغيير
+     * على طريقة التخزين أو قواعد التحقق أو سلوك Alpine عندما يعمل JS بشكل طبيعي.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('phone')) {
+            return; // Alpine.js ملأ الحقل بنجاح — لا حاجة لأي تدخل
+        }
+
+        if (! $this->filled('phone_code') || ! $this->filled('phone_local')) {
+            return; // لا بيانات كافية لإعادة البناء — يُترك الأمر لقاعدة "required" الحالية
+        }
+
+        $local = preg_replace('/\D/', '', (string) $this->input('phone_local'));
+
+        if ($local !== '' && $local[0] === '0') {
+            $local = substr($local, 1);
+        }
+
+        if ($local !== '') {
+            $this->merge([
+                'phone' => $this->input('phone_code') . $local,
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -65,14 +96,14 @@ class RegisterRequest extends FormRequest
         try {
             $renderedAt = (int) decrypt($token);
         } catch (\Throwable) {
-            // التوكن مفقود أو مزيّف أو التشفير فاشل — رفض صامت
-            $validator->errors()->add('_form_token', 'invalid');
+            // التوكن مفقود أو مزيّف أو التشفير فاشل — يُعرض للمستخدم عبر @error('_form_token')
+            $validator->errors()->add('_form_token', 'انتهت صلاحية نموذج التسجيل، يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.');
             return;
         }
 
-        // الإرسال خلال أقل من ثانيتين = ربما بوت
+        // الإرسال خلال أقل من ثانيتين = ربما بوت — يُعرض للمستخدم عبر @error('_form_token')
         if ((now()->timestamp - $renderedAt) < 2) {
-            $validator->errors()->add('_form_token', 'too_fast');
+            $validator->errors()->add('_form_token', 'لا يمكن إرسال النموذج حالياً، يرجى المحاولة مرة أخرى.');
         }
     }
 

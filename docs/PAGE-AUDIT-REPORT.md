@@ -25,7 +25,7 @@
 | 15 | Settings | `resources/views/settings/index.blade.php` |
 | 16 | Auth — Login | `resources/views/auth/login.blade.php` |
 
-**ملاحظة:** الصفحات التالية لم تُراجَع بعد (مؤجلة للجولة الثانية): `projects/show`, `projects/create`, `projects/_card`, `transactions/create`, `clients/show`, `quotes/show`, `wallets/show`, `debts/index`, `budgets/index`, `recurring/index`, `categories/index`, `notifications/index`, `help/index`, `profile/edit`, `marketing/*`, `auth/register`, `auth/forgot-password`.
+**ملاحظة:** الصفحات التالية لم تُراجَع بعد (مؤجلة للجولة الثانية): `projects/show`, `projects/create`, `projects/_card`, `transactions/create`, `clients/show`, `quotes/show`, `wallets/show`, `debts/index`, `budgets/index`, `recurring/index`, `categories/index`, `notifications/index`, `help/index`, `profile/edit`, `marketing/*`, `auth/forgot-password`. (`auth/register` رُوجعت في 2026-07-08 — انظر القسم 17)
 
 ---
 
@@ -341,6 +341,30 @@
 
 ---
 
+### 17. Auth — Register (`auth/register.blade.php`)
+**التقييم:** ⭐⭐ يعمل، لكن فيه مشاكل وظيفية وaccessibility حقيقية (رُوجعت حياً على `http://127.0.0.1:8000/register` + قراءة الكود: Controller + FormRequest + Action + View)
+
+**ما يعمل جيداً:**
+- تدفق التسجيل الأساسي يعمل فعلياً (اختُبر حياً): إنشاء المستخدم → `event(Registered)` → توجيه صحيح لـ `/verify-email`
+- `old()` تُعيد تعبئة الحقول بشكل صحيح عند فشل validation حقيقي (مثل عدم تطابق كلمة المرور)
+- Honeypot (`website`) + form-timing token (`_form_token`) لمكافحة السبام — فكرة جيدة في الأساس
+- `lang="ar" dir="rtl"` على مستوى الصفحة، ومنتقي رمز دولة منفصل لرقم الهاتف مع تجميعه بـ Alpine قبل الإرسال
+
+**مشاكل:**
+| | المشكلة | الأولوية | الحالة |
+|--|---------|---------|--------|
+| AU4 | **فشل صامت** عند رفض `_form_token` (قيم `invalid`/`too_fast` في `RegisterRequest::validateFormTiming`): لا توجد رسالة في `messages()` ولا `@error('_form_token')` في الـ blade — المستخدم يرى الفورم يُعاد فارغاً تماماً بدون أي تفسير (نفس نمط "الفورم ما يضيف") | عالية | ✅ تم الإصلاح 2026-07-08 |
+| AU5 | تباين رسائل الخطأ منخفض: `text-red-500` (`#ef4444`) على أبيض = **3.76:1** فقط، وWCAG AA يتطلب 4.5:1 للنص العادي — يؤثر على كل رسائل الخطأ في الصفحة (name/email/phone/password/currency/timezone) | عالية | ✅ تم الإصلاح 2026-07-08 |
+| AU6 | `<label>` حقل الهاتف بدون `for` — قارئ الشاشة لا يربطه لا بحقل رمز الدولة (`phone_code`) ولا بالرقم المحلي (`phone_local`)؛ تأكيد ذلك عبر accessibility tree أظهر أسماء عامة "combobox"/"textbox" بلا سياق (WCAG 1.3.1 / 4.1.2) | متوسطة | ✅ تم الإصلاح 2026-07-08 |
+| AU7 | الحقل الفعلي المُرسَل (`name="phone"`, hidden) يُملأ فقط عبر Alpine.js reactivity (`:value="phone"`)؛ لو تعطّل JS يُرسل فارغاً بصمت رغم أن المستخدم كتب رقمه في الحقل الظاهر — لا تحسين تدريجي (progressive enhancement) | متوسطة | ✅ تم الإصلاح 2026-07-08 |
+| AU8 | العنصر الوحيد من نوع `<h1>` في الصفحة موجود داخل لوحة العلامة التجارية (`hidden lg:flex` في `layouts/guest.blade.php`) — على الموبايل/التابلت (أغلب زيارات صفحة التسجيل) لا يوجد `<h1>` ظاهر إطلاقاً، والصفحة تقفز مباشرة لـ `<h2>` (بنية عناوين غير سليمة) | متوسطة | ✅ تم الإصلاح 2026-07-08 |
+| AU9 | `text-gray-400` كـ placeholder = **2.54:1** تباين فقط؛ وبما أن التلميح الوحيد لصيغة الهاتف (`599123456`) وطول كلمة المرور ("8 أحرف على الأقل") موجود فقط بالـ placeholder، يختفي فور بدء الكتابة | منخفضة | لم يُصلح بعد |
+| AU10 | حقل تأكيد كلمة المرور لا يأخذ أي تنسيق `@error` (حدّ أحمر) عند عدم التطابق — الخطأ يظهر فقط تحت حقل كلمة المرور الأول رغم أن الحقلين معنيّان بالتصحيح | منخفضة | ✅ تم الإصلاح 2026-07-08 |
+
+**تفاصيل الإصلاحات (AU4-AU8, AU10):** انظر `docs/AUTH-REGISTER-FIXES-2026-07-08.md` إن وُجد، أو سجل المحادثة — الملفات المعدّلة: `app/Http/Requests/Auth/RegisterRequest.php`، `resources/views/auth/register.blade.php`، `resources/views/layouts/guest.blade.php`. لا Breaking Changes.
+
+---
+
 ## ملخص تصنيف المشاكل
 
 ### 🔴 عالية الأولوية (تؤثر على UX مباشرة)
@@ -349,6 +373,8 @@
 | IS1 | Invoices Show | أزرار emoji بدلاً من SVG icons |
 | IS2 | Invoices Show | `text-left` في صفحة RTL — محاذاة معكوسة |
 | IS5 | Invoices Show | `grid-cols-2` بلا responsive — ضيق على موبايل |
+| AU4 | Auth Register | فشل صامت عند رفض `_form_token` — لا رسالة خطأ ظاهرة |
+| AU5 | Auth Register | تباين رسائل الخطأ 3.76:1 (يفشل WCAG AA 4.5:1) |
 
 ### 🟡 متوسطة الأولوية (تأثير على consistency أو accessibility)
 | الكود | الصفحة | المشكلة |
@@ -365,6 +391,9 @@
 | IS3 | Invoices Show | `teal-600` خارج نظام الألوان |
 | SE1 | Settings | Emoji في tab labels |
 | AU1 | Auth | `text-gray-*` بدلاً من design tokens |
+| AU6 | Auth Register | Label حقل الهاتف بدون `for` |
+| AU7 | Auth Register | حقل الهاتف hidden يعتمد كلياً على JS (لا progressive enhancement) |
+| AU8 | Auth Register | لا يوجد `<h1>` ظاهر على الموبايل |
 
 ### 🟢 منخفضة الأولوية (تحسينات جمالية)
 | الكود | الصفحة | المشكلة |
@@ -380,6 +409,7 @@
 | BU1-BU4 | Billing Upgrade | dark:, LTR arrows |
 | BI1-BI3 | Billing Index | dark:, hardcoded colors |
 | AU2/AU3 | Auth | rounded-xl, no focus-visible |
+| AU9/AU10 | Auth Register | placeholder-only hints (2.54:1)، لا `@error` على تأكيد كلمة المرور |
 
 ---
 
@@ -452,7 +482,6 @@
 - **`clients/show.blade.php`** — صفحة تفاصيل العميل الكاملة
 - **`wallets/show.blade.php`** — معاملات الصندوق
 - **`marketing/*`** — pricing, features, contact — تحقق من pricing.blade.php بعد إصلاح B01/B02
-- **`auth/register`** — نفس مشاكل auth/login المتوقعة
 
 ---
 
@@ -462,12 +491,14 @@
 |-------|------|
 | صفحات ممتازة (4+ نجوم) | 5 |
 | صفحات جيدة (3-4 نجوم) | 8 |
-| صفحات تحتاج مراجعة (< 3 نجوم) | 3 |
-| مشاكل عالية الأولوية | 3 |
-| مشاكل متوسطة الأولوية | 12 |
-| مشاكل منخفضة الأولوية | 15+ |
+| صفحات تحتاج مراجعة (< 3 نجوم) | 4 |
+| مشاكل عالية الأولوية | 5 |
+| مشاكل متوسطة الأولوية | 15 |
+| مشاكل منخفضة الأولوية | 17+ |
 
 **أبرز ما يُعقد التطبيق:** مشكلة RTL physical vs logical properties تتكرر في 6 صفحات، وكلاسات `dark:` ميتة في 4 صفحات، وعدم اتساق design tokens في 5 صفحات.
+
+**أخطر ما وُجد:** فشل صامت (AU4) في `auth/register` — إذا رُفض التوكن الزمني (`_form_token`) لأي سبب (ساعة نظام غير متزامنة، تبويب قديم، إعادة إرسال) يُعاد المستخدم لصفحة تسجيل فارغة تماماً بدون أي رسالة خطأ.
 
 **أفضل صفحة في التطبيق:** `dashboard.blade.php` و`invoices/index.blade.php` — نموذج يُحتذى به في استخدام الكومبوننتس والـ design tokens.
 
