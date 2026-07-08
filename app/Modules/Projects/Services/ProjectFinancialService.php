@@ -32,7 +32,11 @@ class ProjectFinancialService
             ];
         }
 
-        $multiCurrency = count($byCurrency) > 1;
+        // متعدد العملات إذا: (أ) هناك أكثر من عملة معاملات، أو (ب) هناك عملة معاملات وحيدة لكنها مختلفة عن عملة المشروع نفسها
+        // (ب) يغطي حالة كانت تُخفى سابقاً: مشروع بعملة واحدة (مثلاً ILS) لكن كل معاملاته فعلياً بعملة أخرى (مثلاً USD)
+        // كانت تُعرض كـ 0.00 بدون أي تنبيه لأن count($byCurrency) === 1 لا يُفعّل شرط "متعدد العملات" القديم.
+        $multiCurrency = count($byCurrency) > 1
+            || (count($byCurrency) === 1 && !array_key_exists($projectCur, $byCurrency));
 
         // المجاميع بعملة المشروع فقط (للمقارنة بقيمة العقد والميزانية)
         $primaryIncome   = $byCurrency[$projectCur]['income']   ?? 0;

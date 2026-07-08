@@ -72,8 +72,10 @@ class Wallet extends Model
      */
     public function balance(): float
     {
-        $income   = $this->transactions()->income()->sum('amount');
-        $expenses = $this->transactions()->expense()->sum('amount');
+        // نجمع فقط المعاملات بنفس عملة الصندوق — معاملة بعملة مختلفة مسجّلة خطأً على هذا
+        // الصندوق (راجع BUG-05 في docs/KNOWN-BUGS-AND-GAPS.md) لا يجب أن تُضاف كأنها بنفس العملة.
+        $income   = $this->transactions()->income()->where('currency', $this->currency)->sum('amount');
+        $expenses = $this->transactions()->expense()->where('currency', $this->currency)->sum('amount');
         $feesOut  = $this->transfersOut()->sum('fee');
 
         // التحويلات الصادرة تُخصم، التحويلات الواردة تُضاف
@@ -93,7 +95,7 @@ class Wallet extends Model
      */
     public function totalIncome(): float
     {
-        return (float) $this->transactions()->income()->sum('amount');
+        return (float) $this->transactions()->income()->where('currency', $this->currency)->sum('amount');
     }
 
     /**
@@ -101,6 +103,16 @@ class Wallet extends Model
      */
     public function totalExpenses(): float
     {
-        return (float) $this->transactions()->expense()->sum('amount');
+        return (float) $this->transactions()->expense()->where('currency', $this->currency)->sum('amount');
+    }
+
+    /**
+     * هل توجد معاملات مرتبطة بهذا الصندوق بعملة غير عملته؟ (لا تُحتسَب في balance()/totalIncome()/totalExpenses())
+     */
+    public function hasForeignCurrencyTransactions(): bool
+    {
+        return $this->transactions()
+            ->where('currency', '!=', $this->currency)
+            ->exists();
     }
 }

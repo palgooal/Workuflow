@@ -38,6 +38,9 @@ class ProjectController extends Controller
     public function index(): View
     {
         $projects = Project::withCount('transactions')
+            ->withCount(['transactions as foreign_currency_transactions_count' => function ($q) {
+                $q->whereColumn('transactions.currency', '!=', 'projects.currency');
+            }])
             ->orderByRaw("CASE status
                 WHEN 'active'    THEN 1
                 WHEN 'completed' THEN 2

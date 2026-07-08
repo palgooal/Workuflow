@@ -1,4 +1,4 @@
-@php $balance = $wallet->balance(); @endphp
+@php $balance = $wallet->balance(); $hasForeignCurrency = $wallet->hasForeignCurrencyTransactions(); @endphp
 <div class="dash-card dash-card-hover {{ !$wallet->is_active ? 'opacity-60' : '' }}"
      x-data="{ menuOpen: false }">
 
@@ -85,6 +85,17 @@
                 <p class="text-sm font-bold text-red-600 nums">-{{ number_format($wallet->totalExpenses(), 0) }}</p>
             </div>
         </div>
+
+        {{-- تنبيه: توجد معاملات بعملة مختلفة عن عملة الصندوق غير محتسبة في الرصيد أعلاه --}}
+        @if($hasForeignCurrency)
+        <a href="{{ route('wallets.show', $wallet) }}"
+           class="mt-3 flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 hover:bg-amber-100 transition-colors">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            توجد معاملات بعملة أخرى غير محتسبة في الرصيد
+        </a>
+        @endif
 
         {{-- Footer --}}
         <div class="mt-4 pt-3 border-t border-subtle flex items-center justify-between text-xs">

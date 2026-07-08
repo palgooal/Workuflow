@@ -8,7 +8,7 @@
     {{-- Header --}}
     <x-page-header title="المعاملات" subtitle="سجل كامل لجميع الدخل والمصروفات">
         <x-slot name="actions">
-            <a href="{{ route('transactions.create') }}"
+            <a href="{{ route('transactions.create') }}{{ request('project') ? '?project=' . request('project') : '' }}"
                class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-600
                       text-white text-sm font-semibold rounded-btn transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -117,7 +117,7 @@
             <x-empty-state
                 title="لا توجد معاملات"
                 description="ابدأ بتسجيل أول معاملة لتتبع دخلك ومصاريفك"
-                :action="route('transactions.create')"
+                :action="route('transactions.create') . (request('project') ? '?project=' . request('project') : '')"
                 actionLabel="إضافة معاملة" />
         </div>
     @else

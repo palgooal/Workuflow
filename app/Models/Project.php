@@ -107,22 +107,41 @@ class Project extends Model
 
     // ==================== Helpers ====================
 
+    /**
+     * إجمالي الدخل — بعملة المشروع فقط (لتفادي جمع مبالغ بعملات مختلفة كأنها رقم واحد)
+     */
     public function totalIncome(): float
     {
         return $this->transactions()
             ->where('type', TransactionType::Income)
+            ->where('currency', $this->currency)
             ->sum('amount');
     }
 
+    /**
+     * إجمالي المصروفات — بعملة المشروع فقط
+     */
     public function totalExpenses(): float
     {
         return $this->transactions()
             ->where('type', TransactionType::Expense)
+            ->where('currency', $this->currency)
             ->sum('amount');
     }
 
     public function netProfit(): float
     {
         return $this->totalIncome() - $this->totalExpenses();
+    }
+
+    /**
+     * هل يوجد معاملات مرتبطة بهذا المشروع بعملة غير عملته الأساسية؟
+     * تُستخدم لتنبيه المستخدم أن هناك مبالغ غير محتسبة في totalIncome()/totalExpenses().
+     */
+    public function hasForeignCurrencyTransactions(): bool
+    {
+        return $this->transactions()
+            ->where('currency', '!=', $this->currency)
+            ->exists();
     }
 }

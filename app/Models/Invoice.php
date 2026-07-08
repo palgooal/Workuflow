@@ -56,6 +56,20 @@ class Invoice extends Model
                 $invoice->number = self::generateNumber($invoice->user_id);
             }
         });
+
+        // إبطال Cache لوحة التحكم عند أي تغيير على الفاتورة — Invoice لا تستخدم BelongsToUser
+        // (تدير user_id يدوياً)، لذا يُضاف نفس منطق الإبطال هنا صراحةً. راجع docs/KNOWN-BUGS-AND-GAPS.md.
+        static::saved(function (self $invoice) {
+            if (! empty($invoice->user_id)) {
+                app(\App\Modules\Dashboard\Services\DashboardService::class)->clearCache($invoice->user_id);
+            }
+        });
+
+        static::deleted(function (self $invoice) {
+            if (! empty($invoice->user_id)) {
+                app(\App\Modules\Dashboard\Services\DashboardService::class)->clearCache($invoice->user_id);
+            }
+        });
     }
 
     // ==================== Relations ====================

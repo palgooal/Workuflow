@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests\Transactions;
 
+use App\Models\Wallet;
 use App\Support\Enums\TransactionType;
 use App\Support\Helpers\Currency;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Validator;
 
 class StoreTransactionRequest extends FormRequest
 {
@@ -30,6 +32,34 @@ class StoreTransactionRequest extends FormRequest
             'notes'            => ['nullable', 'string', 'max:1000'],
             'reference'        => ['nullable', 'string', 'max:100'],
         ];
+    }
+
+    /**
+     * تمنع تسجيل معاملة بعملة تختلف عن عملة الصندوق المُختار — راجع BUG-05
+     * في docs/KNOWN-BUGS-AND-GAPS.md (كانت تُضاف المبالغ خطأً بدون أي تحويل).
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $walletId = $this->input('wallet_id');
+            $currency = $this->input('currency');
+
+            if (! $walletId || ! $currency) {
+                return;
+            }
+
+            $wallet = Wallet::withoutGlobalScopes()
+                ->where('id', $walletId)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if ($wallet && $wallet->currency !== $currency) {
+                $validator->errors()->add(
+                    'wallet_id',
+                    "عملة المعاملة ({$currency}) لا تطابق عملة الصندوق \"{$wallet->name}\" ({$wallet->currency}). اختر صندوقاً بنفس العملة، أو غيّر عملة المعاملة."
+                );
+            }
+        });
     }
 
     public function messages(): array

@@ -48,7 +48,7 @@
                     </svg>
                     تعديل
                 </a>
-                <a href="{{ route('transactions.index') }}?project={{ $project->id }}"
+                <a href="{{ route('transactions.create') }}?project={{ $project->id }}"
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
                           text-white bg-brand hover:bg-brand-600 rounded-btn transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -485,7 +485,7 @@
                         </p>
                     </div>
                     <span class="text-sm font-bold {{ $tx->isIncome() ? 'text-green-600' : 'text-red-600' }} shrink-0">
-                        {{ $tx->isIncome() ? '+' : '-' }}{{ number_format($tx->amount, 2) }}
+                        {{ $tx->isIncome() ? '+' : '-' }}{{ number_format($tx->amount, 2) }} {{ $tx->currency }}
                     </span>
                 </div>
                 @endforeach

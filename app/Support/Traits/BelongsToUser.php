@@ -2,6 +2,7 @@
 
 namespace App\Support\Traits;
 
+use App\Modules\Dashboard\Services\DashboardService;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -28,6 +29,21 @@ trait BelongsToUser
         static::creating(function ($model) {
             if (auth()->check() && empty($model->user_id)) {
                 $model->user_id = auth()->id();
+            }
+        });
+
+        // إبطال Cache لوحة التحكم (dashboard_v2) عند أي تغيير على بيانات مملوكة للمستخدم —
+        // كان لوحة التحكم تبقى بأرقام قديمة حتى 30 دقيقة (مدة الـ Cache) بعد أي تعديل، لأن
+        // لا شيء كان يستدعي DashboardService::clearCache(). راجع docs/KNOWN-BUGS-AND-GAPS.md.
+        static::saved(function ($model) {
+            if (! empty($model->user_id)) {
+                app(DashboardService::class)->clearCache($model->user_id);
+            }
+        });
+
+        static::deleted(function ($model) {
+            if (! empty($model->user_id)) {
+                app(DashboardService::class)->clearCache($model->user_id);
             }
         });
     }

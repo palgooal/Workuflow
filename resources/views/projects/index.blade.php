@@ -350,6 +350,9 @@
                         </td>
                         <td class="dash-td text-center">
                             <span class="text-xs font-medium text-muted">{{ $project->currency }}</span>
+                            @if(($project->foreign_currency_transactions_count ?? 0) > 0)
+                            <span title="توجد معاملات بعملة أخرى غير محتسبة هنا" class="inline-block text-amber-500 align-middle mr-0.5">⚠</span>
+                            @endif
                         </td>
                         <td class="dash-td text-center font-bold text-success-700 nums">
                             +{{ number_format($income, 0) }}

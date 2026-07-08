@@ -104,6 +104,30 @@
         </x-stats-card>
     </x-stat-grid>
 
+    {{-- تنبيه: معاملات بعملات أخرى غير محتسبة في KPIs أعلاه (راجع BUG-05) --}}
+    @php
+        $foreignByCurrency = [];
+        foreach ($wallet->transactions()->where('currency', '!=', $wallet->currency)->get() as $foreignTx) {
+            $foreignByCurrency[$foreignTx->currency] ??= ['income' => 0, 'expenses' => 0];
+            $foreignByCurrency[$foreignTx->currency][$foreignTx->isIncome() ? 'income' : 'expenses'] += $foreignTx->amount;
+        }
+    @endphp
+    @if(!empty($foreignByCurrency))
+    <div class="dash-card p-4 border border-amber-200 bg-amber-50/60">
+        <div class="flex items-center gap-2 text-amber-800 text-sm font-semibold mb-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            توجد معاملات بعملات أخرى غير محتسبة في الرصيد وKPIs أعلاه (لا يتم تحويل العملات في النظام)
+        </div>
+        <div class="space-y-1 text-xs text-amber-700">
+            @foreach($foreignByCurrency as $cur => $vals)
+            <div>{{ $cur }}: دخل <strong>+{{ number_format($vals['income'], 2) }}</strong> · مصروف <strong>-{{ number_format($vals['expenses'], 2) }}</strong></div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     {{-- المعاملات --}}
     <x-card-section padding="p-0">
         <x-slot name="title">
