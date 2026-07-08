@@ -76,7 +76,7 @@
         --}}
         <div
             x-data="{
-                dialCode: '{{ old('phone_code', '+970') }}',
+                dialCode: '{{ old('phone_code', '+966') }}',
                 localNum: '{{ old('phone_local', '') }}',
                 get phone() {
                     let local = this.localNum.replace(/[\s\-]/g, '').replace(/\D/g, '');
@@ -88,6 +88,23 @@
             <label for="phone_local" class="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
             <div class="flex gap-2">
 
+                {{-- الرقم المحلي --}}
+                {{-- تظهر بصرياً على يمين رمز الدولة (ترتيب DOM هذا مقصود لعرض RTL:
+                     رمز الدولة يسار / رقم الجوال يمين) --}}
+                <input
+                    type="tel"
+                    id="phone_local"
+                    name="phone_local"
+                    x-model="localNum"
+                    required
+                    autocomplete="tel-national"
+                    placeholder="599123456"
+                    inputmode="numeric"
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
+                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
+                           transition @error('phone') border-red-400 @enderror"
+                >
+
                 {{-- رمز الدولة --}}
                 <label for="phone_code" class="sr-only">رمز الدولة</label>
                 <select
@@ -98,8 +115,8 @@
                            focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
                            transition @error('phone') border-red-400 @enderror"
                 >
-                    <option value="+970">🇵🇸 +970</option>
                     <option value="+966">🇸🇦 +966</option>
+                    <option value="+970">🇵🇸 +970</option>
                     <option value="+962">🇯🇴 +962</option>
                     <option value="+971">🇦🇪 +971</option>
                     <option value="+965">🇰🇼 +965</option>
@@ -118,21 +135,6 @@
                     <option value="+1">🇺🇸  +1</option>
                 </select>
 
-                {{-- الرقم المحلي --}}
-                <input
-                    type="tel"
-                    id="phone_local"
-                    name="phone_local"
-                    x-model="localNum"
-                    required
-                    autocomplete="tel-national"
-                    placeholder="599123456"
-                    inputmode="numeric"
-                    class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
-                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
-                           transition @error('phone') border-red-400 @enderror"
-                >
-
                 {{-- الحقل المخفي: يحمل الرقم الكامل بصيغة E.164 → هو المُرسل للـ server --}}
                 <input type="hidden" name="phone" :value="phone">
 
@@ -143,45 +145,26 @@
             @enderror
         </div>
 
-        {{-- العملة والمنطقة الزمنية --}}
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">العملة الافتراضية</label>
-                <select
-                    id="currency" name="currency"
-                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900
-                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
-                           transition @error('currency') border-red-400 @enderror"
-                >
-                    @foreach($currencies as $code => $label)
-                        <option value="{{ $code }}" {{ old('currency', 'SAR') === $code ? 'selected' : '' }}>
-                            {{ $label }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('currency')
-                    <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">المنطقة الزمنية</label>
-                <select
-                    id="timezone" name="timezone"
-                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900
-                           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
-                           transition @error('timezone') border-red-400 @enderror"
-                >
-                    @foreach($timezones as $tz => $label)
-                        <option value="{{ $tz }}" {{ old('timezone', 'Asia/Riyadh') === $tz ? 'selected' : '' }}>
-                            {{ $label }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('timezone')
-                    <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
-                @enderror
-            </div>
+        {{-- العملة الافتراضية --}}
+        {{-- ملاحظة: حقل المنطقة الزمنية أُزيل من هنا (2026-07-08) — كان بدون أي
+             تأثير فعلي بالكود، ويمكن ضبطه لاحقاً من صفحة الإعدادات عند الحاجة. --}}
+        <div>
+            <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">العملة الافتراضية</label>
+            <select
+                id="currency" name="currency"
+                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900
+                       focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
+                       transition @error('currency') border-red-400 @enderror"
+            >
+                @foreach($currencies as $code => $label)
+                    <option value="{{ $code }}" {{ old('currency', 'SAR') === $code ? 'selected' : '' }}>
+                        {{ $label }}
+                    </option>
+                @endforeach
+            </select>
+            @error('currency')
+                <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
+            @enderror
         </div>
 
         {{-- كلمة المرور --}}

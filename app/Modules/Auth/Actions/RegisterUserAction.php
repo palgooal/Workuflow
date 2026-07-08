@@ -24,7 +24,10 @@ class RegisterUserAction
             'phone'                   => $request->phone, // E.164: +970599123456
             'password'                => $request->password,
             'currency'                => $request->currency,
-            'timezone'                => $request->timezone,
+            // المنطقة الزمنية لم تعد تُطلب بفورم التسجيل (غير مستخدمة بأي منطق
+            // فعلي حالياً) — تُضبط على إعداد التطبيق الافتراضي، وتبقى قابلة
+            // للتعديل لاحقاً من صفحة الإعدادات.
+            'timezone'                => config('app.timezone'),
             'subscription_plan'       => SubscriptionPlan::Free,
             'registration_ip'         => $request->ip(),
             'registration_user_agent' => $request->userAgent(),

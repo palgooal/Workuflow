@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Support\Helpers\Currency;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Validator;
 
@@ -64,8 +66,9 @@ class RegisterRequest extends FormRequest
             ],
             'phone'     => ['required', 'string', 'max:30', 'regex:/^\+[1-9]\d{5,14}$/', 'unique:users,phone'],
             'password'  => ['required', 'confirmed', Password::defaults()],
-            'currency'  => ['required', 'string', 'in:SAR,USD,EUR,GBP,AED,KWD'],
-            'timezone'  => ['required', 'string', 'timezone:all'],
+            'currency'  => ['required', 'string', Rule::in(Currency::codes())],
+            // ملاحظة: حقل timezone أُزيل من فورم التسجيل (2026-07-08) — القيمة
+            // تُضبط تلقائياً في RegisterUserAction، ولا تعود تُطلب أو تُتحقَّق هنا.
 
             // ── Plan Intent (اختياري — يأتي من CTAs صفحة التسعير) ────────
             // لا يؤثر على التحقق أو الاشتراك — يُخزَّن في الـ session فقط.
@@ -122,8 +125,6 @@ class RegisterRequest extends FormRequest
             'phone.max'         => 'رقم الهاتف طويل جداً.',
             'currency.required' => 'العملة مطلوبة',
             'currency.in'       => 'العملة المختارة غير مدعومة',
-            'timezone.required' => 'المنطقة الزمنية مطلوبة',
-            'timezone.timezone' => 'المنطقة الزمنية غير صحيحة',
         ];
     }
 }

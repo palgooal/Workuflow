@@ -2,7 +2,7 @@
 
     {{-- العنوان --}}
     <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900">مرحباً بعودتك</h2>
+        <h1 class="text-2xl font-bold text-gray-900">مرحباً بعودتك</h1>
         <p class="mt-1 text-gray-500 text-sm">سجّل دخولك لمتابعة وضعك المالي</p>
     </div>
 
@@ -29,7 +29,7 @@
                        transition @error('email') border-red-400 @enderror"
             >
             @error('email')
-                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
             @enderror
         </div>
 
@@ -49,10 +49,10 @@
                 placeholder="••••••••"
                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400
                        focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
-                       transition @error('password') border-red-400 @enderror"
+                       transition @error('password') border-red-400 @enderror @error('email') border-red-400 @enderror"
             >
             @error('password')
-                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-700">{{ $message }}</p>
             @enderror
         </div>
 

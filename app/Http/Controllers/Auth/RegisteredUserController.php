@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Modules\Auth\Actions\RegisterUserAction;
+use App\Support\Helpers\Currency;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -12,36 +13,18 @@ class RegisteredUserController extends Controller
 {
     public function create(): View
     {
-        $currencies = [
-            'SAR' => 'ريال سعودي (SAR)',
-            'USD' => 'دولار أمريكي (USD)',
-            'EUR' => 'يورو (EUR)',
-            'GBP' => 'جنيه إسترليني (GBP)',
-            'AED' => 'درهم إماراتي (AED)',
-            'KWD' => 'دينار كويتي (KWD)',
-        ];
+        // نفس القائمة المركزية المستخدمة بباقي التطبيق (فواتير، معاملات،
+        // مشاريع، صناديق...) — تغطي كل عملات الدول العربية بدل القائمة
+        // المختصرة السابقة (6 عملات فقط).
+        $currencies = Currency::all();
 
-        $timezones = [
-            'Asia/Riyadh'     => 'الرياض (توقيت السعودية)',
-            'Asia/Dubai'      => 'دبي (توقيت الإمارات)',
-            'Asia/Kuwait'     => 'الكويت',
-            'Asia/Baghdad'    => 'بغداد (توقيت العراق)',
-            'Asia/Jerusalem'  => 'القدس (توقيت فلسطين)',
-            'Asia/Amman'      => 'عمّان (توقيت الأردن)',
-            'Asia/Beirut'     => 'بيروت (توقيت لبنان)',
-            'Asia/Damascus'   => 'دمشق (توقيت سوريا)',
-            'Africa/Cairo'    => 'القاهرة (توقيت مصر)',
-            'Africa/Tunis'    => 'تونس',
-            'Africa/Algiers'  => 'الجزائر',
-            'Africa/Casablanca' => 'الدار البيضاء (المغرب)',
-            'Europe/London'   => 'لندن (GMT)',
-            'America/New_York'=> 'نيويورك (EST)',
-            'UTC'             => 'UTC',
-        ];
-
+        // ملاحظة: حقل المنطقة الزمنية أُزيل من فورم التسجيل (2026-07-08) لأنه غير
+        // مستخدم في أي منطق فعلي بالتطبيق حالياً — القيمة تُضبط تلقائياً على
+        // إعداد التطبيق الافتراضي (انظر RegisterUserAction) ويمكن للمستخدم
+        // تغييرها لاحقاً من صفحة الإعدادات إذا احتاج ذلك مستقبلاً.
         $formToken = encrypt(now()->timestamp);
 
-        return view('auth.register', compact('currencies', 'timezones', 'formToken'));
+        return view('auth.register', compact('currencies', 'formToken'));
     }
 
     public function store(RegisterRequest $request): RedirectResponse
