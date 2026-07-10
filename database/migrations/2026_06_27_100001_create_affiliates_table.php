@@ -64,15 +64,21 @@ return new class extends Migration
 
         // ── CHECK constraints (MySQL 8.0.16+ / MariaDB 10.4+) ────────────
         // يُنفَّذ بعد إنشاء الجدول لتجنب أي تعارض مع Blueprint
-        DB::statement("
-            ALTER TABLE affiliates
-                ADD CONSTRAINT chk_affiliates_status
-                    CHECK (status IN ('pending','active','suspended')),
-                ADD CONSTRAINT chk_affiliates_tier
-                    CHECK (tier IN ('standard','silver','gold','platinum')),
-                ADD CONSTRAINT chk_affiliates_payout_method
-                    CHECK (payout_method IS NULL OR payout_method IN ('bank','whatsapp','credit'))
-        ");
+        // SQLite (تشغيل الاختبارات) لا يدعم ALTER TABLE ADD CONSTRAINT —
+        // نتجاوزها هناك لأن التحقق من القيم مطبّق أصلاً على مستوى الـ
+        // Form Requests / PHP Enums، والـ CHECK هنا حماية إضافية على مستوى
+        // MySQL فقط في الإنتاج.
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("
+                ALTER TABLE affiliates
+                    ADD CONSTRAINT chk_affiliates_status
+                        CHECK (status IN ('pending','active','suspended')),
+                    ADD CONSTRAINT chk_affiliates_tier
+                        CHECK (tier IN ('standard','silver','gold','platinum')),
+                    ADD CONSTRAINT chk_affiliates_payout_method
+                        CHECK (payout_method IS NULL OR payout_method IN ('bank','whatsapp','credit'))
+            ");
+        }
     }
 
     public function down(): void

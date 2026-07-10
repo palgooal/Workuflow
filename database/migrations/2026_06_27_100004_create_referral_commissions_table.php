@@ -77,15 +77,19 @@ return new class extends Migration
         });
 
         // ── CHECK constraints (MySQL 8.0.16+ / MariaDB 10.4+) ────────────
-        DB::statement("
-            ALTER TABLE referral_commissions
-                ADD CONSTRAINT chk_commissions_status
-                    CHECK (status IN ('pending','approved','paid','rejected','cancelled')),
-                ADD CONSTRAINT chk_commissions_trigger
-                    CHECK (trigger_source IN ('togo_callback','manual_admin')),
-                ADD CONSTRAINT chk_commissions_cycle
-                    CHECK (subscription_cycle IN ('monthly','annual'))
-        ");
+        // SQLite (اختبارات) لا يدعم ALTER TABLE ADD CONSTRAINT — راجع
+        // نفس الملاحظة في create_affiliates_table.
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("
+                ALTER TABLE referral_commissions
+                    ADD CONSTRAINT chk_commissions_status
+                        CHECK (status IN ('pending','approved','paid','rejected','cancelled')),
+                    ADD CONSTRAINT chk_commissions_trigger
+                        CHECK (trigger_source IN ('togo_callback','manual_admin')),
+                    ADD CONSTRAINT chk_commissions_cycle
+                        CHECK (subscription_cycle IN ('monthly','annual'))
+            ");
+        }
     }
 
     public function down(): void

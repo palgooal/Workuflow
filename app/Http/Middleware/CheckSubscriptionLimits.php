@@ -93,12 +93,17 @@ class CheckSubscriptionLimits
     // Clients — حد إجمالي
     // Client يستخدم SoftDeletes — count() يستثني المحذوفين تلقائياً.
     // نستعلم مباشرة بدلاً من clients() على User (العلاقة غير موجودة).
+    // العملاء المؤرشفون مستثنون من العدّ — يجب أن يطابق هذا بالضبط
+    // منطق ClientPolicy::create() وإلا يُحظر المستخدم بالخطأ حتى لو
+    // كان عدد عملائه النشطين تحت الحد (راجع commit تدقيق /clients/create).
     // ─────────────────────────────────────────────────────────────
 
     private function checkClients($user, $plan): void
     {
         $max   = $plan->maxClients();
-        $count = Client::where('user_id', $user->id)->count();
+        $count = Client::where('user_id', $user->id)
+            ->where('is_archived', false)
+            ->count();
 
         if ($count >= $max) {
             session()->flash('upgrade_prompt', [

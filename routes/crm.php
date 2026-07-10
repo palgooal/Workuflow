@@ -33,7 +33,9 @@ Route::middleware(['auth', 'active.account'])->group(function () {
         //    يجب أن تكون أولاً لتجنب التقاطها بـ /{client} wildcard
 
         Route::get('/',       [ClientController::class, 'index'])->name('index');
-        Route::get('/create', [ClientController::class, 'create'])->name('create');
+        // نفس حارس الحد المستخدم على /store — يُحذّر المستخدم قبل ملء النموذج
+        // بدل تركه يكتشف أنه تجاوز الحد بعد الحفظ (raw 403 من ClientPolicy فقط)
+        Route::get('/create', [ClientController::class, 'create'])->middleware('subscription:clients')->name('create');
         Route::post('/',      [ClientController::class, 'store'])->middleware('subscription:clients')->name('store');
 
         // ==================== الوسوم ====================

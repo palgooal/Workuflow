@@ -11,6 +11,7 @@ final readonly class CreateClientDTO
     public function __construct(
         public int     $userId,
         public string  $name,
+        public ?string $paymentName = null,
         public ?string $phone     = null,
         public ?string $email     = null,
         public ?string $company   = null,
@@ -33,6 +34,7 @@ final readonly class CreateClientDTO
         return new self(
             userId:   $request->user()->id,
             name:     $request->string('name')->toString(),
+            paymentName: $request->filled('payment_name') ? $request->string('payment_name')->toString() : null,
             phone:    $request->filled('phone')   ? $request->string('phone')->toString()   : null,
             email:    $request->filled('email')   ? $request->string('email')->toString()   : null,
             company:  $request->filled('company')  ? $request->string('company')->toString()  : null,
@@ -91,6 +93,7 @@ final readonly class CreateClientDTO
             'is_active' => $this->isActive,
         ];
 
+        if ($this->paymentName !== null) $data['payment_name'] = $this->paymentName;
         if ($this->phone    !== null) $data['phone']    = $this->phone;
         if ($this->email    !== null) $data['email']    = $this->email;
         if ($this->company  !== null) $data['company']  = $this->company;

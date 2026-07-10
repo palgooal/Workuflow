@@ -31,8 +31,10 @@ class StoreClientRequest extends FormRequest
             ],
             'company' => ['nullable', 'string', 'max:100'],
             'notes'   => ['nullable', 'string', 'max:2000'],
+            // الفورم يرسل دائماً قيمة افتراضية (prospect) عبر <select required> —
+            // required هنا يوحّد التحقق مع النموذج بدل ترك تناقض شكل/تحقق
             'status'  => [
-                'nullable',
+                'required',
                 Rule::in(ClientStatus::values()),
             ],
             'source'  => [
@@ -47,8 +49,17 @@ class StoreClientRequest extends FormRequest
             'is_active' => ['nullable', 'boolean'],
 
             // الوسوم الاختيارية عند الإنشاء
+            // مسموح فقط بوسوم المستخدم الخاصة (user_id = هو) أو الوسوم النظامية المشتركة (user_id = NULL)
+            // لمنع ربط وسوم خاصة بمستخدم آخر (IDOR)
             'tag_ids'   => ['nullable', 'array'],
-            'tag_ids.*' => ['integer', 'exists:client_tags,id'],
+            'tag_ids.*' => [
+                'integer',
+                Rule::exists('client_tags', 'id')->where(
+                    fn ($query) => $query->where(
+                        fn ($q) => $q->where('user_id', $this->user()->id)->orWhereNull('user_id')
+                    )
+                ),
+            ],
         ];
     }
 
@@ -60,9 +71,11 @@ class StoreClientRequest extends FormRequest
             'payment_name.ascii' => 'الاسم البديل يجب أن يكون بأحرف إنجليزية فقط (يُستخدم في الدفع الإلكتروني).',
             'email.email'    => 'صيغة البريد الإلكتروني غير صحيحة.',
             'email.unique'   => 'يوجد عميل بنفس البريد الإلكتروني.',
+            'status.required'=> 'حالة العميل مطلوبة.',
             'status.in'      => 'حالة العميل غير صحيحة.',
             'source.in'      => 'مصدر العميل غير صحيح.',
             'tag_ids.array'  => 'يجب أن تكون الوسوم مصفوفة.',
+            'tag_ids.*.exists' => 'أحد الوسوم المحددة غير موجود أو لا تملكه.',
         ];
     }
 }

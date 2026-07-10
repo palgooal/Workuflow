@@ -71,6 +71,13 @@ return new class extends Migration
 
     public function up(): void
     {
+        // SQLite (اختبارات) لا يدعم ALTER TABLE ... MODIFY، ولا يفرض دقة
+        // DECIMAL أصلاً (type affinity فقط) — تخطّي آمن هناك، القيم بثلاث
+        // خانات تُخزَّن وتُقرأ بلا تقريب على SQLite حتى بدون هذا الـ ALTER.
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         foreach ($this->columns as $table => $cols) {
             foreach ($cols as $column => $definition) {
                 DB::statement("ALTER TABLE `{$table}` MODIFY `{$column}` {$definition}");
@@ -82,6 +89,10 @@ return new class extends Migration
     {
         // ⚠️ تراجع يدوي: أي قيمة بثلاث خانات أُدخلت بعد up() ستُقرَّب صامتاً
         // إلى خانتين عند التراجع — سلوك متوقع لـ down() وليس فقداناً غير مقصود.
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         foreach ($this->originalColumns as $table => $cols) {
             foreach ($cols as $column => $definition) {
                 DB::statement("ALTER TABLE `{$table}` MODIFY `{$column}` {$definition}");

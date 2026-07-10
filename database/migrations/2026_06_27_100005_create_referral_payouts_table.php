@@ -53,13 +53,17 @@ return new class extends Migration
         });
 
         // ── CHECK constraints (MySQL 8.0.16+ / MariaDB 10.4+) ────────────
-        DB::statement("
-            ALTER TABLE referral_payouts
-                ADD CONSTRAINT chk_payouts_method
-                    CHECK (method IN ('bank','whatsapp','credit')),
-                ADD CONSTRAINT chk_payouts_status
-                    CHECK (status IN ('requested','processing','paid','rejected'))
-        ");
+        // SQLite (اختبارات) لا يدعم ALTER TABLE ADD CONSTRAINT — راجع
+        // نفس الملاحظة في create_affiliates_table.
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("
+                ALTER TABLE referral_payouts
+                    ADD CONSTRAINT chk_payouts_method
+                        CHECK (method IN ('bank','whatsapp','credit')),
+                    ADD CONSTRAINT chk_payouts_status
+                        CHECK (status IN ('requested','processing','paid','rejected'))
+            ");
+        }
     }
 
     public function down(): void

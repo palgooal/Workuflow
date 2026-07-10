@@ -11,6 +11,7 @@ final readonly class UpdateClientDTO
 {
     public function __construct(
         public ?string $name       = null,
+        public ?string $paymentName = null,
         public ?string $phone      = null,
         public ?string $email      = null,
         public ?string $company    = null,
@@ -32,6 +33,7 @@ final readonly class UpdateClientDTO
     {
         return new self(
             name:       $request->has('name')       ? $request->string('name')->toString()       : null,
+            paymentName: $request->has('payment_name') ? ($request->filled('payment_name') ? $request->string('payment_name')->toString() : null) : null,
             phone:      $request->has('phone')      ? ($request->filled('phone') ? $request->string('phone')->toString() : null) : null,
             email:      $request->has('email')      ? ($request->filled('email') ? $request->string('email')->toString() : null) : null,
             company:    $request->has('company')    ? ($request->filled('company') ? $request->string('company')->toString() : null) : null,
@@ -62,6 +64,7 @@ final readonly class UpdateClientDTO
         $data = [];
 
         if ($this->name       !== null) $data['name']        = $this->name;
+        if ($this->paymentName !== null) $data['payment_name'] = $this->paymentName;
         if ($this->phone      !== null) $data['phone']       = $this->phone;
         if ($this->email      !== null) $data['email']       = $this->email;
         if ($this->company    !== null) $data['company']     = $this->company;
