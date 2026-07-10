@@ -87,6 +87,9 @@ class ClientTagController extends Controller
             ->firstOrFail();
 
         $this->authorize('update', $clientModel);
+        // منع ربط وسم خاص بمستخدم آخر بعميل هذا المستخدم (IDOR) — وسوم النظام
+        // مسموحة للجميع، والوسوم المخصصة لمالكها فقط (ClientTagPolicy::view)
+        $this->authorize('view', $tag);
 
         $this->tagService->assign($clientModel, $tag, $request->user()->id);
 

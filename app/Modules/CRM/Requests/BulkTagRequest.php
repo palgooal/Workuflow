@@ -26,8 +26,17 @@ class BulkTagRequest extends FormRequest
                     ->whereNull('deleted_at'),
             ],
 
+            // مسموح فقط بوسوم المستخدم الخاصة (user_id = هو) أو الوسوم النظامية
+            // المشتركة (user_id = NULL) — لمنع ربط وسوم خاصة بمستخدم آخر (IDOR)
             'tag_ids'   => ['required', 'array', 'min:1', 'max:20'],
-            'tag_ids.*' => ['integer', 'exists:client_tags,id'],
+            'tag_ids.*' => [
+                'integer',
+                Rule::exists('client_tags', 'id')->where(
+                    fn ($query) => $query->where(
+                        fn ($q) => $q->where('user_id', $this->user()->id)->orWhereNull('user_id')
+                    )
+                ),
+            ],
 
             'action' => ['required', Rule::in(['assign', 'remove'])],
         ];
@@ -41,7 +50,7 @@ class BulkTagRequest extends FormRequest
             'client_ids.max'       => 'لا يمكن تحديد أكثر من 500 عميل.',
             'client_ids.*.exists'  => 'أحد العملاء المحددين غير موجود أو لا تملكه.',
             'tag_ids.required'     => 'يجب اختيار وسم واحد على الأقل.',
-            'tag_ids.*.exists'     => 'أحد الوسوم المحددة غير موجود.',
+            'tag_ids.*.exists'     => 'أحد الوسوم المحددة غير موجود أو لا تملكه.',
             'action.required'      => 'نوع العملية مطلوب (assign أو remove).',
             'action.in'            => 'نوع العملية يجب أن يكون assign أو remove.',
         ];
