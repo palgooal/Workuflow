@@ -108,6 +108,17 @@ Schedule::command('invoices:send-reminders')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/invoice-reminders.log'));
 
+// ==================== Data Retention — تدقيق الاحتفاظ بالبيانات ====================
+
+// تقرير شهري (بدون حذف) بالحسابات التي تجاوزت مدة الاحتفاظ المعتمَدة (سنة واحدة)
+// راجع docs/legal/LEGAL-IMPLEMENTATION-AUDIT.md (الفجوة #1) — Dry-Run فقط،
+// لا يحذف أي بيانات؛ يُسجَّل الملخص في activity_logs لضمان أثر تدقيقي دائم.
+Schedule::command('retention:report-due')
+    ->monthly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/retention-report.log'));
+
 // ==================== Referral — مطابقة الإجماليات ====================
 
 // مطابقة وتصحيح إجماليات المسوّقين يومياً الساعة 03:30

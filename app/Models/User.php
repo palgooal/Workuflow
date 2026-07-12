@@ -106,6 +106,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->hasMany(Subscription::class);
     }
 
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
     // ==================== Referral Relations ====================
 
     /** المسوّق المرتبط بهذا الحساب (إن كان المستخدم مسوّقاً) */

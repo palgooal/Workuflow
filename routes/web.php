@@ -212,14 +212,18 @@ Route::get('/invoice/{ulid}/view', [InvoiceController::class, 'publicView'])
 // التحصيل عبر دراهم — دفع الفاتورة عبر بوابة الدفع نيابة عن المشترك
 // بدون Auth عمداً — الوصول فقط عبر ULID الفاتورة غير القابل للتخمين.
 // ══════════════════════════════════════════════════════
-Route::prefix('pay')->name('pay.')->group(function () {
+// Rate limiting: هذه المسارات عامة وبدون Auth (محمية فقط بصعوبة تخمين
+// ULID/token). throttle:60,1 (لكل IP) يضيف طبقة دفاع إضافية ضد المسح/التخمين
+// الآلي الجماعي — راجع docs/legal/Acceptable-Use-Policy.md §9 و
+// docs/legal/LEGAL-IMPLEMENTATION-AUDIT.md (الفجوة #7).
+Route::prefix('pay')->name('pay.')->middleware('throttle:60,1')->group(function () {
     Route::get('/invoice/{invoice:ulid}',          [InvoicePaymentController::class, 'show'])->name('invoice.show');
     Route::post('/invoice/{invoice:ulid}/checkout', [InvoicePaymentController::class, 'checkout'])->name('invoice.checkout');
     Route::get('/invoice/{invoice:ulid}/callback',  [InvoicePaymentController::class, 'callback'])->name('invoice.callback');
     Route::get('/invoice/{invoice:ulid}/cancel',    [InvoicePaymentController::class, 'cancel'])->name('invoice.cancel');
 });
 
-Route::prefix('q')->name('quotes.')->group(function () {
+Route::prefix('q')->name('quotes.')->middleware('throttle:60,1')->group(function () {
     Route::get('/{token}',         [QuoteController::class, 'portal'])->name('portal');
     Route::post('/{token}/accept', [QuoteController::class, 'accept'])->name('accept');
     Route::post('/{token}/reject', [QuoteController::class, 'reject'])->name('reject');

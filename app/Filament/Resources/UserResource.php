@@ -14,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use App\Mail\ReEngagementEmail;
 use App\Modules\Billing\Services\SubscriptionService;
+use App\Modules\CRM\Actions\Client\DeleteUnlinkedClientsForUserAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -533,13 +534,17 @@ class UserResource extends Resource
                     }),
 
                 // ─── حذف بيانات المستخدم ──────────────────────────────
+                // ينفّذ وعود docs/legal/Data-Deletion.md §2–3 و docs/legal/Privacy-Policy.md §8:
+                // - عملاء CRM غير المرتبطين بأي فاتورة/عرض سعر/تحصيل دفع يُحذفون.
+                // - عملاء مرتبطون بسجل مالي يُستثنون (السجل المالي نفسه يبقى ضمن مدة الاحتفاظ).
+                // - يُسجَّل إغلاق الحساب في data_retention_ledger لتتبّع استحقاق التطهير (سنة واحدة).
                 Tables\Actions\Action::make('deleteData')
                     ->label('حذف البيانات')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalHeading('حذف بيانات المستخدم')
-                    ->modalDescription(fn (User $record) => "سيتم حذف جميع بيانات {$record->name} (المشاريع، المعاملات، الديون، الميزانيات، الإشعارات). هذا الإجراء لا يمكن التراجع عنه!")
+                    ->modalDescription(fn (User $record) => "سيتم حذف جميع بيانات {$record->name} (المشاريع، المعاملات، الديون، الميزانيات، الإشعارات)، بالإضافة لعملاء CRM غير المرتبطين بأي فاتورة أو عرض سعر أو تحصيل دفع. العملاء المرتبطون بسجل مالي يُستثنون وتُحفظ بياناتهم ضمن مدة الاحتفاظ المعتمَدة. هذا الإجراء لا يمكن التراجع عنه!")
                     ->modalSubmitActionLabel('نعم، احذف كل البيانات')
                     ->form([
                         Forms\Components\Checkbox::make('confirm')
@@ -560,9 +565,23 @@ class UserResource extends Resource
                             'subscription_plan' => SubscriptionPlan::Free,
                         ]);
 
+                        $clientsResult = app(DeleteUnlinkedClientsForUserAction::class)
+                            ->execute($record, auth()->id());
+
+                        \App\Models\DataRetentionLedgerEntry::recordClosure(
+                            user: $record,
+                            triggeredByAdminId: auth()->id(),
+                            notes: 'Admin deleteData action — تُطبَّق مدة الاحتفاظ سنة واحدة على السجلات المالية المتبقية.',
+                        );
+
                         Notification::make()
                             ->title('تم حذف البيانات')
-                            ->body("تم حذف جميع بيانات {$record->name} بنجاح.")
+                            ->body(sprintf(
+                                'تم حذف جميع بيانات %s بنجاح. عملاء CRM: %d محذوف، %d مستثنى (مرتبط بسجل مالي).',
+                                $record->name,
+                                $clientsResult['deleted_count'],
+                                $clientsResult['retained_count'],
+                            ))
                             ->danger()
                             ->send();
                     }),
