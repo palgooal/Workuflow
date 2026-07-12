@@ -5,7 +5,7 @@ canonical_url: "https://darahum.com/legal/cookies"
 og_title: "سياسة الكوكيز — دراهم | مال وأعمال"
 og_description: "الكوكيز الفعلية المستخدَمة على دراهم | مال وأعمال، وكيفية التحكم بها."
 last_updated: "2026-07-12"
-document_version: "1.0.0"
+document_version: "1.1.0"
 ---
 
 # سياسة الكوكيز (Cookie Policy)
@@ -67,4 +67,4 @@ document_version: "1.0.0"
 
 ---
 
-*هذه الوثيقة جزء من الحزمة القانونية الكاملة لمنصة دراهم | مال وأعمال، وتُقرأ بالتزامن مع: [التعريفات القانونية](./Definitions.md)، [سياسة الخصوصية](./Privacy-Policy.md)، و[شروط الاستخدام](./Terms-of-Service.md).*
+*هذه الوثيقة جزء من الحزمة القانونية لمنصة دراهم | مال وأعمال، وتُقرأ بالتزامن مع: [سياسة الخصوصية](./Privacy-Policy.md)، [شروط الاستخدام](./Terms-of-Service.md)، و[سياسة حذف البيانات](./Data-Deletion.md).*

@@ -43,6 +43,8 @@ Route::prefix('')->name('marketing.')->group(function () {
 Route::prefix('legal')->name('legal.')->group(function () {
     Route::get('/privacy',            fn() => view('legal.privacy'))->name('privacy');
     Route::get('/terms',              fn() => view('legal.terms'))->name('terms');
+    Route::get('/data-deletion',      fn() => view('legal.data-deletion'))->name('data-deletion');
+    Route::get('/cookies',            fn() => view('legal.cookies'))->name('cookies');
     Route::get('/refund',             fn() => view('legal.refund'))->name('refund');
     Route::get('/subscription-terms', fn() => view('legal.subscription-terms'))->name('subscription-terms');
     Route::get('/cancellation',       fn() => view('legal.cancellation'))->name('cancellation');
@@ -214,7 +216,7 @@ Route::get('/invoice/{ulid}/view', [InvoiceController::class, 'publicView'])
 // ══════════════════════════════════════════════════════
 // Rate limiting: هذه المسارات عامة وبدون Auth (محمية فقط بصعوبة تخمين
 // ULID/token). throttle:60,1 (لكل IP) يضيف طبقة دفاع إضافية ضد المسح/التخمين
-// الآلي الجماعي — راجع docs/legal/Acceptable-Use-Policy.md §9 و
+// الآلي الجماعي — راجع docs/legal/Terms-of-Service.md §9 (الاستخدامات المحظورة) و
 // docs/legal/LEGAL-IMPLEMENTATION-AUDIT.md (الفجوة #7).
 Route::prefix('pay')->name('pay.')->middleware('throttle:60,1')->group(function () {
     Route::get('/invoice/{invoice:ulid}',          [InvoicePaymentController::class, 'show'])->name('invoice.show');
