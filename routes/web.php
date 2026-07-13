@@ -14,6 +14,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecurringController;
 use App\Http\Controllers\SettingsController;
@@ -40,15 +41,24 @@ Route::prefix('')->name('marketing.')->group(function () {
 });
 
 // ==================== الصفحات القانونية ====================
+// الرابط واسم كل Route هنا كما هما دون أي تغيير. المحتوى يُقرأ الآن من
+// نظام إدارة المحتوى (Page Model) إن كانت الصفحة مُرحَّلة ومنشورة، مع
+// سقوط آمن (fallback) تلقائي على ملفات الـBlade الثابتة الحالية خلاف ذلك
+// — راجع PageController@renderLegal ومسار الترحيل في LegalPagesSeeder.
 Route::prefix('legal')->name('legal.')->group(function () {
-    Route::get('/privacy',            fn() => view('legal.privacy'))->name('privacy');
-    Route::get('/terms',              fn() => view('legal.terms'))->name('terms');
-    Route::get('/data-deletion',      fn() => view('legal.data-deletion'))->name('data-deletion');
-    Route::get('/cookies',            fn() => view('legal.cookies'))->name('cookies');
+    Route::get('/privacy',            [PageController::class, 'legalPrivacy'])->name('privacy');
+    Route::get('/terms',              [PageController::class, 'legalTerms'])->name('terms');
+    Route::get('/data-deletion',      [PageController::class, 'legalDataDeletion'])->name('data-deletion');
+    Route::get('/cookies',            [PageController::class, 'legalCookies'])->name('cookies');
     Route::get('/refund',             fn() => view('legal.refund'))->name('refund');
     Route::get('/subscription-terms', fn() => view('legal.subscription-terms'))->name('subscription-terms');
     Route::get('/cancellation',       fn() => view('legal.cancellation'))->name('cancellation');
 });
+
+// ==================== نظام إدارة المحتوى المصغّر — صفحات عامة إضافية ====================
+// (مثل "عن دراهم" أو "الوظائف" بعد نشرها من لوحة الأدمن). الصفحات القانونية
+// الأربع أعلاه لا تُعرض من هنا — تُوجَّه لرابطها الرسمي إن طُلبت بهذا المسار.
+Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 

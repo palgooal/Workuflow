@@ -12,18 +12,22 @@ use App\Models\Wallet;
 use App\Policies\BudgetPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\DebtPolicy;
+use App\Policies\PagePolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\RecurringPolicy;
 use App\Policies\TransactionPolicy;
 use App\Policies\WalletPolicy;
+use App\Models\Page;
 use App\Models\Setting;
 use App\Modules\Billing\Contracts\PaymentProviderInterface;
 use App\Modules\Billing\Contracts\RenewalServiceInterface;
 use App\Modules\Billing\Services\ManualRenewalService;
 use App\Modules\Billing\Services\SubscriptionService;
 use App\Modules\Billing\Services\TogoPaymentService;
+use App\Filament\Pages\SiteSettings;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -63,12 +67,52 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Debt::class, DebtPolicy::class);
         Gate::policy(RecurringTransaction::class, RecurringPolicy::class);
         Gate::policy(Wallet::class, WalletPolicy::class);
+        Gate::policy(Page::class, PagePolicy::class);
 
         // ── تطبيق إعدادات البريد من قاعدة البيانات ──────────────────────
         $this->applyMailSettings();
 
         // ── تطبيق إعدادات بوابة الدفع من قاعدة البيانات ─────────────────
         $this->applyPaymentSettings();
+
+        // ── مشاركة بيانات الفوتر الديناميكي (صفحات + تواصل) مع تخطيط التسويق ──
+        $this->shareFooterData();
+    }
+
+    /**
+     * يشارك روابط الفوتر الديناميكية (Page::footerLinks) وروابط وسائل
+     * التواصل المفعَّلة (SiteSettings::activeSocialLinks) مع
+     * layouts.marketing، بدل تمريرها يدوياً من كل Controller/Route.
+     */
+    private function shareFooterData(): void
+    {
+        View::composer('layouts.marketing', function ($view) {
+            try {
+                $view->with('footerPageLinks', Page::footerLinks());
+            } catch (\Throwable) {
+                // الجدول غير موجود بعد (قبل أول migrate) — لا نكسر الصفحة
+                $view->with('footerPageLinks', collect());
+            }
+
+            try {
+                $view->with('footerSocialLinks', SiteSettings::activeSocialLinks());
+            } catch (\Throwable) {
+                $view->with('footerSocialLinks', []);
+            }
+
+            try {
+                $site = Setting::group('site');
+            } catch (\Throwable) {
+                $site = [];
+            }
+
+            // قيم افتراضية = النصوص الحالية في الفوتر، حتى يملأ الأدمن الإعدادات فعلياً
+            $view->with('footerContact', [
+                'email'       => ($site['site_contact_email'] ?? null) ?: 'support@darahum.com',
+                'location'    => ($site['site_location'] ?? null) ?: 'الرياض، المملكة العربية السعودية',
+                'description' => ($site['footer_description'] ?? null) ?: 'المنصة المالية الأولى المصممة لتمكين المستقلين في العالم العربي. نحن هنا لنمكّن المستقل العربي من التركيز على ما يتقنه.',
+            ]);
+        });
     }
 
     private function applyPaymentSettings(): void
