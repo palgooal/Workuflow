@@ -13,6 +13,7 @@ use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Illuminate\Http\Response;
+use App\Support\Content\PageContentSanitizer;
 use App\Support\Helpers\Currency;
 use App\Support\Enums\InvoiceStatus;
 use Illuminate\Http\RedirectResponse;
@@ -67,13 +68,22 @@ class InvoiceController extends Controller
             'discount'      => 'nullable|numeric|min:0',
             'discount_type' => 'nullable|in:fixed,percentage',
             'currency'      => ['required', 'string', Rule::in(Currency::codes())],
-            'notes'         => 'nullable|string',
-            'terms'         => 'nullable|string',
+            'notes'         => 'nullable|string|max:20000',
+            'terms'         => 'nullable|string|max:20000',
             'items'         => 'required|array|min:1',
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'required|numeric|min:0',
         ]);
+
+        // تعقيم HTML القادم من محرر Quill (bold/italic/underline/قوائم/روابط
+        // فقط) ضد XSS قبل الحفظ — راجع config/purifier.php[invoice_notes]
+        $data['notes'] = filled($data['notes'] ?? null)
+            ? PageContentSanitizer::clean($data['notes'], 'invoice_notes')
+            : null;
+        $data['terms'] = filled($data['terms'] ?? null)
+            ? PageContentSanitizer::clean($data['terms'], 'invoice_notes')
+            : null;
 
         // تحقق من أن العميل يخص المستخدم
         $client = Client::where('id', $data['client_id'])
@@ -216,13 +226,21 @@ class InvoiceController extends Controller
             'discount'      => 'nullable|numeric|min:0',
             'discount_type' => 'nullable|in:fixed,percentage',
             'currency'      => ['required', 'string', Rule::in(Currency::codes())],
-            'notes'         => 'nullable|string',
-            'terms'         => 'nullable|string',
+            'notes'         => 'nullable|string|max:20000',
+            'terms'         => 'nullable|string|max:20000',
             'items'         => 'required|array|min:1',
             'items.*.description' => 'required|string',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'required|numeric|min:0',
         ]);
+
+        // تعقيم HTML القادم من محرر Quill ضد XSS قبل الحفظ (نفس منطق store())
+        $data['notes'] = filled($data['notes'] ?? null)
+            ? PageContentSanitizer::clean($data['notes'], 'invoice_notes')
+            : null;
+        $data['terms'] = filled($data['terms'] ?? null)
+            ? PageContentSanitizer::clean($data['terms'], 'invoice_notes')
+            : null;
 
         // تحقق من أن العميل والمشروع (إن وُجدا) يخصّان المستخدم — يمنع ربط بيانات مستخدم آخر
         Client::where('id', $data['client_id'])

@@ -117,6 +117,10 @@
             font-size: 10pt;
             color: #475569;
         }
+        /* عناصر HTML القادمة من محرر Quill (ملاحظات/شروط) — mPDF لا يفهم Tailwind */
+        .notes p { margin: 4px 0; }
+        .notes ul, .notes ol { margin: 4px 0; padding-right: 18px; }
+        .notes a { color: {{ $color }}; text-decoration: underline; }
 
         .footer {
             margin-top: 30px;
@@ -249,14 +253,14 @@
 {{-- ── ملاحظات ─────────────────────────────────────────── --}}
 @if($invoice->notes)
 <div class="notes">
-    <strong>ملاحظات:</strong> {{ $invoice->notes }}
+    <strong>ملاحظات:</strong> {!! \App\Support\Content\PageContentSanitizer::renderInvoiceField($invoice->notes) !!}
 </div>
 @endif
 
 {{-- ── الشروط والأحكام ─────────────────────────────────── --}}
 @if($invoice->terms)
 <div class="notes">
-    <strong>الشروط والأحكام:</strong> {{ $invoice->terms }}
+    <strong>الشروط والأحكام:</strong> {!! \App\Support\Content\PageContentSanitizer::renderInvoiceField($invoice->terms) !!}
 </div>
 @endif
 

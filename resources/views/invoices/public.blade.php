@@ -45,6 +45,10 @@
         .totals-box .row { display:flex; justify-content:space-between; padding:6px 0; color:#64748b; }
         .totals-box .total { display:flex; justify-content:space-between; padding:10px 0; font-size:17px; font-weight:700; color:{{ $color }}; border-top:2px solid {{ $color }}; margin-top:4px; }
         .notes { margin-top:20px; padding:12px 16px; background:#f8fafc; border-right:3px solid {{ $color }}; font-size:13px; color:#475569; border-radius:0 8px 8px 0; }
+        /* عناصر HTML القادمة من محرر Quill (ملاحظات/شروط) */
+        .notes p { margin: 4px 0; }
+        .notes ul, .notes ol { margin: 4px 0; padding-right: 18px; }
+        .notes a { color: {{ $color }}; text-decoration: underline; }
         .footer-section { margin-top:28px; padding-top:20px; border-top:1px solid #e2e8f0; text-align:center; }
         .footer-custom { font-size:14px; color:#475569; margin-bottom:6px; }
         .footer-brand { font-size:12px; color:#94a3b8; }
@@ -148,12 +152,12 @@
 
         {{-- Notes --}}
         @if($invoice->notes)
-        <div class="notes"><strong>ملاحظات:</strong> {{ $invoice->notes }}</div>
+        <div class="notes"><strong>ملاحظات:</strong> {!! \App\Support\Content\PageContentSanitizer::renderInvoiceField($invoice->notes) !!}</div>
         @endif
 
         {{-- الشروط والأحكام --}}
         @if($invoice->terms)
-        <div class="notes"><strong>الشروط والأحكام:</strong> {{ $invoice->terms }}</div>
+        <div class="notes"><strong>الشروط والأحكام:</strong> {!! \App\Support\Content\PageContentSanitizer::renderInvoiceField($invoice->terms) !!}</div>
         @endif
 
         {{-- Footer --}}

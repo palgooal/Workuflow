@@ -37,6 +37,31 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // ── حارس أمان: يمنع تشغيل الاختبارات على قاعدة بيانات حقيقية ────
+        // حادثة 2026-07-14: تشغيل php artisan test مسح كل بيانات قاعدة
+        // darahum المحلية الفعلية. السبب: RefreshDatabase (يُستخدَم تلقائياً
+        // لكل Feature test في tests/Pest.php) يُنفِّذ فعلياً ما يعادل
+        // migrate:fresh (حذف كل الجداول ثم إعادة إنشائها فارغة) في أول
+        // اختبار يعمل. الحماية المفترضة موجودة في phpunit.xml
+        // (DB_CONNECTION=sqlite, DB_DATABASE=:memory:)، لكنها تُتجاوَز
+        // بالكامل لو كان هناك config مخبَّأ (bootstrap/cache/config.php من
+        // php artisan config:cache أو optimize سابقاً) — عندها يقرأ لارافيل
+        // القيم المجمَّدة (mysql/darahum الحقيقية) متجاهلاً phpunit.xml تماماً.
+        //
+        // هذا الفحص يعمل في register() — أول نقطة تُقرأ فيها config() عند
+        // إقلاع التطبيق، أي قبل أن يصل RefreshDatabase لأي فرصة لتعديل
+        // القاعدة — فيوقف التنفيذ فوراً برسالة واضحة بدل مسح بيانات حقيقية
+        // بصمت. لا تُزِل هذا الفحص إلا إذا كنت متأكداً أنك تقصد ذلك.
+        if ($this->app->environment('testing') && config('database.default') !== 'sqlite') {
+            throw new \RuntimeException(
+                'رُفِض تشغيل الاختبارات: اتصال قاعدة البيانات في بيئة testing هو "'
+                . config('database.default') . '" وليس "sqlite" كما يجب. '
+                . 'هذا يعني على الأرجح أن هناك config مخبَّأ (bootstrap/cache/config.php) '
+                . 'يتجاهل إعدادات phpunit.xml ويشير فعلياً لقاعدة بياناتك الحقيقية. '
+                . 'شغّل: php artisan config:clear ثم أعد المحاولة.'
+            );
+        }
+
         // ── ربط خدمة التجديد ───────────────────────────────────────────
         $this->app->bind(RenewalServiceInterface::class, function ($app) {
             return new ManualRenewalService(

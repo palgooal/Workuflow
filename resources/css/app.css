@@ -33,6 +33,35 @@
         @apply border-error focus:border-error focus:ring-error/30;
     }
 
+    /* عرض محتوى منسّق قادم من محرر Quill (ملاحظات/شروط الفواتير) — Tailwind
+       Preflight يصفّر list-style افتراضياً، فنعيده هنا فقط للعناصر المسموحة
+       في بروفايل invoice_notes (config/purifier.php). */
+    .rich-content :where(ul) {
+        @apply list-disc pr-5;
+    }
+    .rich-content :where(ol) {
+        @apply list-decimal pr-5;
+    }
+    .rich-content :where(a) {
+        @apply text-accent underline hover:text-accent-700;
+    }
+    .rich-content :where(p) + :where(p) {
+        @apply mt-2;
+    }
+    /* عناوين فرعية/اقتباس — أُضيفت لبروفايل invoice_notes مع توسيع أدوات
+       شريط Quill (عناوين/اقتباس). لا نحتاج قاعدة لـs (خط يتوسطه نص) أو
+       span[style] (لون/تظليل/محاذاة) لأنها تُنسَّق بخاصية style inline
+       مباشرة من المحرر نفسه، تصل كما هي دون الحاجة لقواعد CSS إضافية. */
+    .rich-content :where(h2) {
+        @apply text-lg font-bold text-ink mt-3 mb-1.5;
+    }
+    .rich-content :where(h3) {
+        @apply text-base font-bold text-ink mt-2.5 mb-1;
+    }
+    .rich-content :where(blockquote) {
+        @apply border-r-4 border-subtle pr-3 my-2 text-muted italic;
+    }
+
     /* رؤوس الجداول */
     .dash-th {
         @apply text-xs font-semibold text-muted tracking-wide;

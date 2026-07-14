@@ -374,14 +374,15 @@
         @if($invoice->notes)
         <div class="border-t border-subtle pt-4">
             <p class="text-xs font-medium text-muted mb-1">ملاحظات</p>
-            <p class="text-sm text-ink">{{ $invoice->notes }}</p>
+            {{-- مُعقَّمة عبر PageContentSanitizer::renderInvoiceField() — راجع تعليق الدالة --}}
+            <div class="text-sm text-ink leading-relaxed rich-content">{!! \App\Support\Content\PageContentSanitizer::renderInvoiceField($invoice->notes) !!}</div>
         </div>
         @endif
 
         @if($invoice->terms)
         <div class="border-t border-subtle pt-4">
             <p class="text-xs font-medium text-muted mb-1">الشروط والأحكام</p>
-            <p class="text-sm text-ink whitespace-pre-line">{{ $invoice->terms }}</p>
+            <div class="text-sm text-ink leading-relaxed rich-content">{!! \App\Support\Content\PageContentSanitizer::renderInvoiceField($invoice->terms) !!}</div>
         </div>
         @endif
 

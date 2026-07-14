@@ -11,12 +11,70 @@
     <span class="text-ink">تعديل</span>
 @endsection
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css">
+    <style>
+        /* محاذاة شكل محرر Quill مع باقي حقول الفورم (.dash-field). القيم اللونية
+           هنا منسوخة حرفياً من tailwind.config.js (subtle/accent) لأن هذا
+           <style> عادي غير مُمرَّر عبر Tailwind، فلا يمكن استخدام theme() هنا.
+
+           ملاحظة تصحيح مهمة: Quill لا يضع الـtoolbar داخل عنصر المحرر —
+           يضعه كـsibling سابق له (كلاهما أبناء لنفس الحاوية الأب). لذلك
+           لا يصح استهداف الشريط عبر ".rich-editor .ql-toolbar" (Descendant
+           Selector) لأنه لن يطابق أبداً؛ وأيضاً محاولة تنسيق حاوية المحرر
+           نفسها مباشرة (".rich-editor { border: ... }") تخسر أمام قواعد
+           Quill الافتراضية الأعلى تخصصاً (".ql-container.ql-snow" بفئتين).
+           الحل: نضع الاثنين (toolbar + محرر) داخل غلاف ".rich-editor-wrap"
+           واحد فعلي، ونُلغي حدود/زوايا كل عنصر داخلي، ونعتمد على الغلاف
+           وحده للحدود/تأثير التركيز — نفس أسلوب .dash-field.
+
+           ملاحظة تصحيح ثانية: كنا نستخدم overflow:hidden على الغلاف
+           لقصّ الزوايا الحادة للـtoolbar/container فتبدو مستديرة. لكن هذا
+           يقصّ أيضاً أي عنصر يتجاوز حدود الغلاف — واكتشفنا أن نافذة
+           معاينة الرابط المنبثقة في Quill (.ql-tooltip، تظهر عند النقر على
+           رابط موجود) تُموضَع أحياناً (خصوصاً مع روابط قصيرة قرب بداية سطر
+           RTL) جزئياً خارج حدود الغلاف يساراً، فيُخفي overflow:hidden زرَّي
+           "تعديل"/"إزالة" تماماً ويمنع الوصول إليهما نهائياً. الحل: زوايا
+           مستديرة مباشرة على toolbar (أعلى) وcontainer (أسفل) بدل قصّ
+           الغلاف بالكامل — نفس المظهر البصري دون قصّ أي عنصر منبثق. */
+        .rich-editor-wrap { border-radius: 0.75rem; border: 1px solid #E5E7EB; background: #fff; transition: border-color .15s, box-shadow .15s; }
+        .rich-editor-wrap:focus-within { border-color: #13C597; box-shadow: 0 0 0 2px rgba(19,197,151,.3); }
+        .rich-editor-wrap .ql-toolbar.ql-snow { border: none !important; background: #f8fafc; border-radius: 0.75rem 0.75rem 0 0; }
+        .rich-editor-wrap .ql-container.ql-snow { border: none !important; font-family: inherit; font-size: 0.875rem; border-radius: 0 0 0.75rem 0.75rem; }
+        .rich-editor-wrap .ql-editor { min-height: 90px; direction: rtl; text-align: right; }
+        .rich-editor-wrap .ql-editor.ql-blank::before { color: rgba(107,114,128,.7); font-style: normal; }
+        /* تعريب نص القائمة المنسدلة "العناوين" — Quill يعرضها بواسطة
+           content: على ::before حسب data-value، بنفس أسلوب تعريب نافذة
+           الرابط في quill-link-fix.blade.php. باقي القوائم (محاذاة/لون/
+           تظليل) أيقونات أو تدرجات لونية بلا نص، فلا تحتاج تعريباً. */
+        .rich-editor-wrap .ql-picker.ql-header .ql-picker-label::before,
+        .rich-editor-wrap .ql-picker.ql-header .ql-picker-item::before { content: 'عادي'; }
+        .rich-editor-wrap .ql-picker.ql-header .ql-picker-label[data-value="2"]::before,
+        .rich-editor-wrap .ql-picker.ql-header .ql-picker-item[data-value="2"]::before { content: 'عنوان كبير'; }
+        .rich-editor-wrap .ql-picker.ql-header .ql-picker-label[data-value="3"]::before,
+        .rich-editor-wrap .ql-picker.ql-header .ql-picker-item[data-value="3"]::before { content: 'عنوان صغير'; }
+        /* إصلاح: علامات القوائم (مرقّمة/نقطية) في Quill 1.3.7 تعتمد على CSS
+           counters عبر ::before، ولا تظهر بصرياً أثناء الكتابة في هذه الصفحة
+           (تأكيد بالفحص: البنية <ol><li> تُحفَظ بشكل صحيح، لكن العلامة نفسها
+           لا تُرسَم — على الأرجح تعارض بين ترقيم Quill الداخلي واتجاه RTL).
+           الحل: تعطيل ::before الخاصة بـQuill واستخدام list-style-type
+           الأصلية في المتصفح بدلاً منها — أبسط وأكثر توافقاً مع RTL. */
+        .rich-editor-wrap .ql-editor ol, .rich-editor-wrap .ql-editor ul { padding-right: 1.5em; padding-left: 0; }
+        .rich-editor-wrap .ql-editor ol > li, .rich-editor-wrap .ql-editor ul > li { list-style-position: outside; }
+        .rich-editor-wrap .ql-editor ol > li { list-style-type: decimal; }
+        .rich-editor-wrap .ql-editor ul > li { list-style-type: disc; }
+        .rich-editor-wrap .ql-editor li::before { content: none !important; }
+    </style>
+@endpush
+
+@include('invoices.partials.quill-link-fix')
+
 @section('content')
 <div class="max-w-4xl mx-auto space-y-5" x-data="invoiceForm()">
 
     <x-page-header title="تعديل الفاتورة" :subtitle="$invoice->number" />
 
-    <form method="POST" action="{{ route('invoices.update', $invoice->ulid) }}" class="space-y-5">
+    <form method="POST" action="{{ route('invoices.update', $invoice->ulid) }}" class="space-y-5" @submit="syncEditors()">
         @csrf
         @method('PUT')
 
@@ -280,13 +338,17 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-ink mb-1.5">ملاحظات للعميل</label>
-                    <textarea name="notes" rows="2" placeholder="شكراً لتعاملكم معنا…"
-                              class="dash-field px-4 py-2.5 resize-none">{{ old('notes', $invoice->notes) }}</textarea>
+                    <div class="rich-editor-wrap">
+                        <div x-ref="notesEditor"></div>
+                    </div>
+                    <input type="hidden" name="notes" value="{{ old('notes', $invoice->notes) }}">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-ink mb-1.5">الشروط والأحكام</label>
-                    <textarea name="terms" rows="2" placeholder="الدفع خلال 14 يوم من تاريخ الفاتورة…"
-                              class="dash-field px-4 py-2.5 resize-none">{{ old('terms', $invoice->terms) }}</textarea>
+                    <div class="rich-editor-wrap">
+                        <div x-ref="termsEditor"></div>
+                    </div>
+                    <input type="hidden" name="terms" value="{{ old('terms', $invoice->terms) }}">
                 </div>
             </div>
         </x-card-section>
@@ -312,6 +374,7 @@
     </form>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script>
 @php
     $invoiceItems = $invoice->items->map(fn($i) => [
@@ -349,7 +412,109 @@ function invoiceForm() {
             return this.currencySymbols[this.currency] ?? this.currency;
         },
 
-        init() { this.recalc(); },
+        // ── محرر النصوص المنسّق (ملاحظات/شروط) ──────────────────────────
+        // مكتبة Quill عبر CDN — راجع docs/INVOICES.md. الناتج HTML يُعقَّم
+        // على الخادم عبر PageContentSanitizer::clean(..., 'invoice_notes')
+        // في InvoiceController قبل الحفظ.
+        notesQuill: null,
+        termsQuill: null,
+
+        initEditor(refName, hiddenInputSelector, placeholder) {
+            const container = this.$refs[refName];
+            const hiddenInput = this.$el.querySelector(hiddenInputSelector);
+            const quill = new Quill(container, {
+                theme: 'snow',
+                placeholder: placeholder,
+                // bounds: يمنع Quill من موضعة نافذة معاينة/تحرير الرابط
+                // خارج حدود غلاف المحرر. افتراضياً Quill يقيّدها بحدود
+                // document.body فقط، فمع رابط قصير قرب بداية سطر RTL كانت
+                // النافذة تُموضَع جزئياً خارج البطاقة (Card) المحيطة — التي
+                // تملك overflow-hidden الخاص بها (تنسيق مشترك في x-card-section
+                // غير مرتبط بهذه الميزة، فلا نعدّله) — فتُقصّ نافذة الرابط
+                // ويصبح زرّا "تعديل"/"إزالة" غير قابلين للنقر. تقييد الحدود
+                // بغلاف المحرر نفسه يبقيها ظاهرة وقابلة للنقر دائماً.
+                bounds: container.parentElement,
+                modules: {
+                    toolbar: [
+                        [{ header: [2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ align: [] }],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        ['blockquote'],
+                        [{ color: [] }, { background: [] }],
+                        ['link'],
+                        ['clean'],
+                    ],
+                },
+            });
+
+            // اتجاه الكتابة RTL افتراضياً — Quill لا يرث dir من الصفحة
+            // تلقائياً حتى لو كان <html> بأكمله dir="rtl"، فيبقى المؤشر
+            // والفقرات الجديدة LTR افتراضياً ما لم يُضبَط صراحة هنا.
+            quill.root.setAttribute('dir', 'rtl');
+
+            // إصلاح أداة الرابط (تعقيم/تطبيع href + تعريب الواجهة) —
+            // راجع resources/views/invoices/partials/quill-link-fix.blade.php
+            window.setupInvoiceLinkTooltip(quill);
+
+            // إصلاح وصولية: أزرار شريط Quill افتراضياً بلا aria-label ولا
+            // title — أيقونات SVG فقط، فلا تُقرأ أسماؤها لمستخدمي قارئ
+            // الشاشة، ولا تظهر تلميحات عند التحويم بالماوس. نضيفها يدوياً هنا.
+            const toolbarLabels = { 'ql-bold': 'غامق', 'ql-italic': 'مائل', 'ql-underline': 'تسطير', 'ql-strike': 'يتوسطه خط', 'ql-blockquote': 'اقتباس', 'ql-link': 'إدراج رابط', 'ql-clean': 'إزالة التنسيق' };
+            container.parentElement.querySelectorAll('.ql-toolbar button').forEach((btn) => {
+                let label = null;
+                if (btn.classList.contains('ql-list')) {
+                    label = btn.getAttribute('value') === 'ordered' ? 'قائمة مرقّمة' : 'قائمة نقطية';
+                } else {
+                    for (const cls in toolbarLabels) {
+                        if (btn.classList.contains(cls)) { label = toolbarLabels[cls]; break; }
+                    }
+                }
+                if (label) {
+                    btn.setAttribute('aria-label', label);
+                    btn.setAttribute('title', label);
+                }
+            });
+            // تسميات القوائم المنسدلة الجديدة (عناوين/محاذاة/لون/تظليل) —
+            // هذه ليست <button> عادية بل .ql-picker يحوّلها Quill من <select>،
+            // فتحتاج نفس معالجة aria-label/title على عنصر التسمية الظاهر.
+            const pickerLabels = { 'ql-header': 'نوع العنوان', 'ql-align': 'محاذاة النص', 'ql-color': 'لون النص', 'ql-background': 'لون التظليل' };
+            container.parentElement.querySelectorAll('.ql-toolbar .ql-picker').forEach((picker) => {
+                for (const cls in pickerLabels) {
+                    if (picker.classList.contains(cls)) {
+                        const pickerLabel = picker.querySelector('.ql-picker-label');
+                        if (pickerLabel) {
+                            pickerLabel.setAttribute('aria-label', pickerLabels[cls]);
+                            pickerLabel.setAttribute('title', pickerLabels[cls]);
+                        }
+                        break;
+                    }
+                }
+            });
+
+            // تعبئة القيمة القديمة — إما HTML مُعقَّم مسبقاً من فاتورة عُدِّلت
+            // من قبل عبر هذا المحرر، أو نص قديم عادي (بدون أي وسم HTML) من
+            // فاتورة أُنشئت قبل هذه الميزة، نحوّل فيه فواصل الأسطر لـ<br>
+            // يدوياً حتى لا تختفي بصرياً عند تحويلها لـHTML خام.
+            let html = hiddenInput.value;
+            if (html && !html.includes('<')) {
+                html = html.split('\n').join('<br>');
+            }
+            if (html) {
+                quill.clipboard.dangerouslyPasteHTML(html);
+            }
+            return quill;
+        },
+        syncEditors() {
+            if (this.notesQuill) this.$el.querySelector('input[name="notes"]').value = this.notesQuill.root.innerHTML;
+            if (this.termsQuill) this.$el.querySelector('input[name="terms"]').value = this.termsQuill.root.innerHTML;
+        },
+
+        init() {
+            this.recalc();
+            this.notesQuill = this.initEditor('notesEditor', 'input[name="notes"]', 'شكراً لتعاملكم معنا…');
+            this.termsQuill = this.initEditor('termsEditor', 'input[name="terms"]', 'الدفع خلال 14 يوم من تاريخ الفاتورة…');
+        },
 
         addItem() {
             this.items.push({ description: '', quantity: 1, unit_price: 0 });

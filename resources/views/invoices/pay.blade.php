@@ -189,7 +189,7 @@
                 @if($invoice->notes)
                 <div class="border-t border-slate-100 pt-4">
                     <p class="text-xs text-slate-400 uppercase tracking-wide mb-1">ملاحظات</p>
-                    <p class="text-sm text-slate-600 whitespace-pre-line">{{ $invoice->notes }}</p>
+                    <div class="text-sm text-slate-600 leading-relaxed rich-content">{!! \App\Support\Content\PageContentSanitizer::renderInvoiceField($invoice->notes) !!}</div>
                 </div>
                 @endif
 

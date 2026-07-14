@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\EmailTemplate;
 use App\Models\Invoice;
+use App\Support\Content\PageContentSanitizer;
 use App\Support\Helpers\Currency;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -115,7 +116,7 @@ class InvoiceMail extends Mailable
             '{{invoice_total}}'    => number_format($invoice->total, Currency::decimals($invoice->currency)),
             '{{invoice_currency}}' => $invoice->currency,
             '{{invoice_due_date}}' => $dueDate . ($isOverdue ? ' ⚠️ متأخرة' : ''),
-            '{{invoice_notes}}'    => $invoice->notes ?? '',
+            '{{invoice_notes}}'    => PageContentSanitizer::renderInvoiceField($invoice->notes),
             '{{invoice_url}}'      => $invoiceUrl,
             '{{invoice_items}}'    => $itemsHtml,
             '{{from_name}}'        => $this->senderName,
@@ -195,7 +196,7 @@ class InvoiceMail extends Mailable
 
             <p style='color:#6b7280;'>تاريخ الاستحقاق: <strong>{$dueDate}</strong></p>
 
-            " . ($invoice->notes ? "<p style='color:#6b7280;font-size:13px;background:#f9fafb;padding:10px;border-right:3px solid {$color};'>ملاحظات: {$invoice->notes}</p>" : '') . "
+            " . ($invoice->notes ? "<p style='color:#6b7280;font-size:13px;background:#f9fafb;padding:10px;border-right:3px solid {$color};'>ملاحظات: " . PageContentSanitizer::renderInvoiceField($invoice->notes) . "</p>" : '') . "
 
             <p style='text-align:center;margin:24px 0;'>
                 <a href='{$url}' style='background:{$color};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;'>
