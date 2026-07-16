@@ -3,6 +3,10 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+// كل الدوال المساعدة العامة المشتركة بين ملفات الاختبار — راجع tests/Helpers.php.
+// حمّلها هنا مرة واحدة فقط؛ لا تُعرَّف أي function عامة داخل ملف اختبار مباشرة.
+require_once __DIR__.'/Helpers.php';
+
 /*
 |--------------------------------------------------------------------------
 | Test Case

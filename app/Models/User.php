@@ -111,6 +111,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->hasMany(Client::class);
     }
 
+    /** طلبات تصدير بيانات الحساب ("تنزيل نسخة من بياناتي") — راجع docs/DATA-EXPORT.md */
+    public function dataExportRequests(): HasMany
+    {
+        return $this->hasMany(\App\Models\DataExportRequest::class);
+    }
+
     // ==================== Referral Relations ====================
 
     /** المسوّق المرتبط بهذا الحساب (إن كان المستخدم مسوّقاً) */

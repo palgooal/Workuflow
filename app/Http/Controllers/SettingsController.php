@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Account\DataExportController;
 use App\Http\Requests\Settings\UpdatePreferencesRequest;
 use App\Http\Requests\Settings\UpdateProfileRequest;
+use App\Models\DataExportRequest;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,7 +76,19 @@ class SettingsController extends Controller
             'UTC'            => 'UTC (التوقيت العالمي)',
         ];
 
-        return view('settings.index', compact('user', 'currencies', 'timezones'));
+        // تنزيل نسخة من بياناتي — آخر طلب للمستخدم (إن وُجد)
+        $dataExportRequest = DataExportRequest::query()
+            ->where('user_id', $user->id)
+            ->latest('requested_at')
+            ->first();
+
+        $dataExportDownloadUrl = ($dataExportRequest && $dataExportRequest->isDownloadable())
+            ? DataExportController::signedDownloadUrl($dataExportRequest)
+            : null;
+
+        return view('settings.index', compact(
+            'user', 'currencies', 'timezones', 'dataExportRequest', 'dataExportDownloadUrl'
+        ));
     }
 
     public function updateProfile(UpdateProfileRequest $request): RedirectResponse

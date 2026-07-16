@@ -182,10 +182,20 @@ php artisan optimize
 **معالجة Queue** (كل دقيقتين):
 
 ```
-*/2 * * * * /usr/local/bin/php /home/username/workuflow/artisan queue:work --stop-when-empty --max-time=55 --tries=3 >> /dev/null 2>&1
+*/2 * * * * /usr/local/bin/php /home/username/workuflow/artisan queue:work --queue=default,exports,backups --stop-when-empty --max-time=55 --tries=3 >> /dev/null 2>&1
 ```
 
 > 💡 إذا كان مسار PHP مختلفاً: `which php` في Terminal لمعرفته.
+
+> ⚠️ **مهم منذ إضافة نظام النسخ الاحتياطية/التصدير (راجع [DATA-EXPORT.md](DATA-EXPORT.md), [BACKUP-SYSTEM.md](BACKUP-SYSTEM.md)):**
+> Jobs التصدير والنسخ الاحتياطي تُطلَق على طوابير باسم `exports` و`backups` صراحةً
+> (نفس Connection الحالي `database`، أسماء طابور مختلفة فقط) — يجب أن يتضمّن
+> `--queue=` كليهما وإلا لن يُعالَجا أبداً. `backup:full` قد يستغرق دقائق طويلة
+> (حتى ~30 دقيقة لقواعد بيانات كبيرة) وهذا يتجاوز نموذج `--max-time=55` القصير
+> المصمَّم لمهام سريعة على استضافة مشتركة — النسخة الاحتياطية نفسها ستكتمل
+> بأمان (مهلة الـ Job محسوبة داخلياً بمعزل عن `--max-time`)، لكن يُنصَح مستقبلاً
+> بسطر cron منفصل لطابور `backups` بـ `--max-time` أطول إن كثُر استخدام النسخ
+> الكاملة، بدل الاعتماد فقط على هذا السطر المشترك.
 
 ---
 

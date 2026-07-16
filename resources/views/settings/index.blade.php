@@ -70,6 +70,18 @@
             التفضيلات
         </button>
 
+        {{-- بياناتي --}}
+        <button @click="tab = 'data'; window.location.hash = 'data'"
+                :class="tab === 'data' ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs sm:text-sm font-medium rounded-lg transition"
+                role="tab" :aria-selected="tab === 'data'" aria-controls="data">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 7v10c0 1.1 3.6 2 8 2s8-.9 8-2V7M4 7c0 1.1 3.6 2 8 2s8-.9 8-2M4 7c0-1.1 3.6-2 8-2s8 .9 8 2"/>
+            </svg>
+            بياناتي
+        </button>
+
         {{-- الخطة --}}
         <button @click="tab = 'plan'; window.location.hash = 'plan'"
                 :class="tab === 'plan' ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'"
@@ -476,6 +488,91 @@
                         حفظ التفضيلات
                     </button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- ==================== بياناتي Tab (Data Export) ==================== --}}
+    <div x-show="tab === 'data'" id="data" style="display:none">
+        <div class="dash-card p-6 space-y-5">
+            <div>
+                <h2 class="text-base font-bold text-ink mb-1 flex items-center gap-2">
+                    <span class="text-xl">📦</span> تنزيل نسخة من بياناتي
+                </h2>
+                <p class="text-sm text-muted">
+                    نسخة من بياناتك أنت فقط (عملاء، مشاريع، معاملات، فواتير، عروض أسعار، وغيرها) بصيغة CSV/JSON
+                    مع المرفقات — <strong>ليست نسخة كاملة من الحساب ولا أداة استعادة تلقائية.</strong>
+                </p>
+            </div>
+
+            @if(session('success'))
+            <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-2">
+                ✅ {{ session('success') }}
+            </div>
+            @endif
+            @if(session('error'))
+            <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-2">
+                ⚠️ {{ session('error') }}
+            </div>
+            @endif
+
+            @if($dataExportRequest)
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold text-ink">آخر طلب</span>
+                    @php
+                        $statusColors = [
+                            'pending'    => 'bg-slate-100 text-slate-600',
+                            'processing' => 'bg-blue-100 text-blue-700',
+                            'completed'  => 'bg-emerald-100 text-emerald-700',
+                            'failed'     => 'bg-red-100 text-red-700',
+                            'expired'    => 'bg-slate-100 text-slate-500',
+                        ];
+                        $statusValue = $dataExportRequest->status->value;
+                    @endphp
+                    <span class="text-xs font-medium px-2.5 py-1 rounded-full {{ $statusColors[$statusValue] ?? 'bg-slate-100 text-slate-600' }}">
+                        {{ $dataExportRequest->status->label() }}
+                    </span>
+                </div>
+
+                <p class="text-xs text-muted">
+                    تاريخ الطلب: {{ $dataExportRequest->requested_at?->translatedFormat('Y-m-d H:i') }}
+                </p>
+
+                @if($statusValue === 'completed' && $dataExportRequest->expires_at)
+                    <p class="text-xs text-muted">
+                        رابط التنزيل صالح حتى: {{ $dataExportRequest->expires_at->translatedFormat('Y-m-d H:i') }}
+                        @if($dataExportRequest->humanFileSize())
+                            — الحجم: {{ $dataExportRequest->humanFileSize() }}
+                        @endif
+                    </p>
+                @endif
+
+                @if($statusValue === 'failed' && $dataExportRequest->failure_reason)
+                    <p class="text-xs text-red-600">سبب الفشل: {{ $dataExportRequest->failure_reason }}</p>
+                @endif
+
+                @if($dataExportDownloadUrl)
+                    <a href="{{ $dataExportDownloadUrl }}"
+                       class="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-brand hover:bg-brand-600 text-white text-sm font-semibold rounded-btn transition-colors">
+                        ⬇️ تنزيل النسخة
+                    </a>
+                @endif
+            </div>
+            @endif
+
+            <form method="POST" action="{{ route('data-export.store') }}">
+                @csrf
+                <button type="submit"
+                        {{ $dataExportRequest && $dataExportRequest->status->isActive() ? 'disabled' : '' }}
+                        class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed
+                               text-white text-sm font-semibold rounded-btn transition-colors">
+                    طلب نسخة من بياناتي
+                </button>
+                <p class="text-xs text-muted mt-2">
+                    يمكنك طلب نسخة جديدة كل {{ config('backups.user_export.rate_limit_hours', 24) }} ساعة كحد أقصى.
+                    النسخة هذه للاحتفاظ الشخصي ببياناتك — وليست وسيلة لاستعادة حسابك تلقائياً.
+                </p>
             </form>
         </div>
     </div>

@@ -19,6 +19,10 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!-- مفتاح تشفير مخصّص للاختبارات فقط (وليس مفتاح الإنتاج) — مطلوب لأي
+             اختبار يستخدم Signed URLs (URL::temporarySignedRoute) أو التشفير،
+             مثل tests/Feature/Backups/BackupAdminAccessTest.php. -->
+        <env name="APP_KEY" value="base64:EQXRhvgP/H9voBl89Y9rexGbOiwSugxiUJAzQlfTtjg="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Account\DataExportController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\InvoiceController;
@@ -176,6 +177,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/settings/account',         [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
     Route::post('/settings/invoice',           [SettingsController::class, 'updateInvoice'])->name('settings.invoice');
 
+    // تنزيل نسخة من بياناتي — Data Export (راجع docs/DATA-EXPORT.md)
+    Route::post('/settings/data-export', [DataExportController::class, 'store'])->name('data-export.store');
+    Route::get('/settings/data-export/{dataExportRequest}/download', [DataExportController::class, 'download'])
+        ->middleware('signed')
+        ->name('data-export.download');
+
     // Budget — Phase 4.5
     Route::resource('budget', BudgetController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
@@ -252,6 +259,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('admin.impersonate');
     Route::get('/admin/impersonate-leave', [\App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])
         ->name('admin.impersonate.leave');
+});
+
+// ─── Admin Backups — تنزيل نسخة احتياطية (super_admin فقط، راجع docs/BACKUP-SYSTEM.md) ─
+Route::middleware(['auth', 'signed'])->group(function () {
+    Route::get('/admin/backups/{backup}/download', \App\Http\Controllers\Admin\BackupDownloadController::class)
+        ->name('admin.backups.download');
 });
 
 require __DIR__.'/auth.php';

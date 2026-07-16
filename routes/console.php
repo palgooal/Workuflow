@@ -119,6 +119,41 @@ Schedule::command('retention:report-due')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/retention-report.log'));
 
+// ==================== النسخ الاحتياطية وتصدير بيانات المستخدم ====================
+// راجع docs/BACKUP-SYSTEM.md و docs/DATA-EXPORT.md — كل الأوامر أدناه تُطلِق
+// Jobs على قناة database queue، ولا تنفّذ عمليات ثقيلة داخل عملية Scheduler نفسها.
+
+// نسخة قاعدة بيانات يومية — الساعة 05:00
+Schedule::command('backup:database')
+    ->dailyAt('05:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/backup-database.log'));
+
+// نسخة كاملة أسبوعية (قاعدة بيانات + ملفات) — الجمعة 05:30
+Schedule::command('backup:full')
+    ->weekly()
+    ->fridays()
+    ->at('05:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/backup-full.log'));
+
+// تطبيق سياسة الاحتفاظ بالنسخ الاحتياطية — يومياً الساعة 05:45
+// (بعد كل من backup:database وbackup:full لتفادي حذف نسخة قيد الإنشاء)
+Schedule::command('backup:apply-retention')
+    ->dailyAt('05:45')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/backup-retention.log'));
+
+// تنظيف ملفات تصدير بيانات المستخدمين المنتهية الصلاحية — كل ساعة
+Schedule::command('exports:purge-expired')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/exports-purge.log'));
+
 // ==================== Referral — مطابقة الإجماليات ====================
 
 // مطابقة وتصحيح إجماليات المسوّقين يومياً الساعة 03:30

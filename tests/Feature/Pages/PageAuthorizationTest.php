@@ -6,17 +6,8 @@ use App\Support\Enums\PageFooterGroup;
 use App\Support\Enums\PageStatus;
 use App\Support\Enums\PageType;
 use Illuminate\Support\Facades\Gate;
-use Spatie\Permission\Models\Role;
 
-function makeSuperAdmin(): User
-{
-    Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-
-    $user = User::factory()->create();
-    $user->assignRole('super_admin');
-
-    return $user;
-}
+// makeSuperAdmin() موحّدة الآن في tests/Helpers.php (محمَّلة من tests/Pest.php)
 
 test('a user without the super_admin role cannot manage pages via the policy', function () {
     $user = User::factory()->create();
