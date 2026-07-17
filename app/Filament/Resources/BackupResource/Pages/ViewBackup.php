@@ -11,6 +11,7 @@ use App\Support\Enums\BackupType;
 use Filament\Actions;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\View as InfolistView;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
@@ -116,6 +117,19 @@ class ViewBackup extends ViewRecord
 
                         TextEntry::make('disk')->label('Disk')->placeholder('—'),
                         TextEntry::make('path')->label('Path')->fontFamily('mono')->placeholder('—')->columnSpan(2),
+                    ]),
+
+                // المرحلة الثامنة (Backup History & Audit Timeline) — عرض
+                // وتدقيق فقط، مبني بالكامل من $record الحالي (created_at/
+                // started_at/completed_at/status/duration_seconds/
+                // triggered_by/error_message) بلا أي استعلام إضافي. المنطق
+                // الفعلي في App\View\Components\BackupTimeline، والقالب في
+                // resources/views/components/backup-timeline.blade.php —
+                // لا تكرار HTML، ولا تعديل على أي محرك نسخ/جدولة/استعادة.
+                Section::make('السجل الزمني للنسخة')
+                    ->description('دورة حياة هذه النسخة الاحتياطية بالكامل، من الإنشاء حتى الاكتمال أو الفشل.')
+                    ->schema([
+                        InfolistView::make('filament.backups.backup-timeline-section'),
                     ]),
 
                 Section::make('معلومات Manifest')

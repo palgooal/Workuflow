@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\BackupMonitoringWidget;
 use App\Filament\Widgets\MrrTrendWidget;
 use App\Filament\Widgets\RevenueChartWidget;
 use App\Filament\Widgets\RevenueStatsWidget;
@@ -36,6 +37,10 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('دراهم — Admin')
             ->favicon(asset('favicon.ico'))
 
+            // إشعارات داخلية مُخزَّنة (جرس الإشعارات) — المرحلة السابعة
+            // (Backup Failure Notifications). راجع App\Observers\BackupObserver.
+            ->databaseNotifications()
+
             // Auto-discover Resources, Pages, Widgets
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -50,6 +55,7 @@ class AdminPanelProvider extends PanelProvider
                 RevenueChartWidget::class,       // sort: 4 — Donut توزيع الخطط
                 MrrTrendWidget::class,           // sort: 5 — خط نمو الإيرادات
                 SystemHealthWidget::class,       // sort: 6 — صحة النظام
+                BackupMonitoringWidget::class,   // sort: 7 — صحة النسخ الاحتياطي (المرحلة السادسة)
             ])
 
             ->middleware([

@@ -17,6 +17,7 @@ use App\Models\DataExportRequest;
 use App\Models\User;
 use App\Support\Enums\BackupType;
 use App\Support\Enums\DataExportStatus;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
@@ -185,6 +186,24 @@ function makeEncryptedTestBackupArchive(
         'started_at'   => now()->subMinutes(2),
         'completed_at' => now(),
     ]);
+}
+
+/**
+ * يُصيّر مكوّن <x-backup-timeline /> الفعلي (App\View\Components\BackupTimeline
+ * + resources/views/components/backup-timeline.blade.php) مباشرة عبر
+ * Blade::render() الرسمية — دون المرور بأي صفحة Filament/Livewire (ViewBackup)
+ * ودون الحاجة لتهيئة Current Panel، لأن المكوّن نفسه لا يعتمد على أي شيء من
+ * Filament (لا Filament::getCurrentPanel()، لا Resource URLs) — عرض بحت
+ * لبيانات $backup. يُستخدَم في tests/Feature/Backups/BackupTimelineTest.php
+ * (المرحلة الثامنة) لاختبار منطق ومخرجات الـTimeline مباشرة بمعزل عن أي
+ * Breadcrumbs/Header/Layout خاص بلوحة الإدارة. بلا Mock وبلا Reflection.
+ */
+function renderBackupTimeline(Backup $backup): string
+{
+    return Blade::render(
+        '<x-backup-timeline :backup="$backup" />',
+        ['backup' => $backup]
+    );
 }
 
 /**

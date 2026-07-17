@@ -178,11 +178,13 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * يربط عدد نسخ الاحتفاظ (يومي/أسبوعي/شهري) بإعداد موجود بالفعل في
-     * config('backups.system_backup.retention.*') — لا تكرار لإعداد جديد،
-     * فقط تجاوز قيمة config في الـruntime من DB إن حُفظ إعداد صراحة، بنفس
-     * نمط applyMailSettings()/applyPaymentSettings() أعلاه. BackupRetentionService
-     * نفسها لا تُعدَّل إطلاقاً — تستمر بقراءة config() كما هي.
+     * يربط عدد نسخ الاحتفاظ (يومي/أسبوعي/شهري) ومهلة العملية الجارية
+     * (running_timeout — المرحلة التاسعة) بإعدادات موجودة بالفعل في
+     * config('backups.system_backup.retention.*') وconfig('backups.system_backup.job_timeout')
+     * — لا تكرار لإعداد جديد، فقط تجاوز قيمة config في الـruntime من DB إن
+     * حُفظ إعداد صراحة، بنفس نمط applyMailSettings()/applyPaymentSettings()
+     * أعلاه. BackupRetention/SystemBackupService/BackupMonitoringService لا
+     * تُعدَّل إطلاقاً — تستمر بقراءة config() كما هي.
      */
     private function applyBackupScheduleSettings(): void
     {
@@ -198,6 +200,14 @@ class AppServiceProvider extends ServiceProvider
             }
             if (array_key_exists('retention_monthly', $s) && $s['retention_monthly'] !== '') {
                 Config::set('backups.system_backup.retention.monthly', (int) $s['retention_monthly']);
+            }
+
+            // المرحلة التاسعة — يربط "مهلة العملية الجارية" بإعداد موجود بالفعل
+            // في config('backups.system_backup.job_timeout') (نفس نمط الاحتفاظ
+            // أعلاه). SystemBackupService/BackupMonitoringService/
+            // ApplyBackupRetentionCommand لا تُعدَّل — تستمر بقراءة config() كما هي.
+            if (array_key_exists('running_timeout', $s) && $s['running_timeout'] !== '') {
+                Config::set('backups.system_backup.job_timeout', (int) $s['running_timeout']);
             }
         } catch (\Throwable) {
             // تجاهل إذا كان جدول settings غير موجود بعد (أول migrate)

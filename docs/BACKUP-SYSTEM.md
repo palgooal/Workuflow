@@ -21,6 +21,7 @@ Activity Log).
 | التشفير | `app/Services/Backup/BackupEncryptor.php` |
 | الاحتفاظ | `app/Services/Backup/BackupRetentionService.php` |
 | الجدولة (المرحلة الخامسة) | `app/Services/Backup/ScheduledBackupRunner.php`، `app/Observers/BackupObserver.php`، `app/Filament/Pages/BackupScheduleSettings.php` |
+| لوحة المراقبة (المرحلة السادسة) | `app/Services/Backup/BackupMonitoringService.php`، `app/Filament/Widgets/BackupMonitoringWidget.php` |
 | Job | `app/Jobs/Backup/RunSystemBackupJob.php` (queue name: `backups`) |
 | Filament | `app/Filament/Resources/BackupResource.php` + `Pages/ListBackups.php` |
 | تنزيل الأدمن | `app/Http/Controllers/Admin/BackupDownloadController.php` |
@@ -176,6 +177,52 @@ Filament. الأوامر القديمة `backup:database`/`backup:full` ما ز�
   `BackupDownloadController` (`abort_unless(hasRole('super_admin'), 403)`) —
   حتى لو أُضيف دور إداري أضعف لاحقاً على نفس اللوحة، تبقى النسخ محمية تحديداً.
 - تنزيل الأرشيف عبر Signed URL (صلاحية 15 دقيقة) + تحقق الدور معاً.
+
+## لوحة المراقبة (Backup Monitoring Dashboard) — المرحلة السادسة، الجزء الأول
+
+Widget عرض فقط في لوحة `/admin` الرئيسية (`App\Filament\Widgets\BackupMonitoringWidget`،
+super_admin فقط) — لا Polling ولا JavaScript ولا Live Refresh، وكل الحساب في
+`App\Services\Backup\BackupMonitoringService::snapshot()` عبر استعلام Eloquent
+واحد فقط لجدول `backups` (بلا SQL خام)، تُشتَق منه كل النتائج عبر Collections
+في الذاكرة:
+
+- آخر نسخة ناجحة/فاشلة (عامةً ولكل نوع Database/Full) — بترتيب `completed_at`.
+- إحصائيات: عدد Completed/Running/Failed/Database/Full.
+- إجمالي المساحة المستخدَمة (`SUM(size_bytes)` عبر Collection، ليس SQL خام).
+- النسخة المجدولة القادمة — محسوبة برمجياً من `Setting::group('backup_schedule')`
+  (نفس مصدر `ScheduledBackupRunner`/`BackupScheduleSettings`)، **وليس** من
+  `schedule:list`.
+- **Health Status** (`healthy`/`warning`/`critical`):
+  - **Critical**: لا توجد أي نسخة ناجحة إطلاقاً، أو توجد نسخة `running` "عالقة"
+    (أقدم من `job_timeout×2` — نفس تعريف `ApplyBackupRetentionCommand::failAbandonedRunningBackups()`).
+  - **Warning**: آخر نسخة ناجحة أقدم من 48 ساعة، أو يوجد فشل خلال آخر 24 ساعة.
+  - **Healthy**: خلاف ذلك.
+
+⚠️ هذه المرحلة عرض فقط — لا تُضيف أي منطق نسخ/جدولة جديد ولا تُعدَّل
+`SystemBackupService`/`RestoreService`/`ScheduledBackupRunner`/`BackupObserver`/
+Jobs النسخ الاحتياطي.
+
+## إشعارات فشل النسخ المجدولة (Backup Failure Notifications) — المرحلة السابعة، الجزء الأول
+
+عند فشل نسخة **مجدولة فقط** (`triggered_by=scheduled` و`status` تنتقل فعلياً
+إلى `failed`)، يُرسِل `App\Observers\BackupObserver` إشعار **Filament Database
+Notification داخلي فقط** (يظهر في جرس الإشعارات داخل `/admin`) لكل مستخدمي
+`super_admin` — استعلام واحد فقط (`User::role('super_admin')->get()`). لا
+Email/Slack/Telegram/Webhooks/أي قناة خارجية، ولا نسخ ناجحة، ولا نسخ يدوية،
+ولا عمليات استعادة تُرسِل أي إشعار في هذه المرحلة.
+
+- **منع التكرار**: يعتمد حصراً على نفس فحص `wasChanged('status')` المستخدَم
+  أصلاً للـLogging (لا منطق تكرار إضافي) — أي تحديث لاحق لا يغيّر `status`
+  (اسم/حجم/checksum/إلخ) لا يُطلِق إشعاراً ثانياً.
+- **المحتوى**: العنوان "فشل إنشاء النسخة الاحتياطية"، والنص يتضمن النوع
+  (`BackupType::label()` الموجودة أصلاً) والسبب (`error_message` أو "سبب غير
+  معروف." عند الفراغ) والوقت.
+- **الرابط**: Action يفتح مباشرة صفحة تفاصيل تلك النسخة
+  (`BackupResource::getUrl('view', ['record' => $backup])`)، وليس الصفحة
+  الرئيسية.
+- **التفعيل**: `->databaseNotifications()` على لوحة `admin` في
+  `AdminPanelProvider` (كانت غير مفعَّلة سابقاً — لازمة لعرض أي Database
+  Notification في اللوحة، بصرف النظر عن مصدرها).
 
 ## الاستعادة (Restore) — راجع RESTORE-RUNBOOK.md
 
