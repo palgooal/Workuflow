@@ -123,21 +123,40 @@ Schedule::command('retention:report-due')
 // راجع docs/BACKUP-SYSTEM.md و docs/DATA-EXPORT.md — كل الأوامر أدناه تُطلِق
 // Jobs على قناة database queue، ولا تنفّذ عمليات ثقيلة داخل عملية Scheduler نفسها.
 
-// نسخة قاعدة بيانات يومية — الساعة 05:00
-Schedule::command('backup:database')
-    ->dailyAt('05:00')
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/backup-database.log'));
+// نسخ قاعدة البيانات/الكاملة المجدولة (المرحلة الخامسة) — قابلة للتحكم بالكامل
+// من "الإعدادات → النسخ الاحتياطي" (BackupScheduleSettings): تفعيل كل نوع،
+// وقت التنفيذ، والمنطقة الزمنية. لا مواعيد ثابتة في الكود — القيم الافتراضية
+// أدناه (02:00 / تفعيل) تُستخدَم فقط قبل أول حفظ للإعدادات من لوحة الإدارة.
+// هذا الملف يُحمَّل مجدداً في كل استدعاء artisan (بما فيها كل tick لـ
+// schedule:run)، فالقيم دائماً محدَّثة دون الحاجة لأي config:cache خاص.
+// راجع App\Services\Backup\ScheduledBackupRunner — طبقة جدولة فقط، لا تعديل
+// على SystemBackupService/RunSystemBackupJob.
+$backupScheduleSettings = [];
+try {
+    $backupScheduleSettings = \App\Models\Setting::group('backup_schedule');
+} catch (\Throwable) {
+    // جدول settings غير موجود بعد (أول migrate) — تُستخدَم الافتراضيات أدناه
+}
+$backupScheduleTime     = $backupScheduleSettings['backup_time'] ?? '02:00';
+$backupScheduleTimezone = $backupScheduleSettings['backup_timezone'] ?? config('app.timezone');
 
-// نسخة كاملة أسبوعية (قاعدة بيانات + ملفات) — الجمعة 05:30
-Schedule::command('backup:full')
+// نسخة قاعدة البيانات — يومياً في الوقت المُعدّ من لوحة الإدارة
+Schedule::call(fn () => app(\App\Services\Backup\ScheduledBackupRunner::class)->run(\App\Support\Enums\BackupType::Database))
+    ->name('scheduled-database-backup')
+    ->dailyAt($backupScheduleTime)
+    ->timezone($backupScheduleTimezone)
+    ->withoutOverlapping()
+    ->when(fn () => app(\App\Services\Backup\ScheduledBackupRunner::class)->isEnabled(\App\Support\Enums\BackupType::Database));
+
+// النسخة الكاملة — أسبوعياً (الجمعة) في نفس الوقت المُعدّ
+Schedule::call(fn () => app(\App\Services\Backup\ScheduledBackupRunner::class)->run(\App\Support\Enums\BackupType::Full))
+    ->name('scheduled-full-backup')
     ->weekly()
     ->fridays()
-    ->at('05:30')
+    ->at($backupScheduleTime)
+    ->timezone($backupScheduleTimezone)
     ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/backup-full.log'));
+    ->when(fn () => app(\App\Services\Backup\ScheduledBackupRunner::class)->isEnabled(\App\Support\Enums\BackupType::Full));
 
 // تطبيق سياسة الاحتفاظ بالنسخ الاحتياطية — يومياً الساعة 05:45
 // (بعد كل من backup:database وbackup:full لتفادي حذف نسخة قيد الإنشاء)

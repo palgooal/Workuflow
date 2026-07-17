@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Enums\BackupStatus;
+use App\Support\Enums\BackupTrigger;
 use App\Support\Enums\BackupType;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,7 @@ class Backup extends Model
         'type',
         'status',
         'triggered_by_user_id',
+        'triggered_by',
         'disk',
         'path',
         'size_bytes',
@@ -41,6 +43,7 @@ class Backup extends Model
         return [
             'type'                  => BackupType::class,
             'status'                => BackupStatus::class,
+            'triggered_by'          => BackupTrigger::class,
             'encrypted'             => 'boolean',
             'size_bytes'            => 'integer',
             'duration_seconds'      => 'integer',
@@ -73,6 +76,16 @@ class Backup extends Model
     public function scopeOfType($query, BackupType $type)
     {
         return $query->where('type', $type->value);
+    }
+
+    public function scopeScheduledOnes($query)
+    {
+        return $query->where('triggered_by', BackupTrigger::Scheduled->value);
+    }
+
+    public function scopeRunningOnes($query)
+    {
+        return $query->where('status', BackupStatus::Running->value);
     }
 
     // ==================== State transitions ====================

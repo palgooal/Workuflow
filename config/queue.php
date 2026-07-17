@@ -40,7 +40,12 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // ⚠️ يجب أن تبقى أعلى من أطول $timeout لأي Job فعلي على هذا القناة
+            // (RunSystemBackupJob وحده يصل إلى job_timeout+60 ≈ 1860 ثانية
+            // افتراضياً) — وإلا يعتبر القناة أن الـ Job "منتهي المهلة" بينما
+            // لا يزال يعمل فعلياً، فيُعاد جدولته لـ worker آخر وينفَّذ مرتين
+            // بالتوازي. راجع docs/BACKUP-SYSTEM.md.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 3900),
             'after_commit' => false,
         ],
 

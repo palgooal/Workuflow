@@ -7,6 +7,7 @@ use App\Jobs\Backup\RunSystemBackupJob;
 use App\Models\ActivityLog;
 use App\Models\Backup;
 use App\Support\Enums\BackupStatus;
+use App\Support\Enums\BackupTrigger;
 use App\Support\Enums\BackupType;
 use Filament\Actions;
 use Filament\Forms;
@@ -66,6 +67,7 @@ class ListBackups extends ListRecords
                         'type'                  => $type,
                         'status'                => BackupStatus::Pending,
                         'triggered_by_user_id'  => auth()->id(),
+                        'triggered_by'          => BackupTrigger::Manual,
                     ]);
 
                     RunSystemBackupJob::dispatch($backup->id);

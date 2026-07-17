@@ -85,3 +85,39 @@ test('retention applies GFS policy to full backups: weekly + monthly checkpoints
     // النسخة القديمة جداً تقع خارج نطاق الشهر الحالي المحفوظ (monthly=1) وخارج weekly=2
     expect($remaining)->not->toContain($veryOld->id);
 });
+
+// ==================== backup:apply-retention: النسخ العالقة (Running Recovery) ====================
+// راجع تقرير تدقيق Backup System v1.0 — إن تعطّل الخادم أثناء تنفيذ نسخة، يبقى
+// السجل status=running للأبد. backup:apply-retention يكتشف هذه الحالة ويحوّلها
+// إلى failed برسالة واضحة، دون لمس أي نسخة running حديثة لا تزال تعمل فعلياً.
+
+test('apply-retention marks a long-abandoned running backup as failed', function () {
+    $jobTimeout = (int) config('backups.system_backup.job_timeout', 1800);
+
+    $abandoned = Backup::create([
+        'name'       => 'stuck-running-test',
+        'type'       => BackupType::Database,
+        'status'     => BackupStatus::Running,
+        'started_at' => now()->subSeconds(($jobTimeout * 2) + 60),
+    ]);
+
+    $this->artisan('backup:apply-retention')->assertSuccessful();
+
+    $abandoned->refresh();
+    expect($abandoned->status)->toBe(BackupStatus::Failed);
+    expect($abandoned->error_message)->not->toBeEmpty();
+});
+
+test('apply-retention does not touch a running backup still within its execution window', function () {
+    $recentRunning = Backup::create([
+        'name'       => 'still-running-test',
+        'type'       => BackupType::Database,
+        'status'     => BackupStatus::Running,
+        'started_at' => now()->subMinutes(2),
+    ]);
+
+    $this->artisan('backup:apply-retention')->assertSuccessful();
+
+    $recentRunning->refresh();
+    expect($recentRunning->status)->toBe(BackupStatus::Running);
+});

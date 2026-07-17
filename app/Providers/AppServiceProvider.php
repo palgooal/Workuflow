@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Backup;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Debt;
@@ -9,6 +10,7 @@ use App\Models\Project;
 use App\Models\RecurringTransaction;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\Observers\BackupObserver;
 use App\Policies\BudgetPolicy;
 use App\Policies\CategoryPolicy;
 use App\Policies\DebtPolicy;
@@ -96,6 +98,13 @@ class AppServiceProvider extends ServiceProvider
         // ── تطبيق إعدادات بوابة الدفع من قاعدة البيانات ─────────────────
         $this->applyPaymentSettings();
 
+        // ── تطبيق إعدادات جدولة النسخ الاحتياطي (الاحتفاظ) من قاعدة البيانات ──
+        // المرحلة الخامسة — راجع app/Filament/Pages/BackupScheduleSettings.php
+        $this->applyBackupScheduleSettings();
+
+        // ── تسجيل أحداث "Scheduled backup completed/failed" — راجع BackupObserver ──
+        Backup::observe(BackupObserver::class);
+
         // ── مشاركة بيانات الفوتر الديناميكي (صفحات + تواصل) مع تخطيط التسويق ──
         $this->shareFooterData();
     }
@@ -165,6 +174,33 @@ class AppServiceProvider extends ServiceProvider
             // مصدر الحقيقة: config/billing.php (billing.plans.{plan}.{cycle}.price)
         } catch (\Throwable) {
             // تجاهل إذا كان الجدول غير موجود بعد (أول migrate)
+        }
+    }
+
+    /**
+     * يربط عدد نسخ الاحتفاظ (يومي/أسبوعي/شهري) بإعداد موجود بالفعل في
+     * config('backups.system_backup.retention.*') — لا تكرار لإعداد جديد،
+     * فقط تجاوز قيمة config في الـruntime من DB إن حُفظ إعداد صراحة، بنفس
+     * نمط applyMailSettings()/applyPaymentSettings() أعلاه. BackupRetentionService
+     * نفسها لا تُعدَّل إطلاقاً — تستمر بقراءة config() كما هي.
+     */
+    private function applyBackupScheduleSettings(): void
+    {
+        try {
+            $s = Setting::group('backup_schedule');
+            if (empty($s)) return;
+
+            if (array_key_exists('retention_daily', $s) && $s['retention_daily'] !== '') {
+                Config::set('backups.system_backup.retention.daily', (int) $s['retention_daily']);
+            }
+            if (array_key_exists('retention_weekly', $s) && $s['retention_weekly'] !== '') {
+                Config::set('backups.system_backup.retention.weekly', (int) $s['retention_weekly']);
+            }
+            if (array_key_exists('retention_monthly', $s) && $s['retention_monthly'] !== '') {
+                Config::set('backups.system_backup.retention.monthly', (int) $s['retention_monthly']);
+            }
+        } catch (\Throwable) {
+            // تجاهل إذا كان جدول settings غير موجود بعد (أول migrate)
         }
     }
 

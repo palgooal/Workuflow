@@ -14,16 +14,17 @@ Activity Log).
 
 | الطبقة | الملف |
 |---|---|
-| Migration | `database/migrations/2026_07_15_000002_create_backups_table.php` |
+| Migration | `database/migrations/2026_07_15_000002_create_backups_table.php` + `2026_07_17_000001_add_triggered_by_to_backups_table.php` |
 | Model | `app/Models/Backup.php` |
-| Enums | `app/Support/Enums/BackupType.php`, `BackupStatus.php` |
+| Enums | `app/Support/Enums/BackupType.php`, `BackupStatus.php`, `BackupTrigger.php` |
 | خدمة الإنشاء | `app/Services/Backup/SystemBackupService.php` |
 | التشفير | `app/Services/Backup/BackupEncryptor.php` |
 | الاحتفاظ | `app/Services/Backup/BackupRetentionService.php` |
+| الجدولة (المرحلة الخامسة) | `app/Services/Backup/ScheduledBackupRunner.php`، `app/Observers/BackupObserver.php`، `app/Filament/Pages/BackupScheduleSettings.php` |
 | Job | `app/Jobs/Backup/RunSystemBackupJob.php` (queue name: `backups`) |
 | Filament | `app/Filament/Resources/BackupResource.php` + `Pages/ListBackups.php` |
 | تنزيل الأدمن | `app/Http/Controllers/Admin/BackupDownloadController.php` |
-| أوامر Artisan | `backup:database`, `backup:full`, `backup:apply-retention`, `backup:restore` |
+| أوامر Artisan | `backup:database`, `backup:full`, `backup:apply-retention`, `backup:restore` (لم تعد `backup:database`/`backup:full` مجدولة تلقائياً — راجع قسم الجدولة أدناه) |
 | Config | `config/backups.php` → `system_backup.*` |
 
 ## Connection مقابل Queue name (تفادياً لأي التباس)
@@ -39,6 +40,12 @@ Activity Log).
   (هذا ما يستخدمه سطر cron الإنتاج المُحدَّث — راجع [DEPLOY.md](DEPLOY.md)).
   نسخ `full` قد تستغرق دقائق طويلة — إن كثُر استخدامها يُنصَح بسطر cron/worker
   منفصل لطابور `backups` وحده بمهلة أطول، بدل الاعتماد فقط على السطر المشترك.
+- **`DB_QUEUE_RETRY_AFTER`** (في `.env`، افتراضياً `3900` إن لم يُضبَط —
+  `config/queue.php` → `connections.database.retry_after`): يجب أن يبقى دائماً
+  أعلى من أطول `$timeout` لأي Job فعلي على قناة `database` (`RunSystemBackupJob`
+  وحدها تصل لـ `job_timeout+60` ≈ 1860 ثانية افتراضياً). إن كانت القيمة أقل من
+  ذلك، تعتبر القناة أن الـ Job "منتهي المهلة" بينما لا يزال يعمل فعلياً،
+  فيُعاد جدولته لـ worker آخر وينفَّذ **مرتين بالتوازي على نفس النسخة**.
 
 ## آلية الإنشاء
 
@@ -84,13 +91,50 @@ Activity Log).
   على الخادم أبداً عند التنزيل. فك التشفير يحدث فقط محلياً عبر
   `php artisan backup:restore` أو `BackupEncryptor` يدوياً.
 
-## الجدولة (`routes/console.php`)
+## الجدولة (`routes/console.php`) — المرحلة الخامسة: قابلة للتحكم من الإدارة
 
-| الأمر | التكرار | الوقت |
+⚠️ **تغيّر السلوك ابتداءً من المرحلة الخامسة (2026-07-17):** لم تعد نسخة
+قاعدة البيانات/الكاملة مجدولتَين بمواعيد ثابتة في الكود. الجدولة الآن طبقة
+ديناميكية فوق النظام الحالي، عبر `App\Services\Backup\ScheduledBackupRunner`
+(Laravel Scheduler — `Schedule::call()`، وليس Cron يدوي)، وتُقرأ الإعدادات في
+كل مرة يعمل فيها `schedule:run` (كل دقيقة عبر سطر cron أدناه) من صفحة:
+
+**الإعدادات → النسخ الاحتياطي** (`app/Filament/Pages/BackupScheduleSettings.php`،
+`/admin/backup-schedule-settings`) — تحفظ في جدول `settings` (مجموعة
+`backup_schedule`، نفس آلية `Setting::setGroup()` المستخدَمة لإعدادات
+البريد/الدفع):
+
+| الإعداد | الافتراضي عند عدم الحفظ | ملاحظة |
 |---|---|---|
-| `backup:database` | يومي | 05:00 |
-| `backup:full` | أسبوعي (الجمعة) | 05:30 |
-| `backup:apply-retention` | يومي | 05:45 (بعد الاثنين أعلاه) |
+| تفعيل نسخة قاعدة البيانات (يومياً) | مفعّل | |
+| تفعيل النسخة الكاملة (أسبوعياً — الجمعة) | مفعّل | |
+| وقت التنفيذ | `02:00` | نفس الوقت لكلا النوعين — النوعان لا يتشاركان يوم التنفيذ (يومي مقابل جمعة فقط) |
+| المنطقة الزمنية | `config('app.timezone')` | |
+| عدد نسخ الاحتفاظ (يومي/أسبوعي/شهري) | من `config('backups.system_backup.retention.*')` الحالي | **لا يُنشئ إعداداً مكرراً** — يتجاوز نفس مفتاح config في الـruntime عبر `AppServiceProvider::applyBackupScheduleSettings()`؛ `BackupRetentionService` نفسها غير معدَّلة |
+
+**قبل كل تشغيل مجدوَل**: `ScheduledBackupRunner` يتحقق أنه لا توجد أي نسخة
+أخرى بحالة `running` (أي نوع) — إن وُجدت، يُسجَّل `Warning` ولا تُنشأ نسخة
+جديدة إطلاقاً (منفصل عن `withoutOverlapping()` التي تمنع فقط تداخل نفس
+الحدث المجدوَل مع نفسه).
+
+**Logging** (`Log::info/warning/error`، القناة الافتراضية): `Scheduled backup
+started`، `Scheduled backup skipped (another backup is already running)`،
+`Scheduled backup completed`، `Scheduled backup failed` — الأخيران عبر
+`App\Observers\BackupObserver` (يراقب `Backup::updated()` لأي سجل
+`triggered_by=scheduled`، بدون أي تعديل على `SystemBackupService`/
+`RunSystemBackupJob`).
+
+**مصدر النسخة**: كل سجل `Backup` يحمل الآن `triggered_by` (`manual` أو
+`scheduled` — نص وليس Boolean عمداً)، ويظهر كـ badge في عمود "المصدر" داخل
+Filament. الأوامر القديمة `backup:database`/`backup:full` ما زالت موجودة
+وقابلة للتشغيل يدوياً من CLI دون أي تعديل عليها، لكنها لم تعد جزءاً من
+الجدولة الفعلية — الجدولة تستدعي `ScheduledBackupRunner` مباشرة.
+
+| الأمر/الطبقة | التكرار | الوقت |
+|---|---|---|
+| `ScheduledBackupRunner::run(Database)` | يومي | من الإعدادات (افتراضياً 02:00) |
+| `ScheduledBackupRunner::run(Full)` | أسبوعي (الجمعة) | من الإعدادات (نفس الوقت) |
+| `backup:apply-retention` | يومي | 05:45 (ثابت — خارج نطاق هذه المرحلة) |
 | `exports:purge-expired` | كل ساعة | — |
 
 **متطلب Cron في الإنتاج** (سطر واحد قياسي يكفي لكل جدولة Laravel):
@@ -133,7 +177,10 @@ Activity Log).
   حتى لو أُضيف دور إداري أضعف لاحقاً على نفس اللوحة، تبقى النسخ محمية تحديداً.
 - تنزيل الأرشيف عبر Signed URL (صلاحية 15 دقيقة) + تحقق الدور معاً.
 
-## ما لم يُنفَّذ عمداً (راجع RESTORE-RUNBOOK.md)
+## الاستعادة (Restore) — راجع RESTORE-RUNBOOK.md
 
-- **لا زر Restore في Filament بأي شكل.** الاستعادة فقط عبر
-  `php artisan backup:restore` من CLI بواسطة مسؤول لديه وصول للخادم مباشرة.
+⚠️ **محدَّث:** القاعدة القديمة "لا زر Restore في Filament بأي شكل" لم تعد
+سارية — زر "استعادة النسخة" متاح الآن في Filament (`super_admin` فقط)، وهو
+واجهة فقط فوق نفس محرك `RestoreService` المستخدَم في `backup:restore` من
+CLI، دون أي منطق استعادة مستقل. راجع `docs/RESTORE-RUNBOOK.md` للتفاصيل
+الكاملة.

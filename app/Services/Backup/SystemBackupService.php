@@ -189,6 +189,12 @@ class SystemBackupService
             '--quick',
             '--routines',
             '--triggers',
+            // MySQL 8: mysqldump يحاول افتراضياً قراءة معلومات tablespace من
+            // information_schema.FILES (تتطلب صلاحية PROCESS) — يفشل بصمت مع
+            // "Access denied ... PROCESS privilege" لأي مستخدم DB مقيَّد
+            // الصلاحيات (ممارسة أمنية شائعة في الإنتاج). لا حاجة لهذه
+            // المعلومات في نسخة احتياطية عادية.
+            '--no-tablespaces',
             '--result-file='.$dumpPath,
             $connection['database'],
         ];

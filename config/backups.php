@@ -84,4 +84,32 @@ return [
         'job_timeout' => (int) env('SYSTEM_BACKUP_JOB_TIMEOUT', 1800),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | استعادة قاعدة البيانات (Restore Engine — DatabaseRestoreService)
+    |--------------------------------------------------------------------------
+    |
+    | اسم اتصال قاعدة البيانات (من database.connections) الذي يُستخدَم فعلياً
+    | لبناء أمر mysql عند الاستعادة — مختلف عمداً عن database.default حتى يمكن
+    | فصله بالكامل عن اتصال اختبارات Laravel (sqlite :memory:) دون أي تأثير
+    | على أي كود آخر في التطبيق.
+    |
+    | null (الافتراضي) = استخدم database.default كما هو — هذا هو السلوك في
+    | الإنتاج والتطوير، ولا حاجة لتعريف BACKUP_RESTORE_CONNECTION هناك إطلاقاً.
+    |
+    | هذا الاتصال يُستخدَم فقط كمصدر إعدادات (host/port/username/password/
+    | database) لبناء أمر Process — لا يُفتَح عبره أي اتصال PDO فعلي أبداً.
+    |
+    */
+    'restore' => [
+        'connection' => env('BACKUP_RESTORE_CONNECTION'),
+
+        // مسار storage/app الفعلي الذي تستهدفه FilesRestoreService عند استعادة
+        // الملفات — null (الافتراضي) يعني storage_path('app') الحقيقي، وهذا هو
+        // سلوك الإنتاج/التطوير دون أي متغيّر بيئة إضافي. يُستخدَم فقط في
+        // الاختبارات لتوجيه الاستعادة نحو مجلد مؤقت معزول تماماً، بدل لمس
+        // storage/app الحقيقي للمشروع أثناء تشغيل الاختبارات.
+        'storage_app_path' => env('BACKUP_RESTORE_STORAGE_APP_PATH'),
+    ],
+
 ];

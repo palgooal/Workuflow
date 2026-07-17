@@ -2,18 +2,28 @@
 
 namespace App\Filament\Resources;
 
+use App\Exceptions\Backup\BackupIntegrityException;
+use App\Exceptions\Backup\BackupManifestException;
+use App\Exceptions\Backup\BackupNotFoundException;
+use App\Exceptions\Backup\BackupRestoreException;
 use App\Filament\Resources\BackupResource\Pages;
 use App\Models\ActivityLog;
 use App\Models\Backup;
+use App\Services\Backup\BackupInspectionService;
+use App\Services\Backup\RestoreService;
 use App\Services\Backup\SystemBackupService;
 use App\Support\Enums\BackupStatus;
+use App\Support\Enums\BackupTrigger;
 use App\Support\Enums\BackupType;
+use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\URL;
+use Throwable;
 
 /**
  * BackupResource — "النسخ الاحتياطية" (super_admin فقط).
@@ -21,8 +31,11 @@ use Illuminate\Support\Facades\URL;
  * ⚠️ منفصل تماماً عن DataExportRequest (تصدير بيانات مستخدم واحد). هذا يغطي
  * نسخ النظام الكاملة. راجع docs/BACKUP-SYSTEM.md قبل التعديل.
  *
- * لا يوجد Restore من هنا إطلاقاً — فقط عرض/إنشاء/تنزيل/حذف/فحص سلامة.
- * الاستعادة عبر `php artisan backup:restore` من CLI حصراً (docs/RESTORE-RUNBOOK.md).
+ * ⚠️ Restore (المرحلة الرابعة): زر "استعادة النسخة" هنا هو **واجهة فقط** فوق
+ * محرك الاستعادة الحالي — لا يحتوي على أي منطق استعادة بنفسه، ويستدعي حصراً
+ * RestoreService::run() (نفس المحرك الذي يستخدمه backup:restore CLI). لا
+ * تعديل على RestoreService/DatabaseRestoreService/FilesRestoreService هنا
+ * إطلاقاً. راجع docs/RESTORE-RUNBOOK.md.
  */
 class BackupResource extends Resource
 {
@@ -43,6 +56,11 @@ class BackupResource extends Resource
     }
 
     public static function canAccess(): bool
+    {
+        return static::canViewAny();
+    }
+
+    public static function canView($record): bool
     {
         return static::canViewAny();
     }
@@ -71,6 +89,7 @@ class BackupResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(fn (Backup $record) => static::getUrl('view', ['record' => $record]))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('الاسم')
@@ -88,6 +107,12 @@ class BackupResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (BackupStatus $state) => $state->label())
                     ->color(fn (BackupStatus $state) => $state->color()),
+
+                Tables\Columns\TextColumn::make('triggered_by')
+                    ->label('المصدر')
+                    ->badge()
+                    ->formatStateUsing(fn (?BackupTrigger $state) => $state?->label() ?? '—')
+                    ->color(fn (?BackupTrigger $state) => $state?->color() ?? 'gray'),
 
                 Tables\Columns\TextColumn::make('size_bytes')
                     ->label('الحجم')
@@ -181,6 +206,34 @@ class BackupResource extends Resource
                             : Notification::make()->danger()->title('❌ فشل التحقق — checksum غير مطابق أو الملف مفقود')->persistent()->send();
                     }),
 
+                Tables\Actions\Action::make('restore')
+                    ->label('استعادة النسخة')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('danger')
+                    ->visible(fn (Backup $record) => $record->status === BackupStatus::Completed && $record->integrity_verified === true)
+                    ->modalHeading('استعادة نسخة احتياطية')
+                    ->modalIcon('heroicon-o-exclamation-triangle')
+                    ->modalIconColor('danger')
+                    ->modalSubmitActionLabel('نعم، ابدأ الاستعادة الآن')
+                    ->modalWidth('lg')
+                    ->modalContent(fn (Backup $record) => view(
+                        'filament.backups.restore-modal-content',
+                        static::restoreModalViewData($record)
+                    ))
+                    ->form(fn (): array => [
+                        Forms\Components\TextInput::make('confirmation')
+                            ->label('اكتب RESTORE للتأكيد')
+                            ->placeholder('RESTORE')
+                            ->required()
+                            ->autocomplete('off')
+                            ->extraInputAttributes(['class' => 'font-mono'])
+                            ->rule('in:RESTORE')
+                            ->validationMessages([
+                                'in' => 'يجب كتابة RESTORE بحروف كبيرة بالضبط للمتابعة، بدون أي فراغات إضافية.',
+                            ]),
+                    ])
+                    ->action(fn (Backup $record) => static::runRestoreAction($record)),
+
                 Tables\Actions\Action::make('delete')
                     ->label('حذف')
                     ->icon('heroicon-o-trash')
@@ -220,6 +273,94 @@ class BackupResource extends Resource
     {
         return [
             'index' => Pages\ListBackups::route('/'),
+            'view'  => Pages\ViewBackup::route('/{record}'),
         ];
+    }
+
+    /**
+     * يبني بيانات view محتوى Modal الاستعادة (resources/views/filament/backups/
+     * restore-modal-content.blade.php) — عرض فقط، بدون أي Filament Form
+     * Component. المعلومات تُقرَأ عبر BackupInspectionService::readManifest()
+     * الحالية دون أي تكرار لمنطقها.
+     *
+     * ⚠️ هذه الدالة تُستدعى من داخل Closure جديد في كل مرة يُفتَح فيها الـModal
+     * (->modalContent(fn (Backup $record) => view(...)))، ولا تُنشئ أو تُعيد
+     * استخدام أي Filament Form Component — array عادي بسيط فقط، لذلك لا علاقة
+     * لها بمشكلة "$container must not be accessed before initialization"
+     * (كانت ناتجة سابقاً عن بناء Placeholder/Section عبر ->form() + محاولة
+     * تعطيل زر الإرسال تفاعلياً عبر ->modalSubmitAction()، وكلاهما أُزيلا).
+     *
+     * @return array<string,mixed>
+     */
+    private static function restoreModalViewData(Backup $record): array
+    {
+        $manifest = [];
+        $fileCount = null;
+        $inspectionError = null;
+
+        try {
+            $inspection = app(BackupInspectionService::class)->readManifest($record);
+            $manifest = $inspection['manifest'] ?? [];
+            $fileCount = $inspection['file_count'] ?? null;
+        } catch (Throwable $e) {
+            $inspectionError = $e->getMessage();
+        }
+
+        return [
+            'record'          => $record,
+            'manifest'        => $manifest,
+            'fileCount'       => $fileCount,
+            'inspectionError' => $inspectionError,
+        ];
+    }
+
+    /**
+     * ⚠️ لا منطق استعادة هنا — استدعاء وحيد لـ RestoreService::run()، محاط
+     * فقط بقفل Cache (يمنع تشغيل عمليتين استعادة في آن واحد) وإشعارات
+     * Filament. أي منطق فعلي (checksum/فك تشفير/استعادة DB أو الملفات) يعيش
+     * حصراً داخل RestoreService وما تستدعيه.
+     */
+    private static function runRestoreAction(Backup $record): mixed
+    {
+        $lock = Cache::lock('backups:restore-lock', 3600);
+
+        if (! $lock->get()) {
+            Notification::make()
+                ->warning()
+                ->title('يوجد بالفعل عملية استعادة أخرى قيد التنفيذ')
+                ->body('يرجى الانتظار حتى انتهائها قبل المحاولة مرة أخرى.')
+                ->send();
+
+            return null;
+        }
+
+        try {
+            app(RestoreService::class)->run($record->id);
+        } catch (BackupNotFoundException|BackupIntegrityException|BackupManifestException|BackupRestoreException $e) {
+            Notification::make()
+                ->danger()
+                ->title('فشلت عملية الاستعادة')
+                ->body($e->getMessage())
+                ->persistent()
+                ->send();
+
+            return null;
+        } finally {
+            $lock->release();
+        }
+
+        ActivityLog::recordFor(
+            eventType: 'backup.restored',
+            entityType: Backup::class,
+            entityId: $record->id,
+            metadata: ['backup_id' => $record->id],
+        );
+
+        Notification::make()
+            ->success()
+            ->title('تمت استعادة النسخة الاحتياطية بنجاح.')
+            ->send();
+
+        return redirect(request()->header('Referer') ?? static::getUrl('index'));
     }
 }
