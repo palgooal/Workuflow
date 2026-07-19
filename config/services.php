@@ -35,6 +35,13 @@ return [
         ],
     ],
 
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => 'gpt-5.6',
+        'timeout' => (int) env('OPENAI_TIMEOUT', 30),
+        'max_output_tokens' => (int) env('OPENAI_MAX_OUTPUT_TOKENS', 1800),
+    ],
+
     // ملاحظة: روابط وسائل التواصل الاجتماعي لم تعد تُدار عبر .env/config —
     // انتقلت إلى صفحة "إعدادات الموقع والتواصل" في لوحة الأدمن (جدول
     // settings، group = 'site'). راجع App\Filament\Pages\SiteSettings.
