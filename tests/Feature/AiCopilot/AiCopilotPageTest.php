@@ -97,6 +97,27 @@ test('page includes every result and failure state in arabic', function () {
     }
 });
 
+test('page handles impersonation forbidden responses with dedicated trusted arabic guidance', function () {
+    $user = User::factory()->create(['phone' => '0500000005']);
+    $source = file_get_contents(resource_path('views/ai-copilot/index.blade.php'));
+
+    $response = $this->actingAs($user)->get(route('ai-copilot.index'));
+
+    $response->assertOk()
+        ->assertSee('impersonation_blocked', false)
+        ->assertSee('التحليل غير متاح أثناء الدخول كعميل')
+        ->assertSee('لا يمكن إجراء التحليل المالي أثناء الدخول إلى حساب العميل من لوحة الإدارة. سجّل الدخول إلى الحساب بصورة مباشرة لإجراء التحليل.');
+
+    $forbiddenBranch = "if (response.status === 403) {\n                    this.state = 'impersonation_blocked';\n                    this.liveMessage = this.errorMessage;\n                    return;\n                }";
+
+    expect($source)
+        ->toContain($forbiddenBranch)
+        ->and(strpos($source, 'if (response.status === 403)'))
+        ->toBeLessThan(strpos($source, 'if (!response.ok)'))
+        ->and($forbiddenBranch)
+        ->not->toContain('response.json', 'response.text');
+});
+
 test('page load never starts analysis or persists a result', function () {
     $user = User::factory()->create(['phone' => '0500000003']);
     Http::fake();

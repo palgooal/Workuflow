@@ -200,11 +200,12 @@ function aiFinancialCopilot() {
         liveMessage: 'التحليل جاهز للبدء.',
 
         get isErrorState() {
-            return ['rate_limited', 'service_unavailable', 'failure'].includes(this.state);
+            return ['impersonation_blocked', 'rate_limited', 'service_unavailable', 'failure'].includes(this.state);
         },
 
         get errorTitle() {
             return {
+                impersonation_blocked: 'التحليل غير متاح أثناء الدخول كعميل',
                 rate_limited: 'تم بلوغ حد التحليل المؤقت',
                 service_unavailable: 'الخدمة غير متاحة الآن',
                 failure: 'تعذر إكمال التحليل',
@@ -213,6 +214,7 @@ function aiFinancialCopilot() {
 
         get errorMessage() {
             return {
+                impersonation_blocked: 'لا يمكن إجراء التحليل المالي أثناء الدخول إلى حساب العميل من لوحة الإدارة. سجّل الدخول إلى الحساب بصورة مباشرة لإجراء التحليل.',
                 rate_limited: 'يمكن إجراء خمسة تحليلات كل ساعة. يرجى المحاولة بعد انتهاء المهلة.',
                 service_unavailable: 'تعذر الوصول إلى خدمة التحليل حالياً. يرجى المحاولة لاحقاً.',
                 failure: 'حدث خطأ غير متوقع. لم يتم تغيير أي من سجلاتك المالية.',
@@ -308,6 +310,12 @@ function aiFinancialCopilot() {
                     credentials: 'same-origin',
                     body: JSON.stringify({}),
                 });
+
+                if (response.status === 403) {
+                    this.state = 'impersonation_blocked';
+                    this.liveMessage = this.errorMessage;
+                    return;
+                }
 
                 if (response.status === 429) {
                     this.state = 'rate_limited';
