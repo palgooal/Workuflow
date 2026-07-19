@@ -38,7 +38,9 @@ test('sends the strict stateless GPT-5.6 request and parses output after reasoni
             ->and($payload['text']['format']['schema']['properties']['insights']['items']['properties']['evidence_codes']['minItems'])
             ->toBe(1)
             ->and($payload['text']['format']['schema']['properties']['limitations_ar']['minItems'])
-            ->toBe(1)
+            ->toBe(0)
+            ->and($payload['text']['format']['schema']['properties']['limitations_ar']['maxItems'])
+            ->toBe(4)
             ->and($payload['text']['format']['schema']['properties']['insights']['items']['properties']['currency']['enum'])->toBe(['SAR', null])
             ->and($payload['text']['format']['schema']['properties']['insights']['items']['properties']['evidence_codes']['items']['enum'])->toBe([
                 'excluded_cross_currency_transfers',
@@ -116,7 +118,7 @@ test('health status is derived locally and constrained to one schema value', fun
                 'excluded_cross_currency_transfers',
                 'warning',
                 null,
-                ['توجد قيود في بيانات التحويلات بين العملات.']
+                []
             ),
             'attention',
         ],
@@ -147,6 +149,91 @@ test('health status is derived locally and constrained to one schema value', fun
             ->and($request->data()['text']['format']['schema']['properties']['health_status']['enum'])
             ->toBe([$expectedStatus]);
     }
+});
+
+test('zero excluded transfers append no local limitation', function () {
+    $result = openAiResultFixture('stable');
+    Http::fake([
+        OpenAiCopilotService::ENDPOINT => Http::response(openAiProviderResponse($result)),
+    ]);
+
+    $normalized = openAiService()->generateInsights(
+        openAiHealthySnapshot(),
+        openAiRiskFixture(),
+    );
+
+    expect($normalized['limitations_ar'])->toBe([]);
+
+    Http::assertSent(function ($request) {
+        $payload = $request->data();
+        $instructions = $payload['input'][0]['content'];
+
+        expect($payload['text']['format']['schema']['properties']['limitations_ar']['minItems'])->toBe(0)
+            ->and($payload['text']['format']['schema']['properties']['limitations_ar']['maxItems'])->toBe(5)
+            ->and($instructions)->toContain('Never mention excluded cross-currency transfers')
+            ->and($instructions)->toContain('application adds any required user-facing limitation locally')
+            ->and($instructions)->toContain('Never mention implementation terminology');
+
+        return true;
+    });
+
+});
+
+test('positive excluded transfers append exactly one local arabic limitation', function () {
+    $result = openAiValidResult();
+    $result['limitations_ar'] = [];
+    Http::fake([
+        OpenAiCopilotService::ENDPOINT => Http::response(openAiProviderResponse($result)),
+    ]);
+
+    expect(openAiService()->generateInsights(openAiSnapshot(), openAiRiskAnalysis())['limitations_ar'])
+        ->toBe(['لم يشمل التحليل بعض التحويلات بين العملات لعدم توفر سعر صرف موثوق.']);
+});
+
+test('provider exclusion wording cannot duplicate the local limitation', function () {
+    $result = openAiValidResult();
+    $result['limitations_ar'] = [
+        'لم يشمل التحليل بعض التحويلات بين العملات لعدم توفر سعر صرف موثوق.',
+        'لم يشمل التحليل بعض التحويلات بين العملات لعدم توفر سعر صرف موثوق.',
+    ];
+    Http::fake([
+        OpenAiCopilotService::ENDPOINT => Http::response(openAiProviderResponse($result)),
+    ]);
+
+    $normalized = openAiService()->generateInsights(openAiSnapshot(), openAiRiskAnalysis());
+
+    expect($normalized['limitations_ar'])->toBe([
+        'لم يشمل التحليل بعض التحويلات بين العملات لعدم توفر سعر صرف موثوق.',
+    ]);
+});
+
+test('ordinary arabic data quality wording remains valid', function () {
+    $result = openAiResultFixture('stable');
+    $result['limitations_ar'] = ['تعتمد جودة البيانات على اكتمال السجلات المالية المتاحة.'];
+    Http::fake([
+        OpenAiCopilotService::ENDPOINT => Http::response(openAiProviderResponse($result)),
+    ]);
+
+    expect(openAiService()->generateInsights(openAiHealthySnapshot(), openAiRiskFixture())['limitations_ar'])
+        ->toBe(['تعتمد جودة البيانات على اكتمال السجلات المالية المتاحة.']);
+});
+
+test('local exclusion limitation preserves the five item public maximum', function () {
+    $result = openAiValidResult();
+    $result['limitations_ar'] = [
+        'تعتمد القراءة على السجلات المالية المجمعة المتاحة.',
+        'لا تتضمن البيانات تفاصيل المعاملات الفردية.',
+        'قد تتغير النتيجة عند إضافة سجلات مالية جديدة.',
+        'لا تتوفر معلومات زمنية تفصيلية لبعض السجلات.',
+    ];
+    Http::fake([
+        OpenAiCopilotService::ENDPOINT => Http::response(openAiProviderResponse($result)),
+    ]);
+
+    $limitations = openAiService()->generateInsights(openAiSnapshot(), openAiRiskAnalysis())['limitations_ar'];
+
+    expect($limitations)->toHaveCount(5)
+        ->and($limitations[4])->toBe('لم يشمل التحليل بعض التحويلات بين العملات لعدم توفر سعر صرف موثوق.');
 });
 
 test('missing API key fails before making an HTTP request', function () {
@@ -301,12 +388,6 @@ test('unsafe or malformed provider output fails safely without retry', function 
 
         return [openAiProviderResponse($result)];
     },
-    'missing required data quality limitation' => function () {
-        $result = openAiValidResult();
-        $result['limitations_ar'] = [];
-
-        return [openAiProviderResponse($result)];
-    },
     'unsupported priority enum' => function () {
         $result = openAiValidResult();
         $result['actions'][0]['priority'] = 'urgent';
@@ -328,6 +409,12 @@ test('unsafe or malformed provider output fails safely without retry', function 
     'empty Arabic content' => function () {
         $result = openAiValidResult();
         $result['summary_ar'] = '   ';
+
+        return [openAiProviderResponse($result)];
+    },
+    'internal deterministic terminology' => function () {
+        $result = openAiValidResult();
+        $result['summary_ar'] = 'الحالة المالية حرجة وفق التحليل الحتمي للبيانات المتاحة.';
 
         return [openAiProviderResponse($result)];
     },
@@ -544,7 +631,7 @@ function openAiValidResult(): array
             'rationale_ar' => 'يساعد ذلك على فهم البنود التشغيلية التي يمكن ضبطها دون تغيير السجلات.',
             'priority' => 'high',
         ]],
-        'limitations_ar' => ['تم استبعاد تحويل بعملتين مختلفتين لعدم وجود سعر صرف موثوق.'],
+        'limitations_ar' => ['لم يشمل التحليل بعض التحويلات بين العملات لعدم توفر سعر صرف موثوق.'],
         'disclaimer_ar' => 'هذه إرشادات تعليمية تشغيلية وليست نصيحة محاسبية أو استثمارية أو ضريبية أو قانونية.',
     ];
 }
