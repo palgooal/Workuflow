@@ -8,6 +8,7 @@ use App\Modules\AiCopilot\Services\FinancialSnapshotService;
 use App\Modules\AiCopilot\Services\OpenAiCopilotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use RuntimeException;
 
 final class AiCopilotController extends Controller
@@ -15,6 +16,11 @@ final class AiCopilotController extends Controller
     private const IMPERSONATION_MESSAGE = 'لا يمكن إجراء التحليل المالي أثناء انتحال الحساب.';
 
     private const SERVICE_UNAVAILABLE_MESSAGE = 'تعذر إكمال التحليل المالي الآن. يرجى المحاولة لاحقاً.';
+
+    public function index(): View
+    {
+        return view('ai-copilot.index');
+    }
 
     public function analyze(
         Request $request,

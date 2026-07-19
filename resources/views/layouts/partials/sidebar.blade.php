@@ -217,6 +217,16 @@
         {{-- التحليل --}}
         <p class="px-3 pt-5 mb-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">التحليل</p>
         <div class="space-y-0.5">
+            <x-nav-item href="{{ route('ai-copilot.index') }}" :active="request()->routeIs('ai-copilot.*')">
+                <x-slot name="icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9.75 3.75L11.1 7.4a2.25 2.25 0 001.33 1.33l3.65 1.35-3.65 1.35a2.25 2.25 0 00-1.33 1.33l-1.35 3.65-1.35-3.65a2.25 2.25 0 00-1.33-1.33L3.42 10.08l3.65-1.35A2.25 2.25 0 008.4 7.4l1.35-3.65zM17.25 14.25l.72 1.95c.16.43.5.77.93.93l1.95.72-1.95.72c-.43.16-.77.5-.93.93l-.72 1.95-.72-1.95a1.58 1.58 0 00-.93-.93l-1.95-.72 1.95-.72c.43-.16.77-.5.93-.93l.72-1.95z"/>
+                    </svg>
+                </x-slot>
+                المساعد المالي الذكي
+            </x-nav-item>
+
             <x-nav-item href="{{ route('reports.index') }}" :active="request()->routeIs('reports.*')">
                 <x-slot name="icon">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">

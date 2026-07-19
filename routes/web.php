@@ -64,6 +64,9 @@ Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show')
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    Route::get('/ai-copilot', [AiCopilotController::class, 'index'])
+        ->name('ai-copilot.index');
+
     Route::post('/ai-copilot/analyze', [AiCopilotController::class, 'analyze'])
         ->middleware('throttle:ai-copilot')
         ->name('ai-copilot.analyze');
