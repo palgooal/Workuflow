@@ -27,8 +27,11 @@ use App\Modules\Billing\Services\ManualRenewalService;
 use App\Modules\Billing\Services\SubscriptionService;
 use App\Modules\Billing\Services\TogoPaymentService;
 use App\Filament\Pages\SiteSettings;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -83,6 +86,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('ai-copilot', function (Request $request) {
+            $userId = $request->user()?->getAuthIdentifier();
+            $key = $userId !== null ? 'user:'.$userId : 'ip:'.$request->ip();
+
+            return Limit::perHour(5)->by($key);
+        });
+
         Gate::policy(Budget::class, BudgetPolicy::class);
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(Category::class, CategoryPolicy::class);

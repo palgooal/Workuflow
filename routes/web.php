@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Account\DataExportController;
+use App\Http\Controllers\AiCopilotController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\InvoiceController;
@@ -62,6 +63,10 @@ Route::prefix('legal')->name('legal.')->group(function () {
 Route::get('/pages/{slug}', [PageController::class, 'show'])->name('pages.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::post('/ai-copilot/analyze', [AiCopilotController::class, 'analyze'])
+        ->middleware('throttle:ai-copilot')
+        ->name('ai-copilot.analyze');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
