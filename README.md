@@ -76,7 +76,7 @@
 - `tests/Feature/AiCopilot/AiCopilotEndpointTest.php`
 - `tests/Feature/AiCopilot/AiCopilotPageTest.php`
 
-آخر نتيجة تحقق: **65 اختباراً ناجحاً و426 assertion**.
+آخر نتيجة تحقق: **66 اختباراً ناجحاً و433 assertion**.
 
 ```bash
 php artisan test tests/Feature/AiCopilot/FinancialSnapshotIsolationTest.php tests/Unit/Modules/AiCopilot/FinancialRiskAnalyzerTest.php tests/Feature/AiCopilot/OpenAiCopilotServiceTest.php tests/Feature/AiCopilot/AiCopilotEndpointTest.php tests/Feature/AiCopilot/AiCopilotPageTest.php
@@ -107,7 +107,7 @@ php artisan config:clear
 
 ### العرض
 
-- رابط العرض المباشر: _يُضاف لاحقاً._
+- رابط العرض المباشر: https://darahum.com/ai-copilot — يتطلب تسجيل الدخول.
 - رابط فيديو العرض العام: _يُضاف لاحقاً._
 - لقطات الشاشة: _تُضاف لاحقاً._
 
