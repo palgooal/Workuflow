@@ -44,6 +44,7 @@
 ### تكامل OpenAI
 
 - النموذج: `gpt-5.6`.
+- النموذج ثابت على GPT-5.6 في إعدادات التطبيق، ولا يُختار عبر متغير بيئة.
 - الواجهة: OpenAI Responses API.
 - المخرجات: strict Structured Outputs باستخدام JSON Schema، مع تحقق إضافي على الخادم.
 - لا يستخدم التكامل أدوات أو ملفات أو محادثات أو ربطاً ذا حالة بين الاستجابات.
@@ -87,7 +88,6 @@ php artisan test tests/Feature/AiCopilot/FinancialSnapshotIsolationTest.php test
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-5.6
 OPENAI_TIMEOUT=30
 OPENAI_MAX_OUTPUT_TOKENS=1800
 ```
